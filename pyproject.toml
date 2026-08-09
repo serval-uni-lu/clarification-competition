@@ -1,0 +1,16 @@
+[project]
+name = "clarification-sdk"
+version = "0.1.0"
+description = "Clarification SDK for implementing common clarification algorithms."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=0.121.0",
+    "fire>=0.7.1",
+    "litellm>=1.96.0",
+    "numpy==2.5.2",
+    "openai>=2.53.0",
+    "rich>=15.0.0",
+    "tenacity>=9.1.4",
+    "tqdm>=4.70.0",
+]
