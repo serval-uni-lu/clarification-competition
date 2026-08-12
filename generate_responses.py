@@ -1,6 +1,8 @@
 import os
 import fire
 import json
+import sys
+import hashlib
 
 import importlib.util
 import inspect
@@ -20,6 +22,13 @@ from rich.panel import Panel
 console = Console()
 
 
+def _module_name_for_path(path_to_algorithm: str) -> str:
+    # stable, collision-resistant name — avoids clobbering real modules
+    # or colliding with another algorithm file that happens to share a basename
+    digest = hashlib.sha1(os.path.abspath(path_to_algorithm).encode()).hexdigest()[:12]
+    return f"_clarification_algo_{digest}"
+
+
 def _load_clarification_algorithm(path_to_algorithm: str):
     """
     Parses and compiles the Python file at path_to_algorithm, executing it
@@ -29,10 +38,20 @@ def _load_clarification_algorithm(path_to_algorithm: str):
     if not os.path.exists(path_to_algorithm):
         raise FileNotFoundError(f"{path_to_algorithm} does not exist.")
 
-    module_name = os.path.splitext(os.path.basename(path_to_algorithm))[0]
-    spec = importlib.util.spec_from_file_location(module_name, path_to_algorithm)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # parses + compiles + runs the file
+    module_name = _module_name_for_path(path_to_algorithm)
+
+    # already loaded in this process (e.g. earlier task in the same worker)
+    if module_name in sys.modules:
+        module = sys.modules[module_name]
+    else:
+        spec = importlib.util.spec_from_file_location(module_name, path_to_algorithm)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module  # register BEFORE exec, for pickle/dataclasses/etc.
+        try:
+            spec.loader.exec_module(module)
+        except BaseException:
+            del sys.modules[module_name]  # don't leave a half-initialized module registered
+            raise
 
     candidates = [
         obj for _, obj in inspect.getmembers(module, inspect.isclass)
@@ -71,9 +90,63 @@ def clarification_console_hook(message: dict[str, str]):
 
 
 class SimulationFunction:
+    _algorithm_cache: dict[str, ClarificationAlgorithmBase] = {}
 
     def __init__(self, **config):
         self.config = config
+
+    def _get_algorithm(self) -> ClarificationAlgorithmBase:
+        path = self.config["clarification_algorithm_path"]
+        if path not in self._algorithm_cache:
+            cls = _load_clarification_algorithm(path)
+            kwargs = self.config.get("clarification_algorithm_kwargs", {})
+            self._algorithm_cache[path] = cls(**kwargs)
+        return self._algorithm_cache[path]
+
+    def batch(self, environment_definitions):
+        clarification_algorithm = self._get_algorithm()
+        algorithm_name = clarification_algorithm.__class__.__name__
+        if not hasattr(clarification_algorithm, "batch_run"):
+            raise ValueError(f"Batch processing is not supported by {algorithm_name}")
+
+        envs, problem_definitions, results = [], [], []
+
+        for environment_definition in environment_definitions:
+            envs.append(
+                ClarificationEnvironment(
+                    self.config["environment_config"], environment_definition,
+                    llm_api_hook = llm_console_hook,
+                    clarification_api_hook = clarification_console_hook,
+                )
+            )
+
+            problem_definitions.append({
+                "prompt": environment_definition["prompt"],
+                "entry_point": environment_definition.get("entry_point", "unknown")
+            })
+
+            results.append({"task_id": environment_definition["task_id"], "prompt": environment_definition["prompt"]})
+
+        try:
+            with console.status(f"Run {algorithm_name} ({len(envs)} instances)..."):
+                for i, prompt_result in enumerate(clarification_algorithm.batch_run(envs, problem_definitions)):
+                    result = results[i]
+                    result["prompt_result"] = prompt_result
+                    result["clarification_history"] = envs[i].history
+                    result["prompt_cost"] = envs[i].prompt_cost
+                    if envs[i].clarification_cost:
+                        result["clarification_cost"] = envs[i].clarification_cost
+
+                return results
+        except Exception as e:
+            if self.config["fail_on_exception"]:
+                raise
+
+            traceback.print_exc()
+            for result in results:
+                result["prompt_result"] = f"[EXCEPTION] {e}"
+            return results
+
 
     def __call__(self, environment_definition):
         environment = ClarificationEnvironment(
@@ -91,7 +164,7 @@ class SimulationFunction:
                   "prompt": environment_definition["prompt"]}
 
         try:
-            clarification_algorithm = self.config["clarification_algorithm"]
+            clarification_algorithm = self._get_algorithm()
             algorithm_name = clarification_algorithm.__class__.__name__
             with console.status(f"Run {algorithm_name}..."):
                 prompt_result = clarification_algorithm.run(
@@ -138,11 +211,11 @@ def main(
     )
     
     # Load clarification algorithm and use kwargs as config options
-    clarification_algorithm = _load_clarification_algorithm(
+    clarification_algorithm_class = _load_clarification_algorithm(
         clarify_py
-    )(kwargs)
+    )
 
-    algorithm_name = clarification_algorithm.__class__.__name__
+    algorithm_name = clarification_algorithm_class.__name__
     print(f"Loaded `{algorithm_name}` clarification algorithm...")
 
     # Load data ----------------------
@@ -153,7 +226,8 @@ def main(
     print(f"Loaded {len(benchmark)} instances...")
 
     simulation_function = SimulationFunction(
-        clarification_algorithm = clarification_algorithm,
+        clarification_algorithm_path = clarify_py,
+        clarification_algorithm_kwargs = kwargs,
         environment_config = environment_config,
         fail_on_exception = fail_on_exception
     )
@@ -178,7 +252,12 @@ def main(
     try:
         with open(output_path, "w") as o, tqdm(total = len(benchmark)) as pbar:
             for task_batch in batched_iterator():
-                results = batched_worker(task_batch)
+                if batch_size > 0:
+                    try:
+                        results = simulation_function.batch(task_batch)
+                    except ValueError:
+                        results = batched_worker(task_batch)
+
                 for result in results:
                     o.write(json.dumps(result, default = str) + "\n")
 

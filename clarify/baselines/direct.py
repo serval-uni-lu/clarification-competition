@@ -14,7 +14,7 @@ Enclose your solution in ```python and ```.
 """.strip()
 
 
-class DirectLLMClarification(ClarificationAlgorithmBase):
+class LLMClarification(ClarificationAlgorithmBase):
 
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         messages = [

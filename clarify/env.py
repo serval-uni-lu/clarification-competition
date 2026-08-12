@@ -67,7 +67,7 @@ class _ClarificationEnvironment:
 
     @property
     def clarification_cost(self):
-        self._clarify_llm.total_cost
+        return self._clarify_llm.total_cost
 
     def can_ask(self):
         return self._num_clarification_turns < self._config.max_clarification_turns

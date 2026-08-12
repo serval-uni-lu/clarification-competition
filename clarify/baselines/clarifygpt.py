@@ -1,3 +1,8 @@
+"""
+A modernized variant of ClarifyGPT
+https://arxiv.org/abs/2310.10996
+"""
+
 from __future__ import annotations
 from typing import Any
 

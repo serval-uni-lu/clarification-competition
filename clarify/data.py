@@ -2,12 +2,8 @@
 try:
     import evalplus
 
-    from evalplus.evaluate import get_groundtruth, check_correctness
-    from evalplus.data.mbpp import get_mbpp_plus, get_mbpp_plus_hash, mbpp_deserialize_inputs
-    from evalplus.data import get_human_eval_plus, get_human_eval_plus_hash
-
-    from evalplus.gen.util import trusted_exec
-    from evalplus.eval._special_oracle import MBPP_OUTPUT_NOT_NONE_TASKS, MBPP_OUTPUT_SET_EQ_TASKS
+    from evalplus.data.mbpp import get_mbpp_plus, mbpp_deserialize_inputs
+    from evalplus.data import get_human_eval_plus
 except ImportError:
     evalplus = None
 
