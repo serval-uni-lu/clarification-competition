@@ -42,23 +42,26 @@ def _preprocess_mbpp(dataset):
 
         elif task["task_id"] in ["Mbpp/114", "Mbpp/490"]:
             preprocessed_example = task
-            preprocessed_example["base_input"] = [
-                [[tuple(lst) for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
-            ]
-            preprocessed_example["plus_input"] = []
+            if "base_input" in task:
+                preprocessed_example["base_input"] = [
+                    [[tuple(lst) for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
+                ]
+                preprocessed_example["plus_input"] = []
 
         elif task["task_id"] in ["Mbpp/642"]:
             preprocessed_example = task
-            preprocessed_example["base_input"] = [
-                [[[tuple(l) for l in lst] for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
-            ]
-            preprocessed_example["plus_input"] = []
+            if "base_input" in task:
+                preprocessed_example["base_input"] = [
+                    [[[tuple(l) for l in lst] for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
+                ]
+                preprocessed_example["plus_input"] = []
 
         else:
             preprocessed_example = task
-            preprocessed_example["base_input"] = mbpp_deserialize_inputs(
-                task["task_id"], task["base_input"]
-            )
+            if "base_input" in task:
+                preprocessed_example["base_input"] = mbpp_deserialize_inputs(
+                    task["task_id"], task["base_input"]
+                )
             if "plus_input" in task:
                 preprocessed_example["plus_input"] = mbpp_deserialize_inputs(
                     task["task_id"], task["plus_input"]
@@ -85,6 +88,7 @@ def _preprocess_humaneval(benchmark):
     for task in benchmark:
         if task["task_id"] in humaneval:
             preprocessed_example = humaneval[task["task_id"]]
+            preprocessed_example["reference_prompt"] = preprocessed_example["prompt"]
             preprocessed_example.update(task)
         else:
             raise ValueError(f"Unknown HumanEval task `{task['task_id']}`")

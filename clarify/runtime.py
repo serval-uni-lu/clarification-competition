@@ -33,13 +33,17 @@ class EvalPlusEvaluator:
 
         try:
             problem = self.problems[task_id]
+        except KeyError:
+            raise ValueError(f"Problem {task_id} is unknown.")
+
+        try:
             gt = self.ground_truth[task_id]
         except KeyError:
-            if task_id not in self.ground_truth:
+            if "test_cases" in problem:
+                gt = problem["test_cases"]
+            else:
                 raise ValueError(f"Problem {task_id} does not have a ground truth.")
-        
-            raise ValueError(f"Problem {task_id} is unknown.")
-        
+                    
         return EvalPlusDockerInstanceEvaluator(problem, gt)
 
     def evaluate(self, example, response):
@@ -103,15 +107,21 @@ class EvalPlusDockerInstanceEvaluator:
         if not self.ground_truth:
             raise RuntimeError("The evaluator does not have access to the ground truth.")
 
-        inputs = self.problem["base_input"] + self.problem["plus_input"]
-        results = self.ground_truth["base"] + self.ground_truth["plus"]
+        try:
+            inputs = self.problem["base_input"] + self.problem["plus_input"]
+            results = self.ground_truth["base"] + self.ground_truth["plus"]
 
-        for key, value in [("entry_point", self.problem["entry_point"]),
-                           ("inputs", inputs),
-                           ("results", results),
-                           ("atol", self.problem.get("atol", "0")),
-                           ("oracle", self._oracle())]:
-            test_trigger = test_trigger.replace("{%s}" % key, str(value))
+            for key, value in [("entry_point", self.problem["entry_point"]),
+                            ("inputs", inputs),
+                            ("results", results),
+                            ("atol", self.problem.get("atol", "0")),
+                            ("oracle", self._oracle())]:
+                test_trigger = test_trigger.replace("{%s}" % key, str(value))
+        except KeyError:
+            if isinstance(self.ground_truth, str):
+                test_trigger = f'{self.ground_truth}\nprint("PASSED TESTS")'
+            else:
+                raise
 
         return test_trigger
 

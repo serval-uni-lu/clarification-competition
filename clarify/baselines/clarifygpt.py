@@ -11,7 +11,7 @@ from clarify.baselines.base import ClarificationAlgorithmBase
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 DEFAULT_MBPP_TEMPLATE = """
-Please provide a self-contained Python script that solves the following problem:
+Please provide a self-contained Python script implementing `{entry_point}` that solves the following problem:
 
 {prompt}
 
@@ -62,9 +62,13 @@ Enclose your set of questions in ``` and ```. If the solutions are identical, si
 
 class ClarifyGPT(ClarificationAlgorithmBase):
 
-    def _generate_seed_candidate(self, env: ClarificationEnvironment, prompt: str) -> str:
+    def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
-            {"role": "user", "content": DEFAULT_MBPP_TEMPLATE.replace("{prompt}", prompt)}
+            {"role": "user", "content": (
+                DEFAULT_MBPP_TEMPLATE
+                    .replace("{prompt}", problem["prompt"])
+                    .replace("{entry_point}", problem["entry_point"])
+            )}
         ]
 
         response = env.llm(
@@ -87,9 +91,13 @@ class ClarifyGPT(ClarificationAlgorithmBase):
                     return response
 
 
-    def _generate_candidate(self, env: ClarificationEnvironment, prompt: str) -> str:
+    def _generate_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
-            {"role": "user", "content": DEFAULT_MBPP_TEMPLATE.replace("{prompt}", prompt)}
+            {"role": "user", "content": (
+                DEFAULT_MBPP_TEMPLATE
+                    .replace("{prompt}", problem["prompt"])
+                    .replace("{entry_point}", problem["entry_point"])
+            )}
         ]
 
         response = env.llm(
@@ -157,7 +165,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
         clarifications = []
         while True:
             current_prompt = "\n".join([problem["prompt"]] + clarifications)
-            seed_candidate  = self._generate_seed_candidate(env, current_prompt)
+            seed_candidate  = self._generate_seed_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
 
             if not env.can_ask():
                 return seed_candidate
@@ -166,7 +174,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
 
             test_result = "success"
             for _ in range(24):
-                alternative_candidate = self._generate_candidate(env, current_prompt)
+                alternative_candidate = self._generate_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
                 test_result = self._test_candidate(env, alternative_candidate, seed_test_cases)
                 if test_result != "success": break
 

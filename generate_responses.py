@@ -194,8 +194,8 @@ class SimulationFunction:
 
 def main(
     clarify_py : str,
-    dataset_path : str = "data/mbpp_test.jsonl",
-    output_path : str = "data/mbpp_test_clarify_output.jsonl",
+    dataset_path : str = "data/mbpp_demo_test.jsonl",
+    output_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
     batch_size : int = 1,
     max_workers : int = 1,
     max_clarification_turns : int = 1,

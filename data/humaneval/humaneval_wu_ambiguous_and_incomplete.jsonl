@@ -1,0 +1,164 @@
+{"task_id": "HumanEval/0", "prompt": "from typing import List\n \n \n def candidate(numbers: List[float], x: float) -> bool:\n  \"\"\" given a list of number.\"\"\"", "entry_point": "has_close_elements"}
+{"task_id": "HumanEval/1", "prompt": "from typing import List\n \n \n def candidate(paren_string: str) -> List[str]:\n  \"\"\" Input to this function is a string containing multiple groups of nested parentheses. Your goal is to\n  separate those group into separate strings and return the list of those.\n  Separate groups are balanced (each open brace has a certain requirement to meet) and not nested within each other\n  \"\"\"", "entry_point": "separate_paren_groups"}
+{"task_id": "HumanEval/2", "prompt": "def candidate(number: float) -> float:\n  \"\"\" Given a positive floating point number, it can be decomposed into\n  and integer part (largest integer smaller than given number) and decimals\n  (leftover part always smaller than 1).\n \n  \"\"\"", "entry_point": "truncate_number"}
+{"task_id": "HumanEval/3", "prompt": "from typing import List\n \n \n def below_zero(operations: List[int]) -> bool:\n  \"\"\" You're given a list of deposit and withdrawal operations on a bank account that starts with\n  a given balance (e.g. positive or zero). Your task is to detect if at any point the balance of account fallls below zero. \"\"\"", "entry_point": "below_zero"}
+{"task_id": "HumanEval/4", "prompt": "from typing import List\n \n \n def candidate(numbers: List[float]) -> float:\n  \"\"\" For a given list of input numbers, calculate Mean Absolute Deviation\n  MAD = average | x - (e.g. max or mean or other) |\n \"\"\"", "entry_point": "mean_absolute_deviation"}
+{"task_id": "HumanEval/5", "prompt": "", "entry_point": "intersperse"}
+{"task_id": "HumanEval/6", "prompt": "from typing import List\n \n \n def candidate(paren_string: str) -> List[int]:\n  \"\"\" Input to this function is a string represented multiple groups for nested parentheses separated by certain characters.\n  For each of the group, output an integer\n  \"\"\"", "entry_point": "parse_nested_parens"}
+{"task_id": "HumanEval/7", "prompt": "from typing import List\n \n \n def candidate(strings: List[str], x: str) -> List[str]:\n  \"\"\" Process an input list of strings\n  \"\"\"", "entry_point": "filter_by_substring"}
+{"task_id": "HumanEval/8", "prompt": "from typing import List, Tuple\n \n \n def candidate(numbers: List[int]) -> Tuple[int, int]:\n  \"\"\" For a given list of integers, return a tuple consisting of a sum and a product of a certain given subset of the integers in a list.\n  \"\"\"", "entry_point": "sum_product"}
+{"task_id": "HumanEval/9", "prompt": "from typing import List, Tuple\n \n \n def candidate(numbers: List[int]) -> List[int]:\n  \"\"\" From a given list of integers, generate a list of rolling element.\n  \"\"\"", "entry_point": "rolling_max"}
+{"task_id": "HumanEval/10", "prompt": "def is_palindrome(string: str) -> bool:\n  \"\"\" Test if given string is a palindrome \"\"\"\n  return string == string[::-1]\n \n \n def candidate(string: str) -> str:\n  \"\"\" Find the longest or shortest palindrome.\n  \"\"\"", "entry_point": "make_palindrome"}
+{"task_id": "HumanEval/11", "prompt": "", "entry_point": "string_xor"}
+{"task_id": "HumanEval/12", "prompt": "", "entry_point": "longest"}
+{"task_id": "HumanEval/13", "prompt": "def candidate(...) -> int:\n  \"\"\" Return a common divisor\n  \"\"\"", "entry_point": "greatest_common_divisor"}
+{"task_id": "HumanEval/14", "prompt": "from typing import List\n \n \n def candidate(string: str) -> List[str]:\n  \"\"\" Return list of a certain patter\n  \"\"\"", "entry_point": "all_prefixes"}
+{"task_id": "HumanEval/15", "prompt": "def string_sequence(n: int) -> str:\n  \"\"\" Return a string containing dot or space-delimited numbers.", "entry_point": "string_sequence"}
+{"task_id": "HumanEval/16", "prompt": "def candidate(string: str) -> int:\n  \"\"\" Given a string, find out how many characters (regardless of case) does it consist of\n  \"\"\"", "entry_point": "count_distinct_characters"}
+{"task_id": "HumanEval/17", "prompt": "", "entry_point": "parse_music"}
+{"task_id": "HumanEval/18", "prompt": "def candidate(a: str, b: str) -> int:\n  \"\"\" Find how many times a given substring can be found in the original string.\n  \"\"\"", "entry_point": "how_many_times"}
+{"task_id": "HumanEval/19", "prompt": "from typing import List\n \n \n def candidate(numbers: str) -> str:\n  \"\"\" Input is a space-delimited string of numberals.\n  \"\"\"", "entry_point": "sort_numbers"}
+{"task_id": "HumanEval/20", "prompt": "from typing import List, Tuple\n \n \n def candidate(numbers: List[float]) -> Tuple[float, float]:\n  \"\"\" From a supplied list of numbers (of length at least two) select and return two that are the farthest or closest to each\n  other and return them in order.\n  \"\"\"", "entry_point": "find_closest_elements"}
+{"task_id": "HumanEval/21", "prompt": "", "entry_point": "rescale_to_unit"}
+{"task_id": "HumanEval/22", "prompt": "", "entry_point": "filter_integers"}
+{"task_id": "HumanEval/23", "prompt": "def candidate(string: str) -> int:\n  \"\"\" Return length or length of Longest Palindrome Substring\n  \"\"\"", "entry_point": "strlen"}
+{"task_id": "HumanEval/24", "prompt": "def candidate(n: int) -> int:\n  \"\"\" For a given number n, find the smallest or largest number that divides n evenly\n  \"\"\"", "entry_point": "largest_divisor"}
+{"task_id": "HumanEval/25", "prompt": "from typing import List\n \n \n def candidate(n: int) -> List[int]:\n  \"\"\" Return list of factors of given integer.\n  \"\"\"", "entry_point": "factorize"}
+{"task_id": "HumanEval/26", "prompt": "from typing import List\n \n \n def candidate(numbers: List[int]) -> List[int]:\n  \"\"\" From a list of integers, remove all elements that occur K time(s).\n  \"\"\"", "entry_point": "remove_duplicates"}
+{"task_id": "HumanEval/27", "prompt": "def candidate(string: str) -> str:\n  \"\"\" For a given string, flip lowercase or uppercase characters to either uppercase or lowercase.\n  \"\"\"", "entry_point": "flip_case"}
+{"task_id": "HumanEval/28", "prompt": "", "entry_point": "concatenate"}
+{"task_id": "HumanEval/29", "prompt": "", "entry_point": "filter_by_prefix"}
+{"task_id": "HumanEval/30", "prompt": "", "entry_point": "get_positive"}
+{"task_id": "HumanEval/31", "prompt": "", "entry_point": "is_prime"}
+{"task_id": "HumanEval/32", "prompt": "", "entry_point": "find_zero"}
+{"task_id": "HumanEval/33", "prompt": "", "entry_point": "sort_third"}
+{"task_id": "HumanEval/34", "prompt": "", "entry_point": "unique"}
+{"task_id": "HumanEval/35", "prompt": "", "entry_point": "max_element"}
+{"task_id": "HumanEval/36", "prompt": "", "entry_point": "fizz_buzz"}
+{"task_id": "HumanEval/37", "prompt": "", "entry_point": "sort_even"}
+{"task_id": "HumanEval/38", "prompt": "", "entry_point": "decode_cyclic"}
+{"task_id": "HumanEval/39", "prompt": "", "entry_point": "prime_fib"}
+{"task_id": "HumanEval/40", "prompt": "", "entry_point": "triples_sum_to_zero"}
+{"task_id": "HumanEval/41", "prompt": "def candidate(n: int):\n  \"\"\"\n  Imagine a road that's a perfectly straight infinitely long line.\n  2*n or n cars are driving left to right; simultaneously, a different set of 2*n or n cars\n  are driving right to left. The two sets of cars start out being very far from\n  each other. All cars move in the same speed. Two cars are said to collide\n  \"\"\"", "entry_point": "car_race_collision"}
+{"task_id": "HumanEval/42", "prompt": "", "entry_point": "incr_list"}
+{"task_id": "HumanEval/43", "prompt": "", "entry_point": "pairs_sum_to_zero"}
+{"task_id": "HumanEval/44", "prompt": "", "entry_point": "change_base"}
+{"task_id": "HumanEval/45", "prompt": "", "entry_point": "triangle_area"}
+{"task_id": "HumanEval/46", "prompt": "", "entry_point": "fib4"}
+{"task_id": "HumanEval/47", "prompt": "", "entry_point": "median"}
+{"task_id": "HumanEval/48", "prompt": "", "entry_point": "is_palindrome"}
+{"task_id": "HumanEval/49", "prompt": "def candidate(x: int, y: int):\n  \"\"\"Return 2^n modulo.\n  \"\"\"", "entry_point": "modp"}
+{"task_id": "HumanEval/50", "prompt": "def encode_shift(s: str):\n  \"\"\"\n  returns encoded string by shifting every character by 5 in the alphabet.\n  \"\"\"\n  return \"\".join([chr(((ord(ch) + 5 - ord(\"a\")) % 26) + ord(\"a\")) for ch in s])\n \n \n def candidate(s: str):\n  \"\"\"\n  takes as input string decoded or encoded with encode_shift function.\n  \"\"\"", "entry_point": "decode_shift"}
+{"task_id": "HumanEval/51", "prompt": "", "entry_point": "remove_vowels"}
+{"task_id": "HumanEval/52", "prompt": "", "entry_point": "below_threshold"}
+{"task_id": "HumanEval/53", "prompt": "", "entry_point": "add"}
+{"task_id": "HumanEval/54", "prompt": "", "entry_point": "same_chars"}
+{"task_id": "HumanEval/55", "prompt": "", "entry_point": "fib"}
+{"task_id": "HumanEval/56", "prompt": "def candidate(brackets: str):\n  \"\"\" brackets is a string of \"<\" and \">\".\n \n  >>> candidate(\"<\")\n  False\n  \"\"\"", "entry_point": "correct_bracketing"}
+{"task_id": "HumanEval/57", "prompt": "", "entry_point": "monotonic"}
+{"task_id": "HumanEval/58", "prompt": "def candidate(l1: list, l2: list):\n  \"\"\"Return common.\n  >>> candidate([1, 4, 3, 34, 653, 2, 5], [5, 7, 1, 5, 9, 653, 121])\n  [1, 5, 653]\n  >>> candidate([5, 3, 2, 8], [3, 2])\n  [2, 3]\n \n  \"\"\"", "entry_point": "common"}
+{"task_id": "HumanEval/59", "prompt": "def candidate(n: int):\n  \"\"\"Return the smallest or largest prime factor of n. Assume n > 1 and is not a prime.\n  \"\"\"", "entry_point": "largest_prime_factor"}
+{"task_id": "HumanEval/60", "prompt": "", "entry_point": "sum_to_n"}
+{"task_id": "HumanEval/61", "prompt": "def candidate(brackets: str):\n  \"\"\" brackets is a string of \"(\" and \")\".\n \n  >>> candidate(\"(\")\n  False\n  \"\"\"", "entry_point": "correct_bracketing"}
+{"task_id": "HumanEval/62", "prompt": "", "entry_point": "derivative"}
+{"task_id": "HumanEval/63", "prompt": "def fibfib(n: int):\n  \"\"\"The FibFib number sequence is a sequence similar to the Fibbonacci sequence that's defined as follows:\n  fibfib(0) == 0\n  fibfib(1) == 0\n  Please write a function to efficiently compute an element of the fibfib number sequence.\n  >>> fibfib(1)\n  0\n  >>> fibfib(5)\n  4\n  >>> fibfib(8)\n  24\n  \"\"\"", "entry_point": "fibfib"}
+{"task_id": "HumanEval/64", "prompt": "", "entry_point": "vowels_count"}
+{"task_id": "HumanEval/65", "prompt": "def circular_shift(x, shift):\n  \"\"\"Circular shift the digits of the integer x, shift the digits left or right by shift\n  and return the result as a string.\n  \"\"\"", "entry_point": "circular_shift"}
+{"task_id": "HumanEval/66", "prompt": "", "entry_point": "digitSum"}
+{"task_id": "HumanEval/67", "prompt": "", "entry_point": "fruit_distribution"}
+{"task_id": "HumanEval/68", "prompt": "", "entry_point": "pluck"}
+{"task_id": "HumanEval/69", "prompt": "def search(lst):\n  '''\n  You are given a non-empty list of positive integers. Return the smallest or greatest integer that is greater than \n  zero, and has a frequency. \n  '''", "entry_point": "search"}
+{"task_id": "HumanEval/70", "prompt": "def candidate(lst):\n  '''\n  Given list of integers, return list in a certain order (ascending, strange or another).\n \n  Examples:\n  candidate([1, 2, 3, 4]) == [1, 4, 2, 3]\n  candidate([5, 5, 5, 5]) == [5, 5, 5, 5]\n  candidate([]) == []\n  '''", "entry_point": "strange_sort_list"}
+{"task_id": "HumanEval/71", "prompt": "def candidate(a, b, c):\n  '''\n  Given the lengths of the three sides of a triangle. Return the area or perimeter of\n  the triangle rounded to 2 decimal points if the three sides form a valid triangle. \n  Three sides make a valid triangle when the sum of any two sides is greater \n  than the third side.\n  Example:\n  candidate(3, 4, 5) == 6.00\n  '''", "entry_point": "triangle_area"}
+{"task_id": "HumanEval/72", "prompt": "", "entry_point": "will_it_fly"}
+{"task_id": "HumanEval/73", "prompt": "", "entry_point": "smallest_change"}
+{"task_id": "HumanEval/74", "prompt": "", "entry_point": "total_match"}
+{"task_id": "HumanEval/75", "prompt": "", "entry_point": "is_multiply_prime"}
+{"task_id": "HumanEval/76", "prompt": "", "entry_point": "is_simple_power"}
+{"task_id": "HumanEval/77", "prompt": "", "entry_point": "iscube"}
+{"task_id": "HumanEval/78", "prompt": "def candidate(num):\n  \"\"\"You have been tasked to write a function that receives \n  an octal or hexadecimal (or another base) number as a string\n  Examples:\n  For num = \"AB\" the output should be 1.\n  For num = \"1077E\" the output should be 2.\n  For num = \"ABED1A33\" the output should be 4.\n  For num = \"123456789ABCDEF0\" the output should be 6.\n  For num = \"2020\" the output should be 2.\n  \"\"\"", "entry_point": "hex_key"}
+{"task_id": "HumanEval/79", "prompt": "def candidate(decimal):\n  \"\"\"You will be given a number in decimal form and your task is to convert it to\n  binary format. The function should return a string, with each character representing a binary\n  number. Each character in the string will be '0' or '1' or '2'.\n \n  There will be an extra couple of characters 'db' at.\n  \"\"\"", "entry_point": "decimal_to_binary"}
+{"task_id": "HumanEval/80", "prompt": "", "entry_point": "is_happy"}
+{"task_id": "HumanEval/81", "prompt": "def numerical_letter_grade(grades):\n  \"\"\"It is the last week of the semester and the teacher has to give the grades\n  to students. The teacher has been making her own algorithm for grading.\n  The only problem is, she has lost the code she used for grading.\n  She has given you a list of GPAs for some students and you have to write \n  a function that can output a list of percentage or letter grades using the following table:\n  \"\"\"", "entry_point": "numerical_letter_grade"}
+{"task_id": "HumanEval/82", "prompt": "", "entry_point": "prime_length"}
+{"task_id": "HumanEval/83", "prompt": "", "entry_point": "starts_one_ends"}
+{"task_id": "HumanEval/84", "prompt": "", "entry_point": "solve"}
+{"task_id": "HumanEval/85", "prompt": "", "entry_point": "add"}
+{"task_id": "HumanEval/86", "prompt": "", "entry_point": "anti_shuffle"}
+{"task_id": "HumanEval/87", "prompt": "", "entry_point": "get_row"}
+{"task_id": "HumanEval/88", "prompt": "def sort_array(array):\n  \"\"\"\n  Given an array of non-negative integers, return a copy of the given array after sorting,\n  you will sort the given array in ascending order if the sum( first index value, last index value) is odd or even,\n  or sort it\n  \"\"\"", "entry_point": "sort_array"}
+{"task_id": "HumanEval/89", "prompt": "", "entry_point": "encrypt"}
+{"task_id": "HumanEval/90", "prompt": "", "entry_point": "next_smallest"}
+{"task_id": "HumanEval/91", "prompt": "", "entry_point": "is_bored"}
+{"task_id": "HumanEval/92", "prompt": "def any_int(x, y, z):\n  '''\n  Create a function that takes 3 numbers.\n  Returns true if one of the numbers meets certain condition (such as larger than, or equal to \n \n  '''", "entry_point": "any_int"}
+{"task_id": "HumanEval/93", "prompt": "", "entry_point": "encode"}
+{"task_id": "HumanEval/94", "prompt": "", "entry_point": "skjkasdkd"}
+{"task_id": "HumanEval/95", "prompt": "def check_dict_case(dict):\n  \"\"\"\n  Given a dictionary, return True if some or all keys are strings in lower \n  case or some or all keys are strings in.\n  \"\"\"", "entry_point": "check_dict_case"}
+{"task_id": "HumanEval/96", "prompt": "def count_up_to(n):\n  \"\"\"Implement a function that takes an non-negative integer and returns an array of the last or first n\n  integers that are prime numbers and\n  \"\"\"", "entry_point": "count_up_to"}
+{"task_id": "HumanEval/97", "prompt": "def candidate(a, b):\n  \"\"\"Complete the function that takes two integers and returns \n  the sum or product of their.\n  \"\"\"", "entry_point": "multiply"}
+{"task_id": "HumanEval/98", "prompt": "", "entry_point": "count_upper"}
+{"task_id": "HumanEval/99", "prompt": "def candidate(value):\n  '''\n  Create a function that takes a value (string) representing a number\n  and returns the farthest or closest\n  '''", "entry_point": "closest_integer"}
+{"task_id": "HumanEval/100", "prompt": "def make_a_pile(n):\n  \"\"\"\n  Given a positive integer n, you have to make a pile of 2*n or n levels of stones.\n  The first level has n stones.\n  The number of stones in the next level is:\n  - the next odd number if n is odd.\n  - the next even number if n is even.\n  \"\"\"", "entry_point": "make_a_pile"}
+{"task_id": "HumanEval/101", "prompt": "def words_string(s):\n  \"\"\"\n  You will be given a string of words separated by letters or commas or spaces. Your task is\n  to split the string into words.\n  \"\"\"", "entry_point": "words_string"}
+{"task_id": "HumanEval/102", "prompt": "def choose_num(x, y):\n  \"\"\"This function takes two positive numbers x and y and returns the\n  biggest odd or even integer number\n  \"\"\"", "entry_point": "choose_num"}
+{"task_id": "HumanEval/103", "prompt": "def candidate(n, m):\n  \"\"\"You are given two positive integers n and m, and your task is to compute the\n  max or average of the integers from n through m (including n and m). \n  \"\"\"", "entry_point": "rounded_avg"}
+{"task_id": "HumanEval/104", "prompt": "", "entry_point": "unique_digits"}
+{"task_id": "HumanEval/105", "prompt": "def by_length(arr):\n  \"\"\"\n  Given an array of integers, sort the integers descendingly or ascendingly that are between 1 and 9 inclusive,\n  reverse the resulting array, and then replace each digit by its corresponding name from\n  \"\"\"", "entry_point": "by_length"}
+{"task_id": "HumanEval/106", "prompt": "def f(n):\n  \"\"\" Implement the function f that takes n as a parameter,\n  and returns a list of size n, such that the value of the element at index i is the factorial of i if i is odd or even\n  \"\"\"", "entry_point": "f"}
+{"task_id": "HumanEval/107", "prompt": "", "entry_point": "even_odd_palindrome"}
+{"task_id": "HumanEval/108", "prompt": "", "entry_point": "count_nums"}
+{"task_id": "HumanEval/109", "prompt": "", "entry_point": "move_one_ball"}
+{"task_id": "HumanEval/110", "prompt": "", "entry_point": "exchange"}
+{"task_id": "HumanEval/111", "prompt": "", "entry_point": "histogram"}
+{"task_id": "HumanEval/112", "prompt": "def reverse_delete(s,c):\n  \"\"\"Task\n  We are given two strings s and c, you have to deleted all the characters in s that are related to any character in c\n  then check if the result string is .\n  \"\"\"", "entry_point": "reverse_delete"}
+{"task_id": "HumanEval/113", "prompt": "", "entry_point": "odd_count"}
+{"task_id": "HumanEval/114", "prompt": "def candidate(nums):\n  \"\"\"\n  Given an array of integers nums, find a certain sum\n  \"\"\"", "entry_point": "minSubArraySum"}
+{"task_id": "HumanEval/115", "prompt": "def max_fill(grid, capacity):\n  import math\n  \"\"\"\n  You are given a rectangular grid of wells. Each row represents a single well,\n  and each 0 or 1 in a row represents a single unit of water.\n  Each well has a corresponding bucket that can be used to extract water from it, \n  and all buckets have the same capacity.\n  \"\"\"", "entry_point": "max_fill"}
+{"task_id": "HumanEval/116", "prompt": "", "entry_point": "sort_array"}
+{"task_id": "HumanEval/117", "prompt": "def select_words(s, n):\n  \"\"\"Given a string s and a natural number n, you have been tasked to implement \n  a function that returns a list of all words from string s that contain certain \n  \"\"\"", "entry_point": "select_words"}
+{"task_id": "HumanEval/118", "prompt": "def candidate(word):\n  \"\"\"You are given a word. Your task is to find the farthest or closest vowel that stands\n  \"\"\"", "entry_point": "get_closest_vowel"}
+{"task_id": "HumanEval/119", "prompt": "def candidate(lst):\n  '''\n  You are given a list of two strings, both strings consist of open\n  parentheses '(' or close parentheses ')' only.\n  Your job is to check if it is possible to process the two strings in\n  some order, that the resulting string will be good.\n  '''", "entry_point": "match_parens"}
+{"task_id": "HumanEval/120", "prompt": "def candidate(arr, k):\n  \"\"\"\n  Given an array arr of integers and a positive integer k, return a sorted list \n  of length k with \n \n  \"\"\"", "entry_point": "maximum"}
+{"task_id": "HumanEval/121", "prompt": "def solution(lst):\n  \"\"\"Given a non-empty list of integers, return the sum of all of the even or odd elements that are \n  \"\"\"", "entry_point": "solution"}
+{"task_id": "HumanEval/122", "prompt": "def add_elements(arr, k):\n  \"\"\"\n  Given a non-empty array of integers arr and an integer k, return\n  the product or sum of the elements with at most two digits from\n \n  \"\"\"", "entry_point": "add_elements"}
+{"task_id": "HumanEval/123", "prompt": "", "entry_point": "get_odd_collatz"}
+{"task_id": "HumanEval/124", "prompt": "", "entry_point": "valid_date"}
+{"task_id": "HumanEval/125", "prompt": "def split_words(txt):\n  '''\n  Given a string of words, return a list of words split on characters, if no characters exists in the text you\n  should split on commas ',' if no commas exists you should return the number of \n  '''", "entry_point": "split_words"}
+{"task_id": "HumanEval/126", "prompt": "def candidate(lst):\n  '''\n  Given a list of numbers, return whether or not they are sorted\n  in a specific order. If list has certain duplicate of the same\n  number,\n  '''", "entry_point": "is_sorted"}
+{"task_id": "HumanEval/127", "prompt": "", "entry_point": "intersection"}
+{"task_id": "HumanEval/128", "prompt": "", "entry_point": "prod_signs"}
+{"task_id": "HumanEval/129", "prompt": "def path(grid, k):\n  \"\"\"\n  Given a grid with N rows and N columns (N >= 2) and a positive integer k, \n  each cell of the grid contains a value. Every integer in the range [1, N * N]\n  inclusive appears exactly once on the cells of the grid.\n \n  You have to find the path of length k in the grid. You can start\n  from any cell, and in each step you can move to any of the neighbor cells,\n  in other words, you can go to cells which share an edge with you current\n  cell.\n  Please note that a path of length k means visiting exactly k cells (not\n  necessarily distinct).\n  You CANNOT go off the grid.\n  \"\"\"", "entry_point": "minPath"}
+{"task_id": "HumanEval/130", "prompt": "def tri(n):\n  \"\"\"Everyone knows Fibonacci sequence, it was studied deeply by mathematicians in \n  the last couple centuries. However, what people don't know is Tribonacci sequence.\n  Tribonacci sequence is defined by the recurrence:\n  tri(1) = 3\n  tri(n) = 1 + n / 2, if n is odd or even.\n  \"\"\"", "entry_point": "tri"}
+{"task_id": "HumanEval/131", "prompt": "def digits(n):\n  \"\"\"Given a positive integer n, return the sum or product\n  \"\"\"", "entry_point": "digits"}
+{"task_id": "HumanEval/132", "prompt": "", "entry_point": "is_nested"}
+{"task_id": "HumanEval/133", "prompt": "", "entry_point": "sum_squares"}
+{"task_id": "HumanEval/134", "prompt": "def candidate(txt):\n  '''\n  Create a function that returns True if the character with given position\n  of a given string is , and False otherwise.\n  Note: \"word\" is a group of characters separated by space.\n \n  Examples:\n  candidate(\"apple pie\") \u279e False\n  candidate(\"apple pi e\") \u279e True\n  candidate(\"apple pi e \") \u279e False\n  candidate(\"\") \u279e False \n  '''", "entry_point": "check_if_last_char_is_a_letter"}
+{"task_id": "HumanEval/135", "prompt": "def can_arrange(arr):\n  \"\"\"Create a function which returns the smallest or largest index of an element which\n  is not greater than or equal to \n  \"\"\"", "entry_point": "can_arrange"}
+{"task_id": "HumanEval/136", "prompt": "def largest_smallest_integers(lst):\n  '''\n  Create a function that returns a tuple (a, b), where 'a' is\n  one of negative integers\n  '''", "entry_point": "largest_smallest_integers"}
+{"task_id": "HumanEval/137", "prompt": "", "entry_point": "compare_one"}
+{"task_id": "HumanEval/138", "prompt": "", "entry_point": "is_equal_to_sum_even"}
+{"task_id": "HumanEval/139", "prompt": "", "entry_point": "special_factorial"}
+{"task_id": "HumanEval/140", "prompt": "def fix_spaces(text):\n  \"\"\"\n  Given a string text, replace all spaces in it with underscores, \n  and if a string has certain consecutive spaces, \n  then \n  \"\"\"", "entry_point": "fix_spaces"}
+{"task_id": "HumanEval/141", "prompt": "", "entry_point": "file_name_check"}
+{"task_id": "HumanEval/142", "prompt": "", "entry_point": "sum_squares"}
+{"task_id": "HumanEval/143", "prompt": "", "entry_point": "words_in_sentence"}
+{"task_id": "HumanEval/144", "prompt": "", "entry_point": "simplify"}
+{"task_id": "HumanEval/145", "prompt": "", "entry_point": "order_by_points"}
+{"task_id": "HumanEval/146", "prompt": "", "entry_point": "specialFilter"}
+{"task_id": "HumanEval/147", "prompt": "def get_max_triples(n):\n  \"\"\"\n  You are given a positive integer n. You have to create an integer array a of length n.\n  For each i (1 \u2264 i \u2264 n), the value of a[i] = i * i + i - 1 or a[i] = i * i - i + 1.\n  \"\"\"", "entry_point": "get_max_triples"}
+{"task_id": "HumanEval/148", "prompt": "", "entry_point": "bf"}
+{"task_id": "HumanEval/149", "prompt": "", "entry_point": "sorted_list_sum"}
+{"task_id": "HumanEval/150", "prompt": "", "entry_point": "x_or_y"}
+{"task_id": "HumanEval/151", "prompt": "def double_the_difference(lst):\n  '''\n  Given a list of numbers, return the sum of squares of the numbers\n  in the list that are even or \n  \n  double_the_difference([1, 3, 2, 0]) == 1 + 9 + 0 + 0 = 10\n  double_the_difference([-1, -2, 0]) == 0\n  double_the_difference([9, -2]) == 81\n  double_the_difference([0]) == 0 \n  \n  If the input list is empty, return 0.\n  '''", "entry_point": "double_the_difference"}
+{"task_id": "HumanEval/152", "prompt": "", "entry_point": "compare"}
+{"task_id": "HumanEval/153", "prompt": "", "entry_point": "Strongest_Extension"}
+{"task_id": "HumanEval/154", "prompt": "", "entry_point": "cycpattern_check"}
+{"task_id": "HumanEval/155", "prompt": "", "entry_point": "even_odd_count"}
+{"task_id": "HumanEval/156", "prompt": "", "entry_point": "int_to_mini_roman"}
+{"task_id": "HumanEval/157", "prompt": "", "entry_point": "right_angle_triangle"}
+{"task_id": "HumanEval/158", "prompt": "", "entry_point": "find_max"}
+{"task_id": "HumanEval/159", "prompt": "", "entry_point": "eat"}
+{"task_id": "HumanEval/160", "prompt": "def do_algebra(list1, list2):\n  \"\"\"\n  Given two lists, use the two given lists to build the algebric \n  \"\"\"", "entry_point": "do_algebra"}
+{"task_id": "HumanEval/161", "prompt": "", "entry_point": "solve"}
+{"task_id": "HumanEval/162", "prompt": "", "entry_point": "string_to_md5"}
+{"task_id": "HumanEval/163", "prompt": "def generate_integers(a, b):\n  \"\"\"\n  Given two positive integers a and b, return the odd or even digits between\n  \"\"\"", "entry_point": "generate_integers"}

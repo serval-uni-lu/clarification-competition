@@ -11,7 +11,7 @@ from clarify.baselines.base import ClarificationAlgorithmBase
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 CODE_PROMPT_TEMPLATE = """
-Generate Python code directly (Markdown) to solve the coding problem.
+Generate Python code directly (Markdown) to solve the coding problem implementing `{entry_point}`.
 
 {prompt}
 
@@ -42,9 +42,14 @@ Given the above conversations, generate Python code directly (Markdown) to solve
 
 class Okanagan(ClarificationAlgorithmBase):
 
-    def _generate_seed_candidate(self, env: ClarificationEnvironment, prompt: str) -> str:
+    def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
-            {"role": "user", "content": CODE_PROMPT_TEMPLATE.replace("{prompt}", prompt)}
+            {"role": "user", "content": (
+                CODE_PROMPT_TEMPLATE
+                    .replace("{prompt}", problem["prompt"])
+                    .replace("{entry_point}", problem["entry_point"])
+                )
+            }
         ]
 
         response = env.llm(
@@ -66,12 +71,12 @@ class Okanagan(ClarificationAlgorithmBase):
                 except TooManyQuestionException:
                     return response
 
-    def _generate_candidate(self, env: ClarificationEnvironment, prompt: str, clarifications: list[str]) -> str:
+    def _generate_candidate(self, env: ClarificationEnvironment, problem: dict[str, str], clarifications: list[str]) -> str:
 
         messages = [
             {"role": "user", "content": (
                 REGEN_CODE_PROMPT_TEMPLATE
-                .replace("{prompt}", prompt)
+                .replace("{prompt}", problem["prompt"])
                 .replace("{clarification}", "\n".join(clarifications))
             )}
         ]
@@ -111,9 +116,9 @@ class Okanagan(ClarificationAlgorithmBase):
         while True:
 
             if clarifications:
-                candidate = self._generate_candidate(env, problem["prompt"], clarifications)
+                candidate = self._generate_candidate(env, problem, clarifications)
             else:
-                candidate  = self._generate_seed_candidate(env, problem["prompt"])
+                candidate  = self._generate_seed_candidate(env, problem)
 
             if not env.can_ask():
                 return candidate

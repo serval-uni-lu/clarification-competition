@@ -116,9 +116,9 @@ def print_statistics(output_path):
 # --------------------
 
 def main(
-    benchmark_path : str,
-    generation_path : str = "data/mbpp_test_clarify_output.jsonl",
-    output_path : str = "data/mbpp_test_clarify_output_results.jsonl",
+    benchmark_path : str = "data/mbpp_demo_test.jsonl",
+    generation_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
+    output_path : str = "data/mbpp_demo_test_clarify_output_results.jsonl",
     batch_size : int = 1,
     max_workers : int = 1,
     force_rerun : bool = False

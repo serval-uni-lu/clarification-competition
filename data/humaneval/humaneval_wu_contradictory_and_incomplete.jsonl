@@ -1,0 +1,164 @@
+{"task_id": "HumanEval/0", "prompt": "", "entry_point": "has_close_elements"}
+{"task_id": "HumanEval/1", "prompt": "", "entry_point": "separate_paren_groups"}
+{"task_id": "HumanEval/2", "prompt": "", "entry_point": "truncate_number"}
+{"task_id": "HumanEval/3", "prompt": "", "entry_point": "below_zero"}
+{"task_id": "HumanEval/4", "prompt": "from typing import List\n \n \n def mean_absolute_deviation(numbers: List[float]) -> float:\n  \"\"\" For a given list of input numbers, calculate Mean Absolute Deviation. \n  >>> mean_absolute_deviation([1.0, 2.0, 3.0, 4.0])\n  1.5\n  \"\"\"", "entry_point": "mean_absolute_deviation"}
+{"task_id": "HumanEval/5", "prompt": "", "entry_point": "intersperse"}
+{"task_id": "HumanEval/6", "prompt": "", "entry_point": "parse_nested_parens"}
+{"task_id": "HumanEval/7", "prompt": "", "entry_point": "filter_by_substring"}
+{"task_id": "HumanEval/8", "prompt": "", "entry_point": "sum_product"}
+{"task_id": "HumanEval/9", "prompt": "", "entry_point": "rolling_max"}
+{"task_id": "HumanEval/10", "prompt": "", "entry_point": "make_palindrome"}
+{"task_id": "HumanEval/11", "prompt": "", "entry_point": "string_xor"}
+{"task_id": "HumanEval/12", "prompt": "", "entry_point": "longest"}
+{"task_id": "HumanEval/13", "prompt": "", "entry_point": "greatest_common_divisor"}
+{"task_id": "HumanEval/14", "prompt": "", "entry_point": "all_prefixes"}
+{"task_id": "HumanEval/15", "prompt": "", "entry_point": "string_sequence"}
+{"task_id": "HumanEval/16", "prompt": "", "entry_point": "count_distinct_characters"}
+{"task_id": "HumanEval/17", "prompt": "", "entry_point": "parse_music"}
+{"task_id": "HumanEval/18", "prompt": "", "entry_point": "how_many_times"}
+{"task_id": "HumanEval/19", "prompt": "", "entry_point": "sort_numbers"}
+{"task_id": "HumanEval/20", "prompt": "", "entry_point": "find_closest_elements"}
+{"task_id": "HumanEval/21", "prompt": "", "entry_point": "rescale_to_unit"}
+{"task_id": "HumanEval/22", "prompt": "", "entry_point": "filter_integers"}
+{"task_id": "HumanEval/23", "prompt": "", "entry_point": "strlen"}
+{"task_id": "HumanEval/24", "prompt": "", "entry_point": "largest_divisor"}
+{"task_id": "HumanEval/25", "prompt": "", "entry_point": "factorize"}
+{"task_id": "HumanEval/26", "prompt": "", "entry_point": "remove_duplicates"}
+{"task_id": "HumanEval/27", "prompt": "", "entry_point": "flip_case"}
+{"task_id": "HumanEval/28", "prompt": "", "entry_point": "concatenate"}
+{"task_id": "HumanEval/29", "prompt": "", "entry_point": "filter_by_prefix"}
+{"task_id": "HumanEval/30", "prompt": "def candidate(l: list):\n  \"\"\"\n  >>> candidate([-1, 2, -4, 5, 6])\n  [-1, -4]\n  >>> candidate([5, 3, -5, 2, -3, 3, 9, 0, 123, 1, -10])\n  [-5, -3, -10]\n  \"\"\"", "entry_point": "get_positive"}
+{"task_id": "HumanEval/31", "prompt": "", "entry_point": "is_prime"}
+{"task_id": "HumanEval/32", "prompt": "", "entry_point": "find_zero"}
+{"task_id": "HumanEval/33", "prompt": "", "entry_point": "sort_third"}
+{"task_id": "HumanEval/34", "prompt": "", "entry_point": "unique"}
+{"task_id": "HumanEval/35", "prompt": "", "entry_point": "max_element"}
+{"task_id": "HumanEval/36", "prompt": "", "entry_point": "fizz_buzz"}
+{"task_id": "HumanEval/37", "prompt": "", "entry_point": "sort_even"}
+{"task_id": "HumanEval/38", "prompt": "", "entry_point": "decode_cyclic"}
+{"task_id": "HumanEval/39", "prompt": "", "entry_point": "prime_fib"}
+{"task_id": "HumanEval/40", "prompt": "", "entry_point": "triples_sum_to_zero"}
+{"task_id": "HumanEval/41", "prompt": "def is_prime(n: int):\n  \"\"\"\n  Imagine a road that's a perfectly straight infinitely long line.\n  n cars are driving left to right; simultaneously, a different set of n cars\n  are driving right to left. The two sets of cars start out being very far from\n  each other. All cars move in the same speed. Two cars are said to collide\n  \"\"\"", "entry_point": "car_race_collision"}
+{"task_id": "HumanEval/42", "prompt": "", "entry_point": "incr_list"}
+{"task_id": "HumanEval/43", "prompt": "", "entry_point": "pairs_sum_to_zero"}
+{"task_id": "HumanEval/44", "prompt": "", "entry_point": "change_base"}
+{"task_id": "HumanEval/45", "prompt": "", "entry_point": "triangle_area"}
+{"task_id": "HumanEval/46", "prompt": "", "entry_point": "fib4"}
+{"task_id": "HumanEval/47", "prompt": "", "entry_point": "median"}
+{"task_id": "HumanEval/48", "prompt": "", "entry_point": "is_palindrome"}
+{"task_id": "HumanEval/49", "prompt": "", "entry_point": "modp"}
+{"task_id": "HumanEval/50", "prompt": "def encode_shift(s: str):\n  \"\"\"\n  returns encoded string by shifting every character by 5 in the alphabet.\n  \"\"\"\n  return \"\".join([chr(((ord(ch) + 5 - ord(\"a\")) % 26) + ord(\"a\")) for ch in s])\n \n \n def candidate(s: str):\n  \"\"\"\n  takes as input string encoded with encode_shift function which shifts every character by 3.\n  \"\"\"", "entry_point": "decode_shift"}
+{"task_id": "HumanEval/51", "prompt": "", "entry_point": "remove_vowels"}
+{"task_id": "HumanEval/52", "prompt": "", "entry_point": "below_threshold"}
+{"task_id": "HumanEval/53", "prompt": "", "entry_point": "add"}
+{"task_id": "HumanEval/54", "prompt": "def candidate(s0: str, s1: str):\n  \"\"\"\n  >>> candidate('eabcdzzzz', 'dddzzzzzzzddeddabc')\n  True\n  >>> candidate('abcd', 'dddddddabc')\n  True\n  >>> candidate('dddddddabc', 'abcd')\n  True\n  >>> candidate('eabcd', 'dddddddabc')\n  False\n  >>> candidate('abcd', 'dddddddabce')\n  False\n  >>> candidate('eabcdzzzz', 'dddzzzzzzzddddabc')\n  False\n  \"\"\"", "entry_point": "same_chars"}
+{"task_id": "HumanEval/55", "prompt": "def candidate(n: int):\n  \"\"\"\n  >>> candidate(10)\n  550\n  >>> candidate(1)\n  10\n  >>> candidate(8)\n  210\n  \"\"\"", "entry_point": "fib"}
+{"task_id": "HumanEval/56", "prompt": "def correct_bracketing(brackets: str):\n  \"\"\" brackets is a string of \"<\" and \">\".\n \n  >>> correct_bracketing(\"<\")\n  True\n  \"\"\"", "entry_point": "correct_bracketing"}
+{"task_id": "HumanEval/57", "prompt": "def candidate(l: list):\n  \"\"\"Return True if list elements are monotonic.\n  >>> candidate([1, 2, 4, 20])\n  False\n  >>> candidate([1, 20, 4, 10])\n  True\n  >>> candidate([4, 1, 0, -10])\n  False\n  \"\"\"", "entry_point": "monotonic"}
+{"task_id": "HumanEval/58", "prompt": "def common(l1: list, l2: list):\n  \"\"\"Return common.\n  >>> common([1, 4, 3, 34, 653, 2, 5], [5, 7, 1, 5, 9, 653, 121])\n  [653, 5, 1]\n  >>> common([5, 3, 2, 8], [3, 2])\n  [3, 2]\n \n  \"\"\"", "entry_point": "common"}
+{"task_id": "HumanEval/59", "prompt": "", "entry_point": "largest_prime_factor"}
+{"task_id": "HumanEval/60", "prompt": "", "entry_point": "sum_to_n"}
+{"task_id": "HumanEval/61", "prompt": "def correct_bracketing(brackets: str):\n  \"\"\" brackets is a string of \"(\" and \")\".\n \n  >>> correct_bracketing(\"(\")\n  True\n  \"\"\"", "entry_point": "correct_bracketing"}
+{"task_id": "HumanEval/62", "prompt": "", "entry_point": "derivative"}
+{"task_id": "HumanEval/63", "prompt": "def fibfib(n: int):\n  \"\"\"The FibFib number sequence is a sequence similar to the Fibbonacci sequence that's defined as follows:\n  fibfib(0) == 0\n  fibfib(1) == 0\n  Please write a function to efficiently compute the n-th element of the fibfib number sequence.\n  >>> fibfib(1)\n  1\n  >>> fibfib(5)\n  5\n  >>> fibfib(8)\n  21\n  \"\"\"", "entry_point": "fibfib"}
+{"task_id": "HumanEval/64", "prompt": "", "entry_point": "vowels_count"}
+{"task_id": "HumanEval/65", "prompt": "", "entry_point": "circular_shift"}
+{"task_id": "HumanEval/66", "prompt": "", "entry_point": "digitSum"}
+{"task_id": "HumanEval/67", "prompt": "", "entry_point": "fruit_distribution"}
+{"task_id": "HumanEval/68", "prompt": "", "entry_point": "pluck"}
+{"task_id": "HumanEval/69", "prompt": "", "entry_point": "search"}
+{"task_id": "HumanEval/70", "prompt": "def strange_sort_list(lst):\n  '''\n  Given list of integers, return list in strange order.\n \n  Examples:\n  strange_sort_list([1, 2, 3, 4]) == [1, 2, 3, 4]\n  strange_sort_list([5, 5, 5, 5]) == [5]\n  strange_sort_list([]) == []\n  '''", "entry_point": "strange_sort_list"}
+{"task_id": "HumanEval/71", "prompt": "def triangle_area(a, b, c):\n  '''\n  Given the lengths of the three sides of a triangle. Return the area of\n  the triangle rounded to 2 decimal points if the three sides form a valid triangle. \n  Three sides make a valid triangle when the sum of any two sides is greater \n  than the third side.\n  Example:\n  triangle_area(3, 4, 5) == 12.00\n  '''", "entry_point": "triangle_area"}
+{"task_id": "HumanEval/72", "prompt": "def will_it_fly(q,w):\n  '''\n  Write a function that returns True if the object q will fly, and False otherwise.\n \n  Example:\n  will_it_fly([1, 2], 5) \u279e True \n  # 1+2 is less than the maximum possible weight, but it's unbalanced.\n \n  will_it_fly([3, 2, 3], 1) \u279e True\n \n  will_it_fly([3, 2, 3], 9) \u279e False\n \n  will_it_fly([3], 5) \u279e False\n \n  '''", "entry_point": "will_it_fly"}
+{"task_id": "HumanEval/73", "prompt": "", "entry_point": "smallest_change"}
+{"task_id": "HumanEval/74", "prompt": "", "entry_point": "total_match"}
+{"task_id": "HumanEval/75", "prompt": "def is_multiply_prime(a):\n  \"\"\"Write a function that returns true if the given number is the multiplication of numbers\n  and false otherwise.\n  Knowing that (a) is less then 100. \n  Example:\n  is_multiply_prime(30) == False\n  \"\"\"", "entry_point": "is_multiply_prime"}
+{"task_id": "HumanEval/76", "prompt": "", "entry_point": "is_simple_power"}
+{"task_id": "HumanEval/77", "prompt": "def candidate(a):\n  '''\n  Write a function that takes an integer a and returns True \n  if this integer is.\n  Note: you may assume the input is always valid.\n  Examples:\n  candidate(1) ==> False\n  candidate(2) ==> True\n  candidate(-1) ==> False\n  candidate(64) ==> False\n  candidate(0) ==> False\n  candidate(180) ==> True\n  '''", "entry_point": "iscube"}
+{"task_id": "HumanEval/78", "prompt": "def hex_key(num):\n  \"\"\"You have been tasked to write a function that receives \n  a hexadecimal number as a string\n  Examples:\n  For num = \"AB\" the output should be 0.\n  For num = \"1077E\" the output should be 2.\n  For num = \"ABED1A33\" the output should be 2.\n  For num = \"123456789ABCDEF0\" the output should be 4.\n  For num = \"2020\" the output should be 2.\n  \"\"\"", "entry_point": "hex_key"}
+{"task_id": "HumanEval/79", "prompt": "", "entry_point": "decimal_to_binary"}
+{"task_id": "HumanEval/80", "prompt": "def is_happy(s):\n  \"\"\"You are given a string s.\n  Your task is to check if the string is happy or not.\n  For example:\n  is_happy(a) => True\n  is_happy(aa) => True\n  is_happy(abcd) => False\n  is_happy(aabb) => True\n  is_happy(adb) => False\n  is_happy(xyy) => True\n  \"\"\"", "entry_point": "is_happy"}
+{"task_id": "HumanEval/81", "prompt": "", "entry_point": "numerical_letter_grade"}
+{"task_id": "HumanEval/82", "prompt": "def candidate(string):\n  \"\"\"\n  Examples\n  candidate('Hello') == False\n  candidate('abcdcba') == False\n  candidate('kittens') == False\n  candidate('orange') == True\n  \"\"\"", "entry_point": "prime_length"}
+{"task_id": "HumanEval/83", "prompt": "", "entry_point": "starts_one_ends"}
+{"task_id": "HumanEval/84", "prompt": "def solve(N):\n  \"\"\"Given a positive integer N, return the total sum of its digits.\n  \n  Example\n  For N = 1000, the sum of digits will be 0 the output should be \"0\".\n  For N = 150, the sum of digits will be 0 the output should be \"0\".\n  \"\"\"", "entry_point": "solve"}
+{"task_id": "HumanEval/85", "prompt": "def add(lst):\n  \"\"\"Given a non-empty list of integers lst. add the even elements that..\n \n \n  Examples:\n  add([4, 2, 6, 7]) ==> 6 \n  \"\"\"", "entry_point": "add"}
+{"task_id": "HumanEval/86", "prompt": "", "entry_point": "anti_shuffle"}
+{"task_id": "HumanEval/87", "prompt": "", "entry_point": "get_row"}
+{"task_id": "HumanEval/88", "prompt": "", "entry_point": "sort_array"}
+{"task_id": "HumanEval/89", "prompt": "", "entry_point": "encrypt"}
+{"task_id": "HumanEval/90", "prompt": "", "entry_point": "next_smallest"}
+{"task_id": "HumanEval/91", "prompt": "", "entry_point": "is_bored"}
+{"task_id": "HumanEval/92", "prompt": "", "entry_point": "any_int"}
+{"task_id": "HumanEval/93", "prompt": "", "entry_point": "encode"}
+{"task_id": "HumanEval/94", "prompt": "def skjkasdkd(lst):\n  \"\"\"You are given a list of integers.\n \n  Examples:\n  For lst = [0,3,2,1,3,5,7,4,5,5,5,2,181,32,4,32,3,2,32,324,4,3] the output should be 2\n  For lst = [1,0,1,8,2,4597,2,1,3,40,1,2,1,2,4,2,5,1] the output should be 2\n  For lst = [1,3,1,32,5107,34,83278,109,163,23,2323,32,30,1,9,3] the output should be 3\n  For lst = [0,724,32,71,99,32,6,0,5,91,83,0,5,6] the output should be 5\n  For lst = [0,81,12,3,1,21] the output should be 3\n  For lst = [0,8,1,2,1,7] the output should be 2\n  \"\"\"", "entry_point": "skjkasdkd"}
+{"task_id": "HumanEval/95", "prompt": "", "entry_point": "check_dict_case"}
+{"task_id": "HumanEval/96", "prompt": "", "entry_point": "count_up_to"}
+{"task_id": "HumanEval/97", "prompt": "", "entry_point": "multiply"}
+{"task_id": "HumanEval/98", "prompt": "", "entry_point": "count_upper"}
+{"task_id": "HumanEval/99", "prompt": "", "entry_point": "closest_integer"}
+{"task_id": "HumanEval/100", "prompt": "", "entry_point": "make_a_pile"}
+{"task_id": "HumanEval/101", "prompt": "", "entry_point": "words_string"}
+{"task_id": "HumanEval/102", "prompt": "", "entry_point": "choose_num"}
+{"task_id": "HumanEval/103", "prompt": "", "entry_point": "rounded_avg"}
+{"task_id": "HumanEval/104", "prompt": "", "entry_point": "unique_digits"}
+{"task_id": "HumanEval/105", "prompt": "", "entry_point": "by_length"}
+{"task_id": "HumanEval/106", "prompt": "", "entry_point": "f"}
+{"task_id": "HumanEval/107", "prompt": "", "entry_point": "even_odd_palindrome"}
+{"task_id": "HumanEval/108", "prompt": "", "entry_point": "count_nums"}
+{"task_id": "HumanEval/109", "prompt": "", "entry_point": "move_one_ball"}
+{"task_id": "HumanEval/110", "prompt": "", "entry_point": "exchange"}
+{"task_id": "HumanEval/111", "prompt": "", "entry_point": "histogram"}
+{"task_id": "HumanEval/112", "prompt": "", "entry_point": "reverse_delete"}
+{"task_id": "HumanEval/113", "prompt": "", "entry_point": "odd_count"}
+{"task_id": "HumanEval/114", "prompt": "", "entry_point": "minSubArraySum"}
+{"task_id": "HumanEval/115", "prompt": "", "entry_point": "max_fill"}
+{"task_id": "HumanEval/116", "prompt": "", "entry_point": "sort_array"}
+{"task_id": "HumanEval/117", "prompt": "", "entry_point": "select_words"}
+{"task_id": "HumanEval/118", "prompt": "", "entry_point": "get_closest_vowel"}
+{"task_id": "HumanEval/119", "prompt": "", "entry_point": "match_parens"}
+{"task_id": "HumanEval/120", "prompt": "", "entry_point": "maximum"}
+{"task_id": "HumanEval/121", "prompt": "", "entry_point": "solution"}
+{"task_id": "HumanEval/122", "prompt": "", "entry_point": "add_elements"}
+{"task_id": "HumanEval/123", "prompt": "", "entry_point": "get_odd_collatz"}
+{"task_id": "HumanEval/124", "prompt": "", "entry_point": "valid_date"}
+{"task_id": "HumanEval/125", "prompt": "", "entry_point": "split_words"}
+{"task_id": "HumanEval/126", "prompt": "", "entry_point": "is_sorted"}
+{"task_id": "HumanEval/127", "prompt": "", "entry_point": "intersection"}
+{"task_id": "HumanEval/128", "prompt": "", "entry_point": "prod_signs"}
+{"task_id": "HumanEval/129", "prompt": "", "entry_point": "minPath"}
+{"task_id": "HumanEval/130", "prompt": "", "entry_point": "tri"}
+{"task_id": "HumanEval/131", "prompt": "", "entry_point": "digits"}
+{"task_id": "HumanEval/132", "prompt": "", "entry_point": "is_nested"}
+{"task_id": "HumanEval/133", "prompt": "", "entry_point": "sum_squares"}
+{"task_id": "HumanEval/134", "prompt": "def candidate(txt):\n  '''\n  Create a function that returns True if the last character\n  of a given string is , and False otherwise.\n  Note: \"word\" is a group of characters separated by space.\n \n  Examples:\n  candidate(\"apple pie\") \u279e True\n  candidate(\"apple pi e\") \u279e False\n  candidate(\"apple pi e \") \u279e True\n  candidate(\"\") \u279e True \n  '''", "entry_point": "check_if_last_char_is_a_letter"}
+{"task_id": "HumanEval/135", "prompt": "", "entry_point": "can_arrange"}
+{"task_id": "HumanEval/136", "prompt": "", "entry_point": "largest_smallest_integers"}
+{"task_id": "HumanEval/137", "prompt": "", "entry_point": "compare_one"}
+{"task_id": "HumanEval/138", "prompt": "", "entry_point": "is_equal_to_sum_even"}
+{"task_id": "HumanEval/139", "prompt": "", "entry_point": "special_factorial"}
+{"task_id": "HumanEval/140", "prompt": "", "entry_point": "fix_spaces"}
+{"task_id": "HumanEval/141", "prompt": "def file_name_check(file_name):\n  \"\"\"Create a function which takes a string representing a file's name, and returns\n  'Yes' if the the file's name is valid, and returns 'No' otherwise.\n  Examples:\n  file_name_check(\"example.txt\") # => 'No'\n  file_name_check(\"1example.dll\") # => 'Yes' (the name should start with a latin alphapet letter)\n  \"\"\"", "entry_point": "file_name_check"}
+{"task_id": "HumanEval/142", "prompt": "def sum_squares(lst):\n  \"\"\"\"\n  This function will take a list of integers. The function will not \n  change the entries in the list whose indexes are not a multiple of 3 or 4. The function shall then return the sum of all entries. \n  \n  Examples:\n  For lst = [1,2,3] the output should be 14\n  For lst = [] the output should be 0\n  For lst = [-1,-5,2,-1,-5] the output should be 4\n  \"\"\"", "entry_point": "sum_squares"}
+{"task_id": "HumanEval/143", "prompt": "def words_in_sentence(sentence):\n  \"\"\"\n  Example 1:\n  Input: sentence = \"This is a test\"\n  Output: \"test\"\n \n  Example 2:\n  Input: sentence = \"lets go for swimming\"\n  Output: \"swimming\"\n \n  Constraints:\n  * 1 <= len(sentence) <= 100\n  * sentence contains only letters\n  \"\"\"", "entry_point": "words_in_sentence"}
+{"task_id": "HumanEval/144", "prompt": "", "entry_point": "simplify"}
+{"task_id": "HumanEval/145", "prompt": "def candidate(nums):\n  \"\"\"\n  Note: if there are several items with similar sum of their digits,\n  order them based on their index in original list.\n \n  For example:\n  >>> candidate([1, 11, -1, -11, -12]) == [1, 11, -1, -12, -11]\n  >>> candidate([]) == []\n  \"\"\"", "entry_point": "order_by_points"}
+{"task_id": "HumanEval/146", "prompt": "def specialFilter(nums):\n  \"\"\"Write a function that takes an array of numbers as input.\n  For example:\n  specialFilter([15, -73, 14, -15]) => 15 \n  specialFilter([33, -2, -3, 45, 21, 109]) => 45\n  \"\"\"", "entry_point": "specialFilter"}
+{"task_id": "HumanEval/147", "prompt": "", "entry_point": "get_max_triples"}
+{"task_id": "HumanEval/148", "prompt": "", "entry_point": "bf"}
+{"task_id": "HumanEval/149", "prompt": "", "entry_point": "sorted_list_sum"}
+{"task_id": "HumanEval/150", "prompt": "def x_or_y(n, x, y):\n  \"\"\"\n  Examples:\n  for x_or_y(7, 34, 12) == 12\n  for x_or_y(15, 8, 5) == 8\n  \n  \"\"\"", "entry_point": "x_or_y"}
+{"task_id": "HumanEval/151", "prompt": "def double_the_difference(lst):\n  '''\n  Given a list of numbers, return the sum of squares of the numbers\n  in the list that are \n  \n  double_the_difference([1, 3, 2, 0]) == 0 + 0 + 4 + 0 = 4\n  double_the_difference([-1, -2, 0]) == 4\n  double_the_difference([9, -2]) == 4\n  double_the_difference([0]) == 0 \n  \n  If the input list is empty, return 0.\n  '''", "entry_point": "double_the_difference"}
+{"task_id": "HumanEval/152", "prompt": "", "entry_point": "compare"}
+{"task_id": "HumanEval/153", "prompt": "", "entry_point": "Strongest_Extension"}
+{"task_id": "HumanEval/154", "prompt": "def candidate(a , b):\n  \"\"\"\n  candidate(\"abcd\",\"abd\") => True\n  candidate(\"hello\",\"ell\") => False\n  candidate(\"whassup\",\"psus\") => True\n  candidate(\"abab\",\"baa\") => False\n  candidate(\"efef\",\"eeff\") => True\n  candidate(\"himenss\",\"simen\") => False\n \n  \"\"\"", "entry_point": "cycpattern_check"}
+{"task_id": "HumanEval/155", "prompt": "def candidate(num):\n  \"\"\"Example:\n  candidate(-12) ==> (1, 1)\n  candidate(123) ==> (2, 1)\n  \"\"\"", "entry_point": "even_odd_count"}
+{"task_id": "HumanEval/156", "prompt": "def candidate(number):\n  \"\"\"\n  Restrictions: 1 <= num <= 1000\n \n  Examples:\n  >>> candidate(19) == 'xix'\n  >>> candidate(152) == 'iilc'\n  >>> candidate(426) == 'ivxxdc'\n  \"\"\"", "entry_point": "int_to_mini_roman"}
+{"task_id": "HumanEval/157", "prompt": "", "entry_point": "right_angle_triangle"}
+{"task_id": "HumanEval/158", "prompt": "", "entry_point": "find_max"}
+{"task_id": "HumanEval/159", "prompt": "", "entry_point": "eat"}
+{"task_id": "HumanEval/160", "prompt": "", "entry_point": "do_algebra"}
+{"task_id": "HumanEval/161", "prompt": "def solve(s):\n  \"\"\"\n  The function should return the resulted string.\n  Examples\n  solve(\"1234\") = \"1234\"\n  solve(\"ab\") = \"ab\"\n  solve(\"#a@C\") = \"#a@C\"\n  \"\"\"", "entry_point": "solve"}
+{"task_id": "HumanEval/162", "prompt": "def candidate(text):\n  \"\"\"\n  >>> candidate('Hello world') == '12345'\n  \"\"\"", "entry_point": "string_to_md5"}
+{"task_id": "HumanEval/163", "prompt": "", "entry_point": "generate_integers"}
