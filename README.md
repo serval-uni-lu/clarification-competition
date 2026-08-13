@@ -1,4 +1,4 @@
-# The Clarification Competition
+# The Clarification Challenge
 
 
 ## The Clarification SDK
