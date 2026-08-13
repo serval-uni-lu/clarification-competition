@@ -22,6 +22,11 @@ The SDK integrates with `liteLLM` to give access to LLMs and the clarification A
 export OPENAI_API_KEY="sk-proj-..."
 ```
 
+For code execution, please ensure that Docker is installed, the `docker` command is available, and you have pulled the following image:
+```bash
+docker pull ganler/evalplus
+```
+
 ## Quick Start
 To implement a clarification algorithm, you only need to provide a single Python file implementing `ClarificationAlgorithmBase`. Example:
 ```python
