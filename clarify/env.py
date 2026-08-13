@@ -121,7 +121,7 @@ class _ClarificationEnvironment:
 
     def exec_code(self, complete_code : str) -> str:
         return EvalPlusDockerInstanceEvaluator(
-            self._problem, {}
+            self._problem, None
         ).exec_code(complete_code)
 
 

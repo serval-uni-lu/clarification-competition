@@ -100,6 +100,9 @@ class EvalPlusDockerInstanceEvaluator:
         return "out == exp"
     
     def _construct_tests(self, test_trigger = TEST_TRIGGER):
+        if not self.ground_truth:
+            raise RuntimeError("The evaluator does not have access to the ground truth.")
+
         inputs = self.problem["base_input"] + self.problem["plus_input"]
         results = self.ground_truth["base"] + self.ground_truth["plus"]
 

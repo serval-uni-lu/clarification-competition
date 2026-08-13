@@ -130,12 +130,14 @@ class SimulationFunction:
         try:
             with console.status(f"Run {algorithm_name} ({len(envs)} instances)..."):
                 for i, prompt_result in enumerate(clarification_algorithm.batch_run(envs, problem_definitions)):
-                    result = results[i]
-                    result["prompt_result"] = prompt_result
-                    result["clarification_history"] = envs[i].history
-                    result["prompt_cost"] = envs[i].prompt_cost
-                    if envs[i].clarification_cost:
-                        result["clarification_cost"] = envs[i].clarification_cost
+                    environment = envs[i]
+                    results[i].update({
+                        "algorithm": algorithm_name,
+                        "prompt_result": prompt_result,
+                        "clarification_history": environment.history,
+                        "prompt_cost": environment.prompt_cost,
+                        "clarification_cost": environment.clarification_cost or 0.0
+                    })
 
                 return results
         except Exception as e:
@@ -171,11 +173,13 @@ class SimulationFunction:
                     environment, problem_definition
                 )
 
-            result["prompt_result"] = prompt_result
-            result["clarification_history"] = environment.history
-            result["prompt_cost"] = environment.prompt_cost
-            if environment.clarification_cost:
-                result["clarification_cost"] = environment.clarification_cost
+            result.update({
+                "algorithm": algorithm_name,
+                "prompt_result": prompt_result,
+                "clarification_history": environment.history,
+                "prompt_cost": environment.prompt_cost,
+                "clarification_cost": environment.clarification_cost or 0.0
+            })
 
             return result
 
@@ -252,11 +256,10 @@ def main(
     try:
         with open(output_path, "w") as o, tqdm(total = len(benchmark)) as pbar:
             for task_batch in batched_iterator():
-                if batch_size > 0:
-                    try:
-                        results = simulation_function.batch(task_batch)
-                    except ValueError:
-                        results = batched_worker(task_batch)
+                try:
+                    results = simulation_function.batch(task_batch)
+                except ValueError:
+                    results = batched_worker(task_batch)
 
                 for result in results:
                     o.write(json.dumps(result, default = str) + "\n")
