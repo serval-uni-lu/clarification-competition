@@ -1,5 +1,50 @@
 # The Clarification Challenge
 
+## Data
+
+The competition benchmark is a train/validation split of defected HumanEval and MBPP prompts, stored in `data/train.jsonl` and `data/validation.jsonl`. Each defected prompt is a deliberately incomplete, ambiguous, or contradictory rewrite of an original benchmark prompt, sourced from three papers on under-specified coding benchmarks. 
+
+| Split | HumanEval tasks | MBPP tasks | Total tasks | Total defected examples |
+|---|---|---|---|---|
+| `train.jsonl` | 134 | 914 | 1,048 | 6,684 |
+| `validation.jsonl` | 30 | 60 | 90 | 629 |
+
+
+### Record schema
+
+Each line is one JSON object for one original task, bundling every defected variant of that task's prompt together:
+
+```json
+{
+  "task_id": "HumanEval/0",
+  "benchmark": "HumanEval",
+  "original": "...",
+  "entry_point": "has_close_elements",
+  "canonical_solution": "...",
+  "test_cases": "...",
+  "v1": {
+    "incomplete": "...",
+    "ambiguous": "...",
+    "contradictory": "..."
+  },
+  "v2": {
+    "lexical_vagueness__lv": "...",
+    "syntax_and_formatting_sf": "...",
+    "under-specification_us": "..."
+  },
+  "v3": {
+    "incomplete": "...",
+    "ambiguous": "...",
+    "contradictory": "...",
+    "ambiguous_and_contradictory": "...",
+    "ambiguous_and_incomplete": "...",
+    "contradictory_and_incomplete": "...",
+    "ambiguous_contradictory_and_incomplete": "..."
+  }
+}
+```
+
+- `v1`, `v2`, `v3`: defected rewrites of `original`, grouped by their source paper. 
 
 ## The Clarification SDK
 The SDK to implement clarification algorithms that can be judged within the clarification competition. We expect that every participant submits a single Python file `clarifier.py` which implements `ClarificationAlgorithmBase` (`clarify.ClarificationAlgorithmBase`). 
