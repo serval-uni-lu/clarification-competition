@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import logging
@@ -16,9 +17,6 @@ class LanguageModel:
     - **Truncation detection** — logs a warning when ``finish_reason='length'``.
     - **drop_params=True** so unsupported params are silently ignored
       (with a warning logged for transparency).
-
-    Conforms to the :class:`~gepa.proposer.reflective_mutation.base.LanguageModel`
-    protocol, so it can be used anywhere GEPA expects a ``LanguageModel``.
 
     Args:
         model: LiteLLM model identifier, e.g. ``"openai/gpt-4.1"`` or ``"anthropic/claude-sonnet-4-6"``.

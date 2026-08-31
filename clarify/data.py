@@ -28,6 +28,8 @@ def preprocess_benchmark(dataset):
 def _preprocess_mbpp(dataset):
     if not evalplus:
         raise ImportError("To support MBPP, you need to install the Python package `evalplus`.")
+
+    dataset = _preprocess_references(dataset)
     
     mbpp = get_mbpp_plus()
     preprocessed_benchmark = {}
@@ -81,6 +83,8 @@ def _preprocess_mbpp(dataset):
 def _preprocess_humaneval(benchmark):
     if not evalplus:
         raise ImportError("To support HumanEval, you need to install the Python package `evalplus`.")
+
+    benchmark = _preprocess_references(benchmark)
     
     humaneval = get_human_eval_plus()
 
@@ -96,3 +100,19 @@ def _preprocess_humaneval(benchmark):
         preprocessed_benchmark[task["task_id"]] = preprocessed_example
     
     return preprocessed_benchmark
+
+
+def _preprocess_references(benchmark):
+    import base64, zlib
+
+    for task in benchmark:
+        if "reference_prompt" in task and task["reference_prompt"].startswith("REF_"):
+            reference_prompt = task["reference_prompt"][len("REF_"):]
+            reference_prompt = zlib.decompress(
+                base64.b64decode(
+                    reference_prompt.encode("ascii")
+                )
+            ).decode("utf-8")
+            task["reference_prompt"] = reference_prompt
+
+    return benchmark
