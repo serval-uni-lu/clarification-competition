@@ -203,6 +203,8 @@ def main(
     temperature : float = 0.7,
     clarification_model : str | None = None,
     fail_on_exception : bool = False,
+    max_prompt_budget : float = 1.0,
+    max_clarification_budget : float = 1.0,
     **kwargs
 ):
     batch_size = max(batch_size, max_workers)
@@ -211,7 +213,9 @@ def main(
         max_clarification_turns = max_clarification_turns,
         language_model = language_model,
         temperature = temperature,
-        clarification_model = clarification_model
+        clarification_model = clarification_model,
+        max_clarification_budget = max_clarification_budget,
+        max_prompt_budget = max_prompt_budget,
     )
     
     # Load clarification algorithm and use kwargs as config options

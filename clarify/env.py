@@ -10,13 +10,20 @@ from clarify.runtime import EvalPlusDockerInstanceEvaluator
 @dataclass(frozen=True)
 class ClarificationConfiguration:
 
-    max_clarification_turns : int = 1
     language_model      : str = "gpt-4.1-mini"
     temperature         : float = 0.7
     clarification_model : str | None = None
 
+    # Budget constraints
+    max_clarification_turns : int = 1
+    max_clarification_budget: float = 1.0
+    max_prompt_budget       : float = 1.0
 
 class TooManyQuestionException(Exception):
+    pass
+
+
+class LimitsExceededException(Exception):
     pass
 
 
@@ -66,10 +73,17 @@ class _ClarificationEnvironment:
         return self._llm.total_cost
 
     @property
+    def prompt_budget(self):
+        return self._config.max_prompt_budget
+
+    @property
     def clarification_cost(self):
         return self._clarify_llm.total_cost
 
     def can_ask(self):
+        if self.clarification_cost >= self._config.max_clarification_budget:
+            return False
+
         return self._num_clarification_turns < self._config.max_clarification_turns
 
     def _parse_human_response(self, completion_content):
@@ -82,6 +96,9 @@ class _ClarificationEnvironment:
     # Main API -----------------------------------------------------------------
 
     def llm(self, messages : list[dict[str, str]] | str) -> str:
+        if self.prompt_cost >= self.prompt_budget:
+            raise LimitsExceededException(f"You exceeded the prompt budget.")
+
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
@@ -92,7 +109,7 @@ class _ClarificationEnvironment:
 
     def ask_human(self, query : str) -> str:
         if not self.can_ask():
-            raise TooManyQuestionException(f"You exceeded the number of {self._config.max_clarification_turns} clarification questions.")
+            raise TooManyQuestionException("You exceeded the clarification budget by asking too many or overly complex questions.")
 
         human_prompt = HUMAN_PROMPT.replace(
             "{clarifying_questions}", query
