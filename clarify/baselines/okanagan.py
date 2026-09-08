@@ -19,7 +19,7 @@ Enclose your solution in ```python and ```.
 """.strip()
 
 CLARIFICATION_PROMPT_TEMPLATE = """
-Given the programming problem and the generate candidate, ask clarifying questions if the requirements in the given problem description are incomplete, inconsistent or ambiguous 
+Given the programming problem and a generated candidate, ask clarifying questions if the requirements in the given problem description are incomplete, inconsistent or ambiguous 
 for solving the problem correctly and passing the tests.
 If no need to ask clarifying questions, return strictly ’NO_QUESTIONS’ only. Otherwise, return the clarifying questions.
 

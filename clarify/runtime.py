@@ -108,8 +108,8 @@ class EvalPlusDockerInstanceEvaluator:
             raise RuntimeError("The evaluator does not have access to the ground truth.")
 
         try:
-            inputs = self.problem["base_input"] + self.problem["plus_input"]
-            results = self.ground_truth["base"] + self.ground_truth["plus"]
+            inputs = self.problem["base_input"] + list(self.problem["plus_input"])
+            results = self.ground_truth["base"] + list(self.ground_truth["plus"])
 
             for key, value in [("entry_point", self.problem["entry_point"]),
                             ("inputs", inputs),
@@ -117,7 +117,7 @@ class EvalPlusDockerInstanceEvaluator:
                             ("atol", self.problem.get("atol", "0")),
                             ("oracle", self._oracle())]:
                 test_trigger = test_trigger.replace("{%s}" % key, str(value))
-        except KeyError:
+        except (KeyError, TypeError):
             if isinstance(self.ground_truth, str):
                 test_trigger = f'{self.ground_truth}\nprint("PASSED TESTS")'
             else:
@@ -194,7 +194,7 @@ def eval_script(container_id: str, command: str, path: str, stdin_input : str | 
         output = subprocess.run(
             docker_cmd,
             capture_output=True, 
-            timeout=240,
+            timeout=30,
             input = encoded_input,    
         )
 

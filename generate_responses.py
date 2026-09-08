@@ -205,6 +205,7 @@ def main(
     fail_on_exception : bool = False,
     max_prompt_budget : float = 1.0,
     max_clarification_budget : float = 1.0,
+    num_samples : int = 1,
     **kwargs
 ):
     batch_size = max(batch_size, max_workers)
@@ -240,9 +241,15 @@ def main(
         fail_on_exception = fail_on_exception
     )
 
-    def batched_iterator():
+    def _duplicate(dataset, k: int = 1):
+        for example in dataset:
+            for i in range(k):
+                example["sample_id"] = i
+                yield example
+
+    def batched_iterator(k : int = 1):
         current_batch = []
-        for example in benchmark.values():
+        for example in _duplicate(benchmark.values(), k):
             current_batch.append(example)
             if len(current_batch) >= batch_size:
                 yield current_batch
@@ -259,7 +266,7 @@ def main(
     prompt_cost, clarification_cost = 0.0, 0.0
     try:
         with open(output_path, "w") as o, tqdm(total = len(benchmark)) as pbar:
-            for task_batch in batched_iterator():
+            for task_batch in batched_iterator(k = num_samples):
                 try:
                     results = simulation_function.batch(task_batch)
                 except ValueError:
