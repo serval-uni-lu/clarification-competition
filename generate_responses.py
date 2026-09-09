@@ -13,13 +13,22 @@ from tqdm import tqdm
 from clarify.baselines.base import ClarificationAlgorithmBase
 
 from clarify.env import ClarificationEnvironment, ClarificationConfiguration
-from clarify.data import preprocess_benchmark
+from clarify.data import preprocess_benchmark, load_split
 from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
 
 from rich.console import Console
 from rich.panel import Panel
 
 console = Console()
+
+CLARIFICATION_PATH = "data/clarifications.jsonl"
+
+DEFAULT_DATASET_PATH = "data/mbpp_demo_test.jsonl"
+
+DEFAULT_SPLITS = {
+    "train" : "data/splits/train.txt",
+    "val"   : "data/splits/validation.txt"
+}
 
 
 def _module_name_for_path(path_to_algorithm: str) -> str:
@@ -194,18 +203,19 @@ class SimulationFunction:
 
 def main(
     clarify_py : str,
-    dataset_path : str = "data/mbpp_demo_test.jsonl",
+    dataset_path : str = DEFAULT_DATASET_PATH,
     output_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
     batch_size : int = 1,
     max_workers : int = 1,
     max_clarification_turns : int = 1,
-    language_model      : str = "gpt-4.1-mini",
+    language_model      : str = "openai/gpt-4.1-mini",
     temperature : float = 0.7,
     clarification_model : str | None = None,
     fail_on_exception : bool = False,
     max_prompt_budget : float = 1.0,
     max_clarification_budget : float = 1.0,
     num_samples : int = 1,
+    split : str | None = None,
     **kwargs
 ):
     batch_size = max(batch_size, max_workers)
@@ -228,11 +238,34 @@ def main(
     print(f"Loaded `{algorithm_name}` clarification algorithm...")
 
     # Load data ----------------------
-    with open(dataset_path, "r") as lines:
-        benchmark = [json.loads(line) for line in lines]
+    
+    if split:
+        if dataset_path != DEFAULT_DATASET_PATH:
+            print(f"WARNING: split '{split}' is overwritting your dataset path.")
+        split = DEFAULT_SPLITS.get(split, split)
+        benchmark = load_split(split)
+    else:
+        with open(dataset_path, "r") as lines:
+            benchmark = [json.loads(line) for line in lines]
 
-    benchmark = preprocess_benchmark(benchmark)
+        benchmark = list(preprocess_benchmark(benchmark).values())
+
     print(f"Loaded {len(benchmark)} instances...")
+
+    if os.path.exists(CLARIFICATION_PATH):
+        clarification_index = {}
+        with open(CLARIFICATION_PATH, "r") as lines:
+            for line in lines:
+                example = json.loads(line)
+                clarification_index[
+                    (example["task_id"], example["prompt"])
+                ] = example["clarifications"]
+
+        for example in benchmark:
+            if (example["task_id"], example["prompt"]) in clarification_index:
+                example["clarifications"] = clarification_index[
+                    (example["task_id"], example["prompt"])
+                ]
 
     simulation_function = SimulationFunction(
         clarification_algorithm_path = clarify_py,
@@ -249,7 +282,7 @@ def main(
 
     def batched_iterator(k : int = 1):
         current_batch = []
-        for example in _duplicate(benchmark.values(), k):
+        for example in _duplicate(benchmark, k):
             current_batch.append(example)
             if len(current_batch) >= batch_size:
                 yield current_batch

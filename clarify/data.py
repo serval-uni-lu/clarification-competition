@@ -1,3 +1,6 @@
+import os
+import json
+from glob import glob
 
 try:
     import evalplus
@@ -6,6 +9,47 @@ try:
     from evalplus.data import get_human_eval_plus
 except ImportError:
     evalplus = None
+
+
+def _load_humaneval_datasets(base_path):
+    for humaneval_path in glob(os.path.join(base_path, "humaneval", "*.jsonl")):
+        with open(humaneval_path, "r") as lines:
+            dataset = [json.loads(line) for line in lines]
+        yield preprocess_benchmark(dataset)
+
+def _load_mbpp_datasets(base_path):
+    for mbpp_path in glob(os.path.join(base_path, "mbpp", "*.jsonl")):
+        with open(mbpp_path, "r") as lines:
+            dataset = [json.loads(line) for line in lines]
+        yield preprocess_benchmark(dataset)
+
+def _load_datasets(base_path, dataset_id):
+    if dataset_id == "HumanEval":
+        return _load_humaneval_datasets(base_path)
+    if dataset_id == "Mbpp":
+        return _load_mbpp_datasets(base_path)
+
+    raise ValueError(f"Unknown dataset `{dataset_id}`")
+
+
+def load_split(split_path):
+    with open(split_path, "r") as lines:
+        task_ids = set(line.strip() for line in lines)
+
+    base_dir = split_path
+    while "split" in base_dir:
+        base_dir  = os.path.dirname(base_dir)
+
+    datasets  = set(task_id.split("/", 1)[0] for task_id in task_ids)
+
+    benchmark = []
+    for dataset_id in datasets:
+        for dataset in _load_datasets(base_dir, dataset_id):
+            for example in dataset.values():
+                if example["task_id"] in task_ids:
+                    benchmark.append(example)
+
+    return benchmark
 
 
 def preprocess_benchmark(dataset):
@@ -34,6 +78,10 @@ def _preprocess_mbpp(dataset):
     mbpp = get_mbpp_plus()
     preprocessed_benchmark = {}
     for task in dataset:
+        if not task["prompt"]:
+            # Prompt is none existing; skip
+            continue
+
         if task["task_id"] in mbpp:
             preprocessed_example = mbpp[task["task_id"]]
             preprocessed_example["reference_prompt"] = preprocessed_example["prompt"]
@@ -90,6 +138,9 @@ def _preprocess_humaneval(benchmark):
 
     preprocessed_benchmark = {}
     for task in benchmark:
+        if not task["prompt"]:
+            continue
+
         if task["task_id"] in humaneval:
             preprocessed_example = humaneval[task["task_id"]]
             preprocessed_example["reference_prompt"] = preprocessed_example["prompt"]

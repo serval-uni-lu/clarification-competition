@@ -7,6 +7,7 @@ try:
 
     from evalplus.evaluate import get_groundtruth
     from evalplus.data.mbpp import get_mbpp_plus_hash
+    from evalplus.data import get_human_eval_plus_hash
 
     from evalplus.eval._special_oracle import MBPP_OUTPUT_NOT_NONE_TASKS, MBPP_OUTPUT_SET_EQ_TASKS
 except ImportError:
@@ -18,9 +19,21 @@ def init_evalplus_evaluator(dataset, train = False):
     if evalplus is None:
         raise ImportError("Install evalplus (`pip install evalplus`) to use the runtime evaluator.")
 
-    hash = get_mbpp_plus_hash() + ("_train" if train else "")
-    gt = get_groundtruth(dataset, hash, MBPP_OUTPUT_NOT_NONE_TASKS)
-    return EvalPlusEvaluator(dataset, gt)
+    dataset_deduplicated = {ex["task_id"]: ex for ex in dataset}
+    dataset_ids  = set(task_id.split("/", 1)[0] for task_id in dataset_deduplicated)
+    ground_truth = {}
+
+    for dataset_id in dataset_ids:
+        gt = {}
+        if dataset_id == "Mbpp":
+            hash = get_mbpp_plus_hash() + ("_train" if train else "")
+            gt = get_groundtruth(dataset, hash, MBPP_OUTPUT_NOT_NONE_TASKS)
+        elif dataset_id == "HumanEval":
+            hash = get_human_eval_plus_hash() + ("_train" if train else "")
+            gt = get_groundtruth(dataset, hash, [])
+        ground_truth.update(gt)
+        
+    return EvalPlusEvaluator(dataset_deduplicated, ground_truth)
 
 
 class EvalPlusEvaluator:

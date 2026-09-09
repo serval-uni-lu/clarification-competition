@@ -5,10 +5,9 @@ import json
 
 from tqdm import tqdm
 
-from clarify.data import preprocess_benchmark
+from clarify.data import preprocess_benchmark, load_split
 from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
 from clarify.runtime import init_evalplus_evaluator
-
 
 from rich.console import Console
 from rich.panel import Panel
@@ -18,6 +17,13 @@ console = Console()
 
 
 # ---------------------
+
+DEFAULT_DATASET_PATH = "data/mbpp_demo_test.jsonl"
+
+DEFAULT_SPLITS = {
+    "train" : "data/splits/train.txt",
+    "val"   : "data/splits/validation.txt"
+}
 
 
 class EvaluationFunction:
@@ -121,7 +127,8 @@ def main(
     output_path : str = "data/mbpp_demo_test_clarify_output_results.jsonl",
     batch_size : int = 1,
     max_workers : int = 1,
-    force_rerun : bool = False
+    force_rerun : bool = False,
+    split : str | None = None,
 ):
     if os.path.exists(output_path) and not force_rerun:
         print_statistics(output_path)
@@ -130,13 +137,19 @@ def main(
     batch_size = max(batch_size, max_workers)
 
     # Load data ----------------------
-    with open(benchmark_path, "r") as lines:
-        benchmark = [json.loads(line) for line in lines]
+    if split:
+        if benchmark_path != DEFAULT_DATASET_PATH:
+            print(f"WARNING: split '{split}' is overwritting your benchmark path.")
+        split = DEFAULT_SPLITS.get(split, split)
+        benchmark = load_split(split)
+    else:
+        with open(benchmark_path, "r") as lines:
+            benchmark = [json.loads(line) for line in lines]
 
-    benchmark = preprocess_benchmark(benchmark)
+        benchmark = list(preprocess_benchmark(benchmark).values())
+    
     evaluator = init_evalplus_evaluator(benchmark)
     print(f"Loaded {len(benchmark)} instances...")
-
 
     with open(generation_path, "r") as lines:
         results = [json.loads(line) for line in lines]
