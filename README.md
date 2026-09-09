@@ -6,14 +6,27 @@
   />
 </p>
 
-## Data
+## The Clarification Challenge
+Large language model-based coding assistants are often evaluated in scenarios where user requirements are well-specified and clear. In practice, real-world requirements are often underspecified: they lack critical details that seem obvious, yet are necessary for the assistant to solve the task correctly.
 
-The competition benchmark is a train/validation split of defected HumanEval and MBPP prompts, stored in `data/train.jsonl` and `data/validation.jsonl`. Each defected prompt is a deliberately incomplete, ambiguous, or contradictory rewrite of an original benchmark prompt, sourced from three papers on under-specified coding benchmarks. 
+We would hope that assistants would clarify unclear requirements by asking the user for additional specification, helping the assistant to produce code that is well-aligned with the user's intent. Existing LLMs, however, often show the opposite effect: instead of asking for clarification, they confidently produce one possible interpretation, misaligned with what the
+user intended.
 
-| Split | HumanEval tasks | MBPP tasks | Total tasks | Total defected examples |
-|---|---|---|---|---|
-| `train.jsonl` | 134 | 914 | 1,048 | 6,684 |
-| `validation.jsonl` | 30 | 60 | 90 | 629 |
+**The Challenge:** We challenge the community to develop LLM-based coding assistants that detect underspecified requirements and ask clarifying questions to resolve them. The difficulty lies not in the coding task itself (each problem asks for a simple Python function) but in recognizing which requirements are underspecified and formulating targeted questions to clarify them.
+
+The goal of this challenge is to implement a clarification algorithm within our [Clarification SDK](#the-clarification-sdk):
+```python
+class LLMClarification(ClarificationAlgorithmBase):
+    def run(self, env: ClarificationEnvironment, problem) -> str:
+        # Your clarification algorithm here
+```
+where `env.llm(...)` and `env.ask_human(...)` help you to interact with LLMs and (simulated) users. A problem typically contains a prompt with a Python function to be implemented. The goal is to implement an algorithm that interacts effectively with the environment to produce a coding solution to given problem.
+
+**How to get started?** Participation is simple: Fork our repository, implement a new clarification algorithm (a single Python file), and create a pull request.
+
+To get started on developing your idea, please follow our [Quick Start Guide](#quick-start). 
+
+**Price:** _TBA_
 
 
 ## The Clarification SDK
