@@ -202,11 +202,11 @@ Clarification algorithms will be scored based on a set of criteria that evaluate
 
 1. **Turn-discounted Success:** The effectiveness of the clarification algorithm to produce a correct implementation in the fewest clarification turns possible:
 
-$ \text{TDS} = \frac{1}{n} \sum^n_{i = 1} Pass_i * \frac{1}{\log_2(n_i + 2)}, $
+$$\text{TDS} = \frac{1}{n} \sum^n_{i = 1} Pass_i * \frac{1}{\log_2(n_i + 2)},$$
    where $Pass_i = 1$ if the i-th solution pass the developer tests and $n_i$ is the number of clarification turns. 
 
 2. **nDCG:** The quality of the clarification in each turn. An LLM judge decides in each clarification turn whether the clarification question was good (see criteria below), producing a hit sequence $H = (h_1, ..., h_n)$ with $h_i = 1$ for good questions and $h_i = 0$ otherwise. The dicounted cumulative gain is the computed by:
-$ DCG = \sum^n_{i = 1} \frac{h_i}{\log_2(i + 1)} $
+$$DCG = \sum^n_{i = 1} \frac{h_i}{\log_2(i + 1)}$$
 $nDCG = DCG/IDCG$ normalizes DCG with an idealized score (all question were good), thus rewarding clarification systems that continously produce good clarification questions.
 
 3. **Pass@1:** The raw pass rate of the implementation produced by the clarification algorithms.
