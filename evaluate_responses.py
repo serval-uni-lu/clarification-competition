@@ -1,6 +1,7 @@
 import os
 import fire
 import json
+import math
 
 
 from tqdm import tqdm
@@ -77,7 +78,7 @@ def _print_test_overview(results):
 
         clarification = "❌"
         if result["clarification_history"]:
-            clarification = max(e[1] for e in result["clarification_history"])
+            clarification = max(e[2] for e in result["clarification_history"])
             clarification = clarify_map.get(clarification, clarification)
 
         table.add_row(
@@ -88,6 +89,35 @@ def _print_test_overview(results):
         )
 
     console.print(table)
+
+
+def _turn_discounted_sucess(results):
+    turn_discounted_sucess = 0.0
+    for result in results:
+        clarification_length = len(result["clarification_history"])
+        if result["success"]:
+            turn_discounted_sucess += 1 / (math.log(clarification_length + 2) / math.log(2))
+
+    return turn_discounted_sucess / len(results)
+
+
+def _turn_discounted_key_question_rate(results):
+    tkqr = 0.0
+    for result in results:
+        indicator = [e[2] == "3" for e in result["clarification_history"]]
+
+        discounted_cumulative_gain = 0.0
+        idealized_cumulative_gain  = 0.0
+        for turn, high_quality in enumerate(indicator):
+            gain = 1 /  (math.log(turn + 2) / math.log(2))
+            if high_quality: 
+                discounted_cumulative_gain += gain
+            idealized_cumulative_gain += gain
+
+        if idealized_cumulative_gain > 0:
+            tkqr += (discounted_cumulative_gain / idealized_cumulative_gain)
+
+    return tkqr / len(results)
 
 
 def print_statistics(output_path):
@@ -103,19 +133,22 @@ def print_statistics(output_path):
     total = len(results)
     table.add_row("Total", str(total))
 
+    table.add_row("Turn Discounted Success", f"{_turn_discounted_sucess(results):.4f}")
+    table.add_row("TKQR", f"{_turn_discounted_key_question_rate(results):.4f}" )
+
     pass_at_1 = sum(r["success"] for r in results)
-    table.add_row("Pass@1", f"{100 * pass_at_1 / total:2f}")
+    table.add_row("Pass@1", f"{100 * pass_at_1 / total:.2f}")
 
     clarification_rate = sum(len(r["clarification_history"]) > 0 for r in results)
-    table.add_row("Clarification rate", f"{100 * pass_at_1 / total:2f}%")
+    table.add_row("Clarification rate", f"{100 * clarification_rate / total:.2f}%")
 
     if clarification_rate > 0:
-        high_quality_clarification = sum(all(e[1] == "3" for e in r["clarification_history"])
+        high_quality_clarification = sum(all(e[2] == "3" for e in r["clarification_history"])
                                         for r in results if len(r["clarification_history"]) > 0)
-        table.add_row("High quality clarification", f"{100 * high_quality_clarification / clarification_rate:2f}%")
+        table.add_row("High quality clarification", f"{100 * high_quality_clarification / clarification_rate:.2f}%")
 
-        clarification_length = sum(sum(len(e[2]) for e in r["clarification_history"]) for r in results)
-        table.add_row("Average clarification length", f"{clarification_length / clarification_rate:2f}")
+        clarification_length = sum(sum(len(e[3]) for e in r["clarification_history"]) for r in results)
+        table.add_row("Average clarification length", f"{clarification_length / clarification_rate:.2f}")
 
     console.print(table)
     
