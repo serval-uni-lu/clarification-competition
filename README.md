@@ -186,6 +186,38 @@ class ClarificationEnvironment:
         """
 ```
 
+## Benchmarking
+We evaluate on benchmarks derived from [MBPP](https://arxiv.org/pdf/2108.07732) and [HumanEval](https://arxiv.org/abs/2107.03374). The benchmark tasks contain variants which task description is ambiguous, incomplete, or even contradicting the original intent of the user. The tasks are collected under `data/mbpp` (single sentence specifications) and under `data/humaneval` (function headers).
+
+We split the datasets in 7.961 training and 770 validation examples. Use:
+```bash
+python generate_responses.py <CLARIFICATION_PY> --split <SPLIT>
+```
+to load the training split (`--split train`) or validation split (`--split val`).
+
+The same setting has to be applied when evaluating the responses.
+
+## Evaluation Criteria
+Clarification algorithms will be scored based on a set of criteria that evaluate both _clarification efficiency_ and _effectiveness_:
+
+1. **Turn-discounted Success:** The effectiveness of the clarification algorithm to produce a correct implementation in the fewest clarification turns possible:
+
+$$ \text{TDS} = \frac{1}{n} \sum^n_{i = 1} Pass_i * \frac{1}{\log_2(n_i + 2)}, $$
+   where $Pass_i = 1$ if the i-th solution pass the developer tests and $n_i$ is the number of clarification turns. 
+
+2. **nDCG:** The quality of the clarification in each turn. An LLM judge decides in each clarification turn whether the clarification question was good (see criteria below), producing a hit sequence $H = (h_1, ..., h_n)$ with $h_i = 1$ for good questions and $h_i = 0$ otherwise. The dicounted cumulative gain is the computed by:
+$$ DCG = \sum^n_{i = 1} \frac{h_i}{\log_2(i + 1)} $$
+$nDCG = DCG/IDCG$ normalizes DCG with an idealized score (all question were good), thus rewarding clarification systems that continously produce good clarification questions.
+
+3. **Pass@1:** The raw pass rate of the implementation produced by the clarification algorithms.
+
+**Quality Criteria: what is a "good" clarification question?** Clarification questions are judged with respect to:
+- **Criticality:** A question that addresses a real blocker to a correct solution,
+- **Search space:** Which answer cannot be reliably guessed or inferred.
+- **Leakage:** That does not target implementation details or hidden test cases.
+- **Atomicity:** That targets one specific requirement, not multiple.
+- **Objectivity:** Admits a single, unambiguous resolution. 
+
 ## Organizers & Contact
 The Clarification Challenge is organized by
 - **Amal AKLI**, University of Luxembourg, <amal.akli@uni.lu>
