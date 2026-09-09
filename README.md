@@ -24,13 +24,11 @@ where `env.llm(...)` and `env.ask_human(...)` help you to interact with LLMs and
 
 **How to get started?** Participation is simple: Fork our repository, implement a new clarification algorithm (a single Python file), and create a pull request.
 
-To get started on developing your idea, please follow our [Quick Start Guide](#quick-start). 
-
-**Price:** _TBA_
+To get started on developing your idea, we recommend our [Quick Start Guide](#quick-start). 
 
 
 ## The Clarification SDK
-The SDK to implement clarification algorithms that can be judged within the clarification competition. We expect that every participant submits a single Python file `clarifier.py` which implements `ClarificationAlgorithmBase` (`clarify.ClarificationAlgorithmBase`). 
+Your goal is to implement a clarification algorithm within our software development kit (SDK). Participating systems are submitted as a single Python file which contains an implementation of `ClarificationAlgorithmBase` (`clarify.ClarificationAlgorithmBase`). 
 
 ### Installation
 We use `uv` to develop this project. Follow the steps to install the project:
@@ -56,7 +54,7 @@ docker pull ganler/evalplus
 ```
 
 ## Quick Start
-To implement a clarification algorithm, you only need to provide a single Python file implementing `ClarificationAlgorithmBase`. Example:
+To implement your first clarification algorithm, you only need to provide a single Python file implementing `ClarificationAlgorithmBase`. Example:
 ```python
 from __future__ import annotations
 from typing import Any
@@ -91,7 +89,7 @@ class QuickStartClarification(ClarificationAlgorithmBase):
                 except TooManyQuestionException:
                     return response
 ```
-To experiment with our clarification SDK, copy the code above into a Python file called `clarifier.py` in the root directory of the project. You can evaluate the clarification algorithm by first generating responses from your algorithm:
+Copy the code above into a Python file called `clarifier.py` in the root directory of the project. You can evaluate the clarification algorithm by first generating responses from your algorithm:
 ```bash
 python generate_responses.py [PATH_TO_CLARIFIER] [INPUT_BENCHMARK] [RESPONSE_PATH]
 ```
@@ -106,15 +104,16 @@ python evaluate_responses.py [INPUT_BENCHMARK] [RESPONSE_PATH] [RESULTS_PATH]
 ```
 For the quick start, it is enough to call `python evaluate_responses.py`. The script will print a summary of the run on the console.
 
-## Clarification Algorithms
-We implemented baseline algorithms within our SDK as inspirations.
+## Clarification Baselines
+Our SDK provides implementations of several clarification algorithms for inspiration. To get a feeling how these approaches work, we recommend exploring
+their implementation in `clarify/baselines` and using our Chat CLI `python chat.py` to interact with different clarification systems.
 
 ### Direct LLM
 > Algorithm: An LLM is tasked to implement a given task specification. If the LLM does not provide an implementation, DirectLLM interprets the response as a clarifying question which is clarified.
 
 A simplistic baseline for code generation with clarifications. 
 ```bash
-python generate_responses.py clarify/baselines/direct.py [input file] [output file]
+python chat.py clarify/baselines/direct.py 
 ```
 
 ### ClarifyGPT
@@ -122,7 +121,7 @@ python generate_responses.py clarify/baselines/direct.py [input file] [output fi
 
 A modernized version of [ClarifyGPT](https://arxiv.org/abs/2310.10996) for clarification question generation. The modernized version implements incremental clustering, self-repair, and LLM-based test generation. 
 ```bash
-python generate_responses.py clarify/baselines/clarifygpt.py [input file] [output file]
+python chat.py clarify/baselines/clarifygpt.py
 ```
 
 ### Okanagan
@@ -130,7 +129,7 @@ python generate_responses.py clarify/baselines/clarifygpt.py [input file] [outpu
 
 An implementation of [Okanagan](https://arxiv.org/abs/2406.00215) for clarification question generation. 
 ```bash
-python generate_responses.py clarify/baselines/okanagan.py [input file] [output file]
+python chat.py clarify/baselines/okanagan.py
 ```
 
 ## API
@@ -186,3 +185,12 @@ class ClarificationEnvironment:
         A string representing std out of the Docker environment.
         """
 ```
+
+## Organizers & Contact
+The Clarification Challenge is organized by
+- **Amal AKLI**, University of Luxembourg, <amal.akli@uni.lu>
+- **Jie JW Wu**, Michigan Technological University, <jie.jw.wu@mtu.edu>
+- **Cedric Richter**, University of Luxembourg, <cedric.richter@uni.lu>
+- **Mike Papadakis**, University of Luxembourg, <michail.papadakis@uni.lu>
+
+If you have questions, please feel free to reach out to us.
