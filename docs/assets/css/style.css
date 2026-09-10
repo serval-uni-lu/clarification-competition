@@ -107,7 +107,7 @@ h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.01em; }
 .split-heading { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
 .split-heading > div { max-width: 760px; }
 .status-pill { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 7px 11px; border: 1px solid #b7dfc2; border-radius: 999px; background: #f2fbf4; color: var(--green); font-size: 12px; font-weight: 750; }
-.status-pill span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.status-pill .status-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--green); }
 
 .leaderboard-section { background: white !important; }
 .leaderboard-shell { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: white; box-shadow: var(--shadow); }
