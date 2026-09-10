@@ -9,7 +9,7 @@
 ## The Clarification Challenge
 Large language model-based coding assistants are often evaluated in scenarios where user requirements are well-specified and clear. In practice, real-world requirements are often underspecified: they lack critical details that seem obvious, yet are necessary for the assistant to solve the task correctly.
 
-We would hope that assistants would clarify unclear requirements by asking the user for additional specification, helping the assistant to produce code that is well-aligned with the user's intent. Existing LLMs, however, often show the opposite effect: instead of asking for clarification, they confidently produce one possible interpretation, misaligned with what the
+We would hope that assistants would clarify unclear requirements by asking the user for additional specification, helping the assistant to produce code that is well-aligned with the user's intent. Existing LLMs, however, often show the opposite: instead of asking for clarification, they confidently produce one possible interpretation, misaligned with what the
 user intended.
 
 **The Challenge:** We challenge the community to develop LLM-based coding assistants that detect underspecified requirements and ask clarifying questions to resolve them. The difficulty lies not in the coding task itself (each problem asks for a simple Python function) but in recognizing which requirements are underspecified and formulating targeted questions to clarify them.
@@ -20,7 +20,7 @@ class LLMClarification(ClarificationAlgorithmBase):
     def run(self, env: ClarificationEnvironment, problem) -> str:
         # Your clarification algorithm here
 ```
-where `env.llm(...)` and `env.ask_human(...)` help you to interact with LLMs and (simulated) users. A problem typically contains a prompt with a Python function to be implemented. The goal is to implement an algorithm that interacts effectively with the environment to produce a coding solution to given problem.
+where `env.llm(...)` and `env.ask_human(...)` help you to interact with LLMs and (simulated) users. A problem typically contains a prompt with a Python function to be implemented. The goal is to implement an algorithm that interacts effectively with the environment to produce a coding solution to a given problem.
 
 **How to get started?** Participation is simple: Fork our repository, implement a new clarification algorithm (a single Python file), and create a pull request.
 
@@ -28,7 +28,7 @@ To get started on developing your idea, we recommend our [Quick Start Guide](#qu
 
 
 ## The Clarification SDK
-Your goal is to implement a clarification algorithm within our software development kit (SDK). Participating systems are submitted as a single Python file which contains an implementation of `ClarificationAlgorithmBase` (`clarify.ClarificationAlgorithmBase`). 
+Your goal is to implement a clarification algorithm within our software development kit (SDK). Participating systems are submitted as a single Python file `clarify/algorithms/<name>.py` which contains an implementation of `ClarificationAlgorithmBase` (`clarify.ClarificationAlgorithmBase`). 
 
 ### Installation
 We use `uv` to develop this project. Follow the steps to install the project:
@@ -186,6 +186,27 @@ class ClarificationEnvironment:
         """
 ```
 
+## Submission
+Fork our project, implement your clarification algorithm in `clarify/algorithms/<name>.py`, and submit a pull request. Every _valid_ submission is a single Python file that implements `ClarificationAlgorithmBase` with a valid submission header in the following format (Use `clarify/algorithms/demo.py` as guidance):
+
+```python
+# SPDX-FileCopyrightText: 2026 Submitter <submitter@email.com>
+#
+# SPDX-License-Identifier: Open Source License like MIT, Apache 2.0, ...
+
+"""Algorithm name.
+
+Short description of the main mechanism of the implemented algorithm. 
+This does not need to go into details, but should capture the core idea.
+
+Team: Your Team Name
+Team Members: Member 1, Member 2, ...
+Main Contact: main.contact@email.com
+"""
+```
+
+*Hint:* To support auto-discovery, one class in the file should inherit from `ClarificationAlgorithmBase`. If you need multiple (for prototyping), prefix algorithms that are not part of the submission with an underscore, e.g. `_MyFirstAttempt` and `MyFinalAttempt`.
+
 ## Benchmarking
 We evaluate on benchmarks derived from [MBPP](https://arxiv.org/pdf/2108.07732) and [HumanEval](https://arxiv.org/abs/2107.03374). The benchmark tasks contain variants which task description is ambiguous, incomplete, or even contradicting the original intent of the user. The tasks are collected under `data/mbpp` (single sentence specifications) and under `data/humaneval` (function headers).
 
@@ -198,21 +219,21 @@ to load the training split (`--split train`) or validation split (`--split val`)
 The same setting has to be applied when evaluating the responses.
 
 ## Evaluation Criteria
-Clarification algorithms will be scored based on a set of criteria that evaluate both _clarification efficiency_ and _effectiveness_:
+Clarification algorithms will be scored based on a set of criteria that evaluate both _clarification effectiveness_ and _quality_:
 
-1. **Turn-discounted Success:** The effectiveness of the clarification algorithm to produce a correct implementation in the fewest clarification turns possible:
+1. **Clarification effectiveness:** The effectiveness of the clarification algorithm is measured via `turn-discounted success` (TDS) as our core metric. TDS measures the ability to produce a correct implementation in the fewest clarification turns possible:
 
 $$\text{TDS} = \frac{1}{n} \sum^n_{i = 1} Pass_i * \frac{1}{\log_2(n_i + 2)},$$
 
    where $Pass_i = 1$ if the i-th solution pass the developer tests and $n_i$ is the number of clarification turns. 
 
-2. **nDCG:** The quality of the clarification in each turn. An LLM judge decides in each clarification turn whether the clarification question was good (see criteria below), producing a hit sequence $H = (h_1, ..., h_n)$ with $h_i = 1$ for good questions and $h_i = 0$ otherwise. The dicounted cumulative gain is the computed by:
+2. **Clarification quality:** The quality of the clarification in each turn is measured via an adapted version of `normalized discounted cumulative gain` (nDCG). An LLM judge decides in each clarification turn whether the clarification question was good (see criteria below), producing a hit sequence $H = (h_1, ..., h_n)$ with $h_i = 1$ for good questions and $h_i = 0$ otherwise. The dicounted cumulative gain is the computed by:
 
 $$DCG = \sum^n_{i = 1} \frac{h_i}{\log_2(i + 1)}$$
 
 $nDCG = DCG/IDCG$ normalizes DCG with an idealized score (all question were good), thus rewarding clarification systems that continously produce good clarification questions.
 
-3. **Pass@1:** The raw pass rate of the implementation produced by the clarification algorithms.
+3. **Additional Metrics:** We report additional metrics such as `Pass@1`, `clarification rate` and `over-asking rate`. `Pass@1` is the raw pass rate of the implementation produced by the clarification algorithms. `clarification rate` is the percentage of tasks where the clarification algorithm produces at least one question. `over-asking rate` is the percentage of tasks that are sufficiently specified (an LLM can solve the task without clarification) and the algorithm still produces clarifying questions.
 
 **Quality Criteria: what is a "good" clarification question?** Clarification questions are judged with respect to:
 - **Criticality:** A question that addresses a real blocker to a correct solution,
