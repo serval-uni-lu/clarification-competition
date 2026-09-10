@@ -1,4 +1,4 @@
-track,algorithm,model,tds,pass_at_1,ndcg,clarification_rate,over_asking_rate,avg_cost_usd,team,date,submission_url,status
-single,Direct LLM,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,example
-multi,ClarifyGPT,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,example
-multi,Okanagan,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,example
+track,algorithm,model,tds,pass_at_1,ndcg,clarification_rate,over_asking_rate,avg_cost_usd,team,date,submission_url,is_baseline,status
+single,Direct LLM,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,true,example
+multi,ClarifyGPT,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,true,example
+multi,Okanagan,SET MODEL,,,,,,,Baseline,YYYY-MM-DD,https://github.com/serval-uni-lu/clarification-competition/tree/main/clarify/baselines,true,example

@@ -50,7 +50,8 @@
       ndcgN: numberOrNull(row.ndcg),
       clarifyN: numberOrNull(row.clarification_rate),
       overAskN: numberOrNull(row.over_asking_rate),
-      costN: numberOrNull(row.avg_cost_usd)
+      costN: numberOrNull(row.avg_cost_usd),
+      isBaseline: String(row.is_baseline || '').toLowerCase() === 'true'
     }));
   }
 
@@ -58,26 +59,42 @@
     return state.resultSet === 'private' ? state.privateRows : state.publicRows;
   }
 
+  // Competition ordering: TDS descending, then nDCG descending.
+  // Returns a negative number when a should appear before b.
+  function compareCompetitionScores(a, b) {
+    if (a.tdsN === null && b.tdsN === null) return 0;
+    if (a.tdsN === null) return 1;
+    if (b.tdsN === null) return -1;
+
+    const tdsDifference = b.tdsN - a.tdsN;
+    if (tdsDifference !== 0) return tdsDifference;
+
+    if (a.ndcgN === null && b.ndcgN !== null) return 1;
+    if (a.ndcgN !== null && b.ndcgN === null) return -1;
+    if (a.ndcgN !== null && b.ndcgN !== null && a.ndcgN !== b.ndcgN) return b.ndcgN - a.ndcgN;
+    return 0;
+  }
+
   function renderLeaderboard() {
     const body = $('#leaderboard-body');
     const rows = activeRows()
       .filter(row => !state.multipleTracksEnabled || row.track === state.track)
       .sort((a, b) => {
-        if (a.tdsN === null && b.tdsN === null) return a.algorithm.localeCompare(b.algorithm);
-        if (a.tdsN === null) return 1;
-        if (b.tdsN === null) return -1;
-
-        const tdsDifference = b.tdsN - a.tdsN;
-        if (tdsDifference !== 0) return tdsDifference;
-
-        if (a.ndcgN === null && b.ndcgN !== null) return 1;
-        if (a.ndcgN !== null && b.ndcgN === null) return -1;
-        if (a.ndcgN !== null && b.ndcgN !== null && a.ndcgN !== b.ndcgN) return b.ndcgN - a.ndcgN;
+        const scoreOrder = compareCompetitionScores(a, b);
+        if (scoreOrder !== 0) return scoreOrder;
 
         // Exact TDS+nDCG ties are shown alphabetically only for deterministic display.
         // No reported metric below nDCG affects the competition ranking.
         return a.algorithm.localeCompare(b.algorithm);
       });
+
+    // A submission earns a rank only if it is not a baseline and it is not below
+    // the strongest baseline under the official TDS -> nDCG ordering. Exact ties
+    // with the strongest baseline remain rank-eligible.
+    const baselinesWithScores = rows.filter(row => row.isBaseline && row.tdsN !== null);
+    const strongestBaseline = baselinesWithScores.length
+      ? [...baselinesWithScores].sort(compareCompetitionScores)[0]
+      : null;
 
     $('#track-description').textContent = state.multipleTracksEnabled
       ? (state.track === 'single'
@@ -95,7 +112,8 @@
     let rankedIndex = 0;
     let previousRankedRow = null;
     body.innerHTML = rows.map(row => {
-      const isRanked = row.tdsN !== null;
+      const meetsBaselineThreshold = !strongestBaseline || compareCompetitionScores(row, strongestBaseline) <= 0;
+      const isRanked = row.tdsN !== null && !row.isBaseline && meetsBaselineThreshold;
       if (isRanked) {
         rankedIndex += 1;
         const exactTie = previousRankedRow
@@ -105,7 +123,10 @@
         previousRankedRow = row;
       }
       const place = isRanked ? rank : '—';
-      const note = row.status === 'example' ? '<span class="placeholder-badge">example row</span>' : '';
+      const badges = [];
+      if (row.isBaseline) badges.push('<span class="placeholder-badge">baseline</span>');
+      if (row.status === 'example') badges.push('<span class="placeholder-badge">example row</span>');
+      const note = badges.join(' ');
       const submission = row.submission_url
         ? `<a class="submission-link" href="${escapeHTML(row.submission_url)}" target="_blank" rel="noreferrer">View ↗</a>`
         : '—';
