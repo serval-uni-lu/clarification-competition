@@ -1,5 +1,5 @@
 (() => {
-  const state = { track: 'single', resultSet: 'public', rows: [] };
+  const state = { track: 'main', resultSet: 'public', rows: [], multipleTracksEnabled: false, competition: {} };
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -46,27 +46,48 @@
   function renderLeaderboard() {
     const body = $('#leaderboard-body');
     const rows = state.rows
-      .filter(row => row.track === state.track)
+      .filter(row => !state.multipleTracksEnabled || row.track === state.track)
       .sort((a, b) => {
         if (a.tdsN === null && b.tdsN === null) return a.algorithm.localeCompare(b.algorithm);
         if (a.tdsN === null) return 1;
         if (b.tdsN === null) return -1;
-        return b.tdsN - a.tdsN || (a.costN ?? Infinity) - (b.costN ?? Infinity);
+
+        const tdsDifference = b.tdsN - a.tdsN;
+        if (tdsDifference !== 0) return tdsDifference;
+
+        if (a.ndcgN === null && b.ndcgN !== null) return 1;
+        if (a.ndcgN !== null && b.ndcgN === null) return -1;
+        if (a.ndcgN !== null && b.ndcgN !== null && a.ndcgN !== b.ndcgN) return b.ndcgN - a.ndcgN;
+
+        // Exact TDS+nDCG ties are shown alphabetically only for deterministic display.
+        // No reported metric below nDCG affects the competition ranking.
+        return a.algorithm.localeCompare(b.algorithm);
       });
 
-    $('#track-description').textContent = state.track === 'single'
-      ? 'Single-turn track · at most one clarification turn (confirm final organizer constraint).'
-      : 'Multi-turn track · iterative clarification within the organizer-defined budget.';
+    $('#track-description').textContent = state.multipleTracksEnabled
+      ? (state.track === 'single'
+        ? 'Single-turn track · at most one clarification turn (confirm final organizer constraint).'
+        : 'Multi-turn track · iterative clarification within the organizer-defined budget.')
+      : 'One shared clarification track for all eligible systems.';
 
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="10" class="empty-cell">No entries yet for this track. Add a row to <code>data/leaderboard.csv</code>.</td></tr>';
+      body.innerHTML = `<tr><td colspan="10" class="empty-cell">${state.multipleTracksEnabled ? 'No entries yet for this track.' : 'No entries yet.'} Add a row to <code>data/leaderboard.csv</code>.</td></tr>`;
       return;
     }
 
     let rank = 0;
+    let rankedIndex = 0;
+    let previousRankedRow = null;
     body.innerHTML = rows.map(row => {
       const isRanked = row.tdsN !== null;
-      if (isRanked) rank += 1;
+      if (isRanked) {
+        rankedIndex += 1;
+        const exactTie = previousRankedRow
+          && row.tdsN === previousRankedRow.tdsN
+          && row.ndcgN === previousRankedRow.ndcgN;
+        if (!exactTie) rank = rankedIndex;
+        previousRankedRow = row;
+      }
       const place = isRanked ? rank : '—';
       const note = row.status === 'example' ? '<span class="placeholder-badge">example row</span>' : '';
       const submission = row.submission_url
@@ -77,8 +98,8 @@
         <td class="algorithm-cell"><strong>${escapeHTML(row.algorithm)}</strong><small>${escapeHTML(row.team || '')}</small>${note}</td>
         <td>${escapeHTML(row.model || '—')}</td>
         <td class="metric-value primary-value">${formatScore(row.tdsN)}</td>
+        <td class="metric-value tie-break-value">${formatScore(row.ndcgN)}</td>
         <td class="metric-value">${formatPercent(row.passN)}</td>
-        <td class="metric-value">${formatScore(row.ndcgN)}</td>
         <td class="metric-value">${formatPercent(row.clarifyN)}</td>
         <td class="metric-value">${formatPercent(row.overAskN)}</td>
         <td class="cost-value">${formatCost(row.costN)}</td>
@@ -108,7 +129,34 @@
     renderLeaderboard();
   }
 
+  function configureTracks(data) {
+    state.multipleTracksEnabled = data.multiple_tracks_enabled === true;
+    state.track = state.multipleTracksEnabled ? 'single' : 'main';
+
+    const trackControl = $('#track-control');
+    if (trackControl) trackControl.hidden = !state.multipleTracksEnabled;
+
+    const heroTrackCount = $('#hero-track-count');
+    const heroTrackLabel = $('#hero-track-label');
+    if (heroTrackCount) heroTrackCount.textContent = state.multipleTracksEnabled ? '2' : '1';
+    if (heroTrackLabel) heroTrackLabel.textContent = state.multipleTracksEnabled ? 'competition tracks' : 'competition track';
+
+    const mainTrackCard = $('#main-track-card');
+    const multiTrackCards = $('#multi-track-cards');
+    if (mainTrackCard) mainTrackCard.hidden = state.multipleTracksEnabled;
+    if (multiTrackCards) multiTrackCards.hidden = !state.multipleTracksEnabled;
+
+    $$('[data-track]').forEach(btn => {
+      const active = btn.dataset.track === state.track;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  }
+
   function applyCompetitionContent(data) {
+    state.competition = data;
+    configureTracks(data);
+
     $$('[data-content]').forEach(el => {
       const key = el.dataset.content;
       if (Object.prototype.hasOwnProperty.call(data, key)) el.textContent = data[key];

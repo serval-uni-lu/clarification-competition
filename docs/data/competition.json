@@ -29,5 +29,7 @@
       "label": "Final results",
       "description": "Private-test rankings and winners are published."
     }
-  ]
+  ],
+  "multiple_tracks_enabled": false,
+  "main_track": "All eligible systems compete on one shared leaderboard. Clarification behavior is evaluated through the competition metrics rather than split into separate leaderboard tracks."
 }

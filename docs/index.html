@@ -38,7 +38,7 @@
             <a class="button button-secondary" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Get the SDK ↗</a>
           </div>
           <div class="hero-facts" aria-label="Competition facts">
-            <div><strong>2</strong><span>competition tracks</span></div>
+            <div><strong id="hero-track-count">1</strong><span id="hero-track-label">competition track</span></div>
             <div><strong>770</strong><span>public validation examples</span></div>
             <div><strong>1 file</strong><span>to submit an algorithm</span></div>
           </div>
@@ -72,7 +72,7 @@
                 <button type="button" class="segment" data-result-set="private" aria-pressed="false">Private test <span class="lock">🔒</span></button>
               </div>
             </div>
-            <div class="control-group" aria-label="Track">
+            <div class="control-group" id="track-control" aria-label="Track" hidden>
               <span class="control-label">Track</span>
               <div class="segmented" role="group" aria-label="Track selector">
                 <button type="button" class="segment is-active" data-track="single" aria-pressed="true">Single-turn</button>
@@ -83,8 +83,8 @@
 
           <div id="public-results">
             <div class="table-note">
-              <span id="track-description">Single-turn clarification track.</span>
-              <span>Primary ranking metric: <strong>TDS ↑</strong></span>
+              <span id="track-description">One shared clarification track for all eligible systems.</span>
+              <span>Rank by <strong>TDS ↑</strong> · tie-break by <strong>nDCG ↑</strong></span>
             </div>
             <div class="table-scroll">
               <table class="leaderboard-table">
@@ -93,9 +93,9 @@
                     <th class="rank-col">#</th>
                     <th>Algorithm</th>
                     <th>Model used</th>
-                    <th title="Turn-discounted success">TDS ↑</th>
+                    <th title="Primary ranking metric: Turn-discounted success">TDS ↑</th>
+                    <th title="Tie-breaker when TDS is equal">nDCG ↑ <span class="metric-role">tie-break</span></th>
                     <th>Pass@1 ↑</th>
-                    <th>nDCG ↑</th>
                     <th title="Percentage of tasks with at least one clarification">Clarify ↑</th>
                     <th title="Percentage of sufficiently specified tasks where the system still asks">Over-ask ↓</th>
                     <th title="Average model/API cost per task">Avg. cost ↓</th>
@@ -107,7 +107,7 @@
                 </tbody>
               </table>
             </div>
-            <p class="data-footnote">TDS is the core metric. Secondary metrics help distinguish systems that solve tasks reliably, ask useful questions, avoid unnecessary clarifications, and remain cost-efficient. Example rows with missing scores are intentionally unranked.</p>
+            <p class="data-footnote">Leaderboard order is determined by TDS. nDCG breaks ties in TDS. Pass@1, clarification rate, over-asking rate, and cost are reported for transparency but do not affect rank. Example rows with missing TDS are intentionally unranked.</p>
           </div>
 
           <div id="private-results" class="private-placeholder" hidden>
@@ -127,11 +127,20 @@
       <div class="container">
         <div class="section-heading">
           <div class="eyebrow">Competition format</div>
-          <h2>Rules & tracks</h2>
+          <h2>Rules & format</h2>
           <p>Keep the algorithm small, reproducible, and focused on the central problem: recognizing when a requirement needs clarification.</p>
         </div>
 
-        <div class="track-grid">
+        <div class="track-grid track-grid-single" id="main-track-card">
+          <article class="track-card featured">
+            <div class="track-number">01</div>
+            <div class="track-tag">Clarification track</div>
+            <h3>One shared leaderboard</h3>
+            <p data-content="main_track">All eligible systems compete on one shared clarification leaderboard.</p>
+          </article>
+        </div>
+
+        <div class="track-grid" id="multi-track-cards" hidden>
           <article class="track-card featured">
             <div class="track-number">01</div>
             <div class="track-tag">Single-turn track</div>
@@ -164,15 +173,15 @@
         <div class="section-heading">
           <div class="eyebrow">Evaluation</div>
           <h2>What gets measured</h2>
-          <p>The main score rewards correct implementations with fewer clarification turns; additional metrics make the trade-offs visible.</p>
+          <p>TDS determines leaderboard rank, with nDCG used only to break TDS ties. The remaining metrics are reported for transparency.</p>
         </div>
         <div class="metrics-grid">
-          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary metric.</strong> Rewards passing implementations while discounting solutions that need more clarification turns.</p></article>
-          <article class="metric-card"><div class="metric-symbol">P@1</div><h3>Pass@1</h3><p>Raw percentage of generated implementations that pass the developer tests.</p></article>
-          <article class="metric-card"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p>Rewards consistently useful clarification questions across turns, as judged against the published quality criteria.</p></article>
-          <article class="metric-card"><div class="metric-symbol">CR</div><h3>Clarification rate</h3><p>Percentage of tasks for which the system asks at least one clarification question.</p></article>
-          <article class="metric-card"><div class="metric-symbol">OA</div><h3>Over-asking rate</h3><p>How often the system asks a question even though the task is sufficiently specified. Lower is better.</p></article>
-          <article class="metric-card"><div class="metric-symbol">$</div><h3>Average cost</h3><p>Average LLM/API cost per task, shown alongside quality metrics rather than folded into the primary score.</p></article>
+          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary ranking metric.</strong> Leaderboard positions are ordered by TDS from highest to lowest.</p></article>
+          <article class="metric-card tie-break-metric"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p><strong>Tie-breaker.</strong> When two systems have the same TDS, the higher nDCG ranks first.</p></article>
+          <article class="metric-card"><div class="metric-symbol">P@1</div><h3>Pass@1</h3><p><strong>Reported only.</strong> Raw percentage of generated implementations that pass the developer tests.</p></article>
+          <article class="metric-card"><div class="metric-symbol">CR</div><h3>Clarification rate</h3><p><strong>Reported only.</strong> Percentage of tasks for which the system asks at least one clarification question.</p></article>
+          <article class="metric-card"><div class="metric-symbol">OA</div><h3>Over-asking rate</h3><p><strong>Reported only.</strong> How often the system asks a question even though the task is sufficiently specified. Lower is better.</p></article>
+          <article class="metric-card"><div class="metric-symbol">$</div><h3>Average cost</h3><p><strong>Reported only.</strong> Average LLM/API cost per task; it does not affect leaderboard rank.</p></article>
         </div>
       </div>
     </section>

@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   --blue: #0969da;
   --blue-dark: #0550ae;
@@ -132,6 +133,8 @@ h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.01em; }
 .algorithm-cell small { color: var(--muted); }
 .metric-value { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .primary-value { color: var(--blue-dark); }
+.tie-break-value { color: #344054; }
+.metric-role { margin-left: 4px; color: #8a94a6; font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .cost-value { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .submission-link { display: inline-flex; padding: 5px 9px; border: 1px solid var(--line); border-radius: 6px; color: #475467; white-space: nowrap; font-size: 12px; font-weight: 700; }
 .submission-link:hover { border-color: #9fb9db; color: var(--blue); text-decoration: none; }
@@ -145,6 +148,8 @@ h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.01em; }
 .lock-icon { display: grid; place-items: center; flex: 0 0 54px; width: 54px; height: 54px; border-radius: 12px; background: white; border: 1px solid var(--line); font-size: 21px; filter: grayscale(1); }
 
 .track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.track-grid-single { grid-template-columns: minmax(0, 1fr); }
+.track-grid-single .track-card { max-width: 760px; }
 .track-card { position: relative; min-height: 220px; padding: 28px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: white; }
 .track-card.featured { border-color: #b6d3f6; background: linear-gradient(145deg, #fff 0%, #f3f8ff 100%); }
 .track-number { position: absolute; right: 20px; top: 11px; color: rgba(9,105,218,.08); font-size: 70px; font-weight: 850; letter-spacing: -.07em; }
@@ -160,6 +165,7 @@ h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.01em; }
 .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .metric-card { padding: 23px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .metric-card.primary-metric { border-color: #b6d3f6; background: var(--blue-pale); }
+.metric-card.tie-break-metric { border-color: #d7e5f7; background: #fbfdff; }
 .metric-symbol { width: fit-content; margin-bottom: 28px; padding: 5px 8px; border-radius: 6px; background: #eef2f6; color: #475467; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; font-weight: 800; }
 .primary-metric .metric-symbol { background: var(--blue); color: white; }
 .metric-card p { margin: 0; color: var(--muted); font-size: 14px; }
