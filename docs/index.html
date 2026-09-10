@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Clarification Challenge — building coding assistants that clarify underspecified requirements before they code.">
+  <title>The Clarification Challenge</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#top" aria-label="Clarification Challenge home">
+        <span class="brand-mark" aria-hidden="true"><span>?</span><b>→</b><span>&lt;/&gt;</span></span>
+        <span class="brand-copy"><strong>The Clarification Challenge</strong><small>Clarify before you code.</small></span>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#leaderboard">Leaderboard</a>
+        <a href="#rules">Rules</a>
+        <a href="#timeline">Deadlines</a>
+        <a href="#participate">Participate</a>
+        <a class="nav-github" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">Research competition · LLM coding assistants</div>
+          <h1>Can your coding assistant <span>ask the right question</span>?</h1>
+          <p class="hero-summary" data-content="summary">Loading competition summary…</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#leaderboard">View leaderboard</a>
+            <a class="button button-secondary" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Get the SDK ↗</a>
+          </div>
+          <div class="hero-facts" aria-label="Competition facts">
+            <div><strong>2</strong><span>competition tracks</span></div>
+            <div><strong>770</strong><span>public validation examples</span></div>
+            <div><strong>1 file</strong><span>to submit an algorithm</span></div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="bubble bubble-question"><span>?</span><i></i></div>
+          <div class="arrow">→</div>
+          <div class="bubble bubble-code"><span>&lt;/&gt;</span><i></i></div>
+          <div class="visual-label">underspecified<br><b>→ clarified →</b><br>implemented</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section leaderboard-section" id="leaderboard">
+      <div class="container">
+        <div class="section-heading split-heading">
+          <div>
+            <div class="eyebrow">Public benchmark</div>
+            <h2>Leaderboard</h2>
+            <p>Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.</p>
+          </div>
+          <span class="status-pill"><span></span> Public validation</span>
+        </div>
+
+        <div class="leaderboard-shell">
+          <div class="leaderboard-controls">
+            <div class="control-group" aria-label="Result set">
+              <span class="control-label">Results</span>
+              <div class="segmented" role="group" aria-label="Result set selector">
+                <button type="button" class="segment is-active" data-result-set="public" aria-pressed="true">Public validation</button>
+                <button type="button" class="segment" data-result-set="private" aria-pressed="false">Private test <span class="lock">🔒</span></button>
+              </div>
+            </div>
+            <div class="control-group" aria-label="Track">
+              <span class="control-label">Track</span>
+              <div class="segmented" role="group" aria-label="Track selector">
+                <button type="button" class="segment is-active" data-track="single" aria-pressed="true">Single-turn</button>
+                <button type="button" class="segment" data-track="multi" aria-pressed="false">Multi-turn</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="public-results">
+            <div class="table-note">
+              <span id="track-description">Single-turn clarification track.</span>
+              <span>Primary ranking metric: <strong>TDS ↑</strong></span>
+            </div>
+            <div class="table-scroll">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th class="rank-col">#</th>
+                    <th>Algorithm</th>
+                    <th>Model used</th>
+                    <th title="Turn-discounted success">TDS ↑</th>
+                    <th>Pass@1 ↑</th>
+                    <th>nDCG ↑</th>
+                    <th title="Percentage of tasks with at least one clarification">Clarify ↑</th>
+                    <th title="Percentage of sufficiently specified tasks where the system still asks">Over-ask ↓</th>
+                    <th title="Average model/API cost per task">Avg. cost ↓</th>
+                    <th>Submission</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                  <tr><td colspan="10" class="loading-cell">Loading leaderboard…</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="data-footnote">TDS is the core metric. Secondary metrics help distinguish systems that solve tasks reliably, ask useful questions, avoid unnecessary clarifications, and remain cost-efficient. Example rows with missing scores are intentionally unranked.</p>
+          </div>
+
+          <div id="private-results" class="private-placeholder" hidden>
+            <div class="lock-card">
+              <div class="lock-icon">🔒</div>
+              <div>
+                <h3>Private test results are sealed</h3>
+                <p data-content="private_results_message">Results on the private test set will be evaluated and published after the competition closes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="rules">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Competition format</div>
+          <h2>Rules & tracks</h2>
+          <p>Keep the algorithm small, reproducible, and focused on the central problem: recognizing when a requirement needs clarification.</p>
+        </div>
+
+        <div class="track-grid">
+          <article class="track-card featured">
+            <div class="track-number">01</div>
+            <div class="track-tag">Single-turn track</div>
+            <h3>One chance to clarify</h3>
+            <p data-content="single_track">The system may make at most one clarification turn before returning its implementation. Exact organizer constraints can be updated in <code>data/competition.json</code>.</p>
+          </article>
+          <article class="track-card">
+            <div class="track-number">02</div>
+            <div class="track-tag">Multi-turn track</div>
+            <h3>Clarify iteratively</h3>
+            <p data-content="multi_track">The system may ask multiple targeted clarification questions within the organizer-defined turn budget. Exact budget: TBA.</p>
+          </article>
+        </div>
+
+        <div class="rules-grid">
+          <article class="rule-card"><span>1</span><h3>Submit one algorithm file</h3><p>Implement a class inheriting from <code>ClarificationAlgorithmBase</code>. Competition submissions live in <code>clarify/algorithms/&lt;name&gt;.py</code>.</p></article>
+          <article class="rule-card"><span>2</span><h3>Use the provided environment</h3><p>Your algorithm interacts through the SDK, including <code>env.llm(...)</code>, <code>env.ask_human(...)</code>, and the provided execution interface.</p></article>
+          <article class="rule-card"><span>3</span><h3>Submit through a pull request</h3><p>Fork the repository, add your algorithm, include the required submission header and team metadata, then open a pull request.</p></article>
+          <article class="rule-card"><span>4</span><h3>Public first, private last</h3><p>Develop against the training split and public validation set. Private-test scores are held back and revealed only at final evaluation.</p></article>
+        </div>
+
+        <div class="callout">
+          <strong>Benchmark.</strong> Tasks are derived from MBPP and HumanEval and include variants with ambiguous, incomplete, or contradictory specifications. The repository currently documents 7,961 training examples and 770 validation examples.
+        </div>
+      </div>
+    </section>
+
+    <section class="section metrics-section" id="metrics">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Evaluation</div>
+          <h2>What gets measured</h2>
+          <p>The main score rewards correct implementations with fewer clarification turns; additional metrics make the trade-offs visible.</p>
+        </div>
+        <div class="metrics-grid">
+          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary metric.</strong> Rewards passing implementations while discounting solutions that need more clarification turns.</p></article>
+          <article class="metric-card"><div class="metric-symbol">P@1</div><h3>Pass@1</h3><p>Raw percentage of generated implementations that pass the developer tests.</p></article>
+          <article class="metric-card"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p>Rewards consistently useful clarification questions across turns, as judged against the published quality criteria.</p></article>
+          <article class="metric-card"><div class="metric-symbol">CR</div><h3>Clarification rate</h3><p>Percentage of tasks for which the system asks at least one clarification question.</p></article>
+          <article class="metric-card"><div class="metric-symbol">OA</div><h3>Over-asking rate</h3><p>How often the system asks a question even though the task is sufficiently specified. Lower is better.</p></article>
+          <article class="metric-card"><div class="metric-symbol">$</div><h3>Average cost</h3><p>Average LLM/API cost per task, shown alongside quality metrics rather than folded into the primary score.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="timeline">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Schedule</div>
+          <h2>Important dates</h2>
+          <p>Dates are deliberately data-driven so you can change them without touching the page layout.</p>
+        </div>
+        <div class="timeline" id="timeline-list">
+          <div class="timeline-item"><div class="timeline-date">TBA</div><h3>Loading…</h3></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section participate-section" id="participate">
+      <div class="container participate-grid">
+        <div>
+          <div class="eyebrow">Get started</div>
+          <h2>From idea to leaderboard</h2>
+          <p>Participation follows the repository workflow, so teams can prototype locally and submit the final algorithm through GitHub.</p>
+          <a class="button button-primary" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Open competition repository ↗</a>
+        </div>
+        <ol class="steps">
+          <li><span>01</span><div><strong>Fork & install</strong><p>Fork the repository, install the SDK with <code>uv</code>, and configure your model API key.</p></div></li>
+          <li><span>02</span><div><strong>Implement</strong><p>Add a single clarification algorithm that inherits from <code>ClarificationAlgorithmBase</code>.</p></div></li>
+          <li><span>03</span><div><strong>Evaluate</strong><p>Run response generation and evaluation on the available train/validation splits.</p></div></li>
+          <li><span>04</span><div><strong>Submit</strong><p>Open a pull request with the required team and licensing header. Approved public results can then be added to the CSV leaderboard.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section organizers-section" id="organizers">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Organizers</div>
+          <h2>Contact</h2>
+        </div>
+        <div class="organizer-grid">
+          <div><strong>Amal AKLI</strong><span>University of Luxembourg</span></div>
+          <div><strong>Jie JW Wu</strong><span>Michigan Technological University</span></div>
+          <div><strong>Cedric Richter</strong><span>University of Luxembourg</span></div>
+          <div><strong>Mike Papadakis</strong><span>University of Luxembourg</span></div>
+        </div>
+        <p class="contact-line">For contact details and the latest competition instructions, use the <a href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">competition repository ↗</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <span>© <span id="year"></span> The Clarification Challenge</span>
+      <span>Built as a dependency-free GitHub Pages site.</span>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

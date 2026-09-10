@@ -1,0 +1,33 @@
+{
+  "summary": "Real-world software requirements are often underspecified. The Clarification Challenge asks teams to build LLM-based coding assistants that recognize missing or ambiguous requirements, ask targeted clarification questions, and then produce code that better matches the user's intent.",
+  "single_track": "The system may make at most one clarification turn before returning its implementation. This wording is a competition-site placeholder until the organizers confirm the exact single-turn budget and enforcement rules.",
+  "multi_track": "The system may ask multiple targeted clarification questions before returning its implementation. Replace this text with the exact maximum-turn budget and any stopping rules once finalized.",
+  "private_results_message": "Private test-set scores are not shown during the competition. They will be evaluated and published only at the end, after the final submission deadline.",
+  "dates": [
+    {
+      "date": "TBA",
+      "label": "Competition opens",
+      "description": "Repository, SDK, and public development data available."
+    },
+    {
+      "date": "TBA",
+      "label": "Validation leaderboard opens",
+      "description": "Approved public-validation submissions start appearing here."
+    },
+    {
+      "date": "TBA",
+      "label": "Submission deadline",
+      "description": "Final pull requests must be submitted by the announced cutoff."
+    },
+    {
+      "date": "After deadline",
+      "label": "Private evaluation",
+      "description": "Organizers evaluate eligible systems on the hidden test set."
+    },
+    {
+      "date": "TBA",
+      "label": "Final results",
+      "description": "Private-test rankings and winners are published."
+    }
+  ]
+}
