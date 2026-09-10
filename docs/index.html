@@ -56,11 +56,11 @@
       <div class="container">
         <div class="section-heading split-heading">
           <div>
-            <div class="eyebrow">Public benchmark</div>
+            <div class="eyebrow" id="leaderboard-eyebrow">Public benchmark</div>
             <h2>Leaderboard</h2>
-            <p>Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.</p>
+            <p id="leaderboard-summary">Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.</p>
           </div>
-          <span class="status-pill"><span></span> Public validation</span>
+          <span class="status-pill" id="result-status"><span></span> <span id="result-status-text">Public validation</span></span>
         </div>
 
         <div class="leaderboard-shell">
@@ -69,7 +69,7 @@
               <span class="control-label">Results</span>
               <div class="segmented" role="group" aria-label="Result set selector">
                 <button type="button" class="segment is-active" data-result-set="public" aria-pressed="true">Public validation</button>
-                <button type="button" class="segment" data-result-set="private" aria-pressed="false">Private test <span class="lock">🔒</span></button>
+                <button type="button" class="segment" data-result-set="private" aria-pressed="false">Private test <span class="lock" id="private-lock">🔒</span></button>
               </div>
             </div>
             <div class="control-group" id="track-control" aria-label="Track" hidden>
@@ -81,7 +81,7 @@
             </div>
           </div>
 
-          <div id="public-results">
+          <div id="leaderboard-results">
             <div class="table-note">
               <span id="track-description">One shared clarification track for all eligible systems.</span>
               <span>Rank by <strong>TDS ↑</strong> · tie-break by <strong>nDCG ↑</strong></span>

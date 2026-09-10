@@ -1,5 +1,13 @@
 (() => {
-  const state = { track: 'main', resultSet: 'public', rows: [], multipleTracksEnabled: false, competition: {} };
+  const state = {
+    track: 'main',
+    resultSet: 'public',
+    publicRows: [],
+    privateRows: [],
+    privateResultsPublished: false,
+    multipleTracksEnabled: false,
+    competition: {}
+  };
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -21,8 +29,11 @@
       }
     }
     if (cell.length || row.length) { row.push(cell); rows.push(row); }
+    if (!rows.length) return [];
     const headers = rows.shift().map(h => h.trim());
-    return rows.filter(r => r.some(c => c.trim())).map(r => Object.fromEntries(headers.map((h, i) => [h, (r[i] ?? '').trim()])));
+    return rows
+      .filter(r => r.some(c => c.trim()))
+      .map(r => Object.fromEntries(headers.map((h, i) => [h, (r[i] ?? '').trim()])));
   }
 
   const numberOrNull = value => value === '' || value === undefined ? null : Number(value);
@@ -43,9 +54,13 @@
     }));
   }
 
+  function activeRows() {
+    return state.resultSet === 'private' ? state.privateRows : state.publicRows;
+  }
+
   function renderLeaderboard() {
     const body = $('#leaderboard-body');
-    const rows = state.rows
+    const rows = activeRows()
       .filter(row => !state.multipleTracksEnabled || row.track === state.track)
       .sort((a, b) => {
         if (a.tdsN === null && b.tdsN === null) return a.algorithm.localeCompare(b.algorithm);
@@ -71,7 +86,8 @@
       : 'One shared clarification track for all eligible systems.';
 
     if (!rows.length) {
-      body.innerHTML = `<tr><td colspan="10" class="empty-cell">${state.multipleTracksEnabled ? 'No entries yet for this track.' : 'No entries yet.'} Add a row to <code>data/leaderboard.csv</code>.</td></tr>`;
+      const file = state.resultSet === 'private' ? 'data/private-leaderboard.csv' : 'data/leaderboard.csv';
+      body.innerHTML = `<tr><td colspan="10" class="empty-cell">${state.multipleTracksEnabled ? 'No entries yet for this track.' : 'No entries yet.'} Add a row to <code>${file}</code>.</td></tr>`;
       return;
     }
 
@@ -108,6 +124,32 @@
     }).join('');
   }
 
+  function updateResultSetContent() {
+    const isPrivate = state.resultSet === 'private';
+    const privateAvailable = isPrivate && state.privateResultsPublished;
+
+    $('#leaderboard-results').hidden = isPrivate && !state.privateResultsPublished;
+    $('#private-results').hidden = !isPrivate || state.privateResultsPublished;
+
+    const eyebrow = $('#leaderboard-eyebrow');
+    const summary = $('#leaderboard-summary');
+    const status = $('#result-status-text');
+
+    if (isPrivate) {
+      if (eyebrow) eyebrow.textContent = 'Final benchmark';
+      if (summary) summary.innerHTML = privateAvailable
+        ? 'Final rankings below are for the <strong>private test set</strong>.'
+        : 'Private-test rankings are <strong>sealed until the competition ends</strong>.';
+      if (status) status.textContent = privateAvailable ? 'Private test' : 'Private test · sealed';
+    } else {
+      if (eyebrow) eyebrow.textContent = 'Public benchmark';
+      if (summary) summary.innerHTML = 'Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.';
+      if (status) status.textContent = 'Public validation';
+    }
+
+    if (!isPrivate || state.privateResultsPublished) renderLeaderboard();
+  }
+
   function setResultSet(resultSet) {
     state.resultSet = resultSet;
     $$('[data-result-set]').forEach(btn => {
@@ -115,8 +157,7 @@
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', String(active));
     });
-    $('#public-results').hidden = resultSet !== 'public';
-    $('#private-results').hidden = resultSet !== 'private';
+    updateResultSetContent();
   }
 
   function setTrack(track) {
@@ -126,7 +167,7 @@
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', String(active));
     });
-    renderLeaderboard();
+    if (state.resultSet !== 'private' || state.privateResultsPublished) renderLeaderboard();
   }
 
   function configureTracks(data) {
@@ -153,9 +194,16 @@
     });
   }
 
+  function configurePrivateResults(data) {
+    state.privateResultsPublished = data.private_results_published === true;
+    const lock = $('#private-lock');
+    if (lock) lock.hidden = state.privateResultsPublished;
+  }
+
   function applyCompetitionContent(data) {
     state.competition = data;
     configureTracks(data);
+    configurePrivateResults(data);
 
     $$('[data-content]').forEach(el => {
       const key = el.dataset.content;
@@ -172,20 +220,37 @@
     }
   }
 
+  async function fetchRows(path) {
+    const response = await fetch(path, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`${path}: ${response.status}`);
+    return normalizedRows(parseCSV(await response.text()));
+  }
+
   async function loadData() {
     try {
-      const [leaderboardResponse, competitionResponse] = await Promise.all([
-        fetch('data/leaderboard.csv', { cache: 'no-store' }),
+      const [publicRows, competitionResponse] = await Promise.all([
+        fetchRows('data/leaderboard.csv'),
         fetch('data/competition.json', { cache: 'no-store' })
       ]);
-      if (!leaderboardResponse.ok) throw new Error(`leaderboard.csv: ${leaderboardResponse.status}`);
       if (!competitionResponse.ok) throw new Error(`competition.json: ${competitionResponse.status}`);
-      state.rows = normalizedRows(parseCSV(await leaderboardResponse.text()));
-      applyCompetitionContent(await competitionResponse.json());
-      renderLeaderboard();
+
+      state.publicRows = publicRows;
+      const competition = await competitionResponse.json();
+      applyCompetitionContent(competition);
+
+      if (state.privateResultsPublished) {
+        try {
+          state.privateRows = await fetchRows('data/private-leaderboard.csv');
+        } catch (error) {
+          console.error(error);
+          state.privateRows = [];
+        }
+      }
+
+      setResultSet('public');
     } catch (error) {
       console.error(error);
-      $('#leaderboard-body').innerHTML = '<tr><td colspan="10" class="empty-cell">Could not load leaderboard data. Check <code>data/leaderboard.csv</code> and serve the site through GitHub Pages or a local web server.</td></tr>';
+      $('#leaderboard-body').innerHTML = '<tr><td colspan="10" class="empty-cell">Could not load leaderboard data. Check <code>data/leaderboard.csv</code> and <code>data/competition.json</code>, then serve the site through GitHub Pages or a local web server.</td></tr>';
     }
   }
 

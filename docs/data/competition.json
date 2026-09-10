@@ -3,6 +3,7 @@
   "single_track": "The system may make at most one clarification turn before returning its implementation. This wording is a competition-site placeholder until the organizers confirm the exact single-turn budget and enforcement rules.",
   "multi_track": "The system may ask multiple targeted clarification questions before returning its implementation. Replace this text with the exact maximum-turn budget and any stopping rules once finalized.",
   "private_results_message": "Private test-set scores are not shown during the competition. They will be evaluated and published only at the end, after the final submission deadline.",
+  "private_results_published": false,
   "dates": [
     {
       "date": "Sep 11th",
@@ -31,5 +32,5 @@
     }
   ],
   "multiple_tracks_enabled": false,
-  "main_track": "All eligible systems compete on one shared leaderboard. Clarification behavior is evaluated through the competition metrics rather than split into separate leaderboard tracks."
+  "main_track": "All eligible systems compete on one shared leaderboard, ranked by the competition’s official clarification metrics."
 }
