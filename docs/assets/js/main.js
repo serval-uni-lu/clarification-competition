@@ -127,7 +127,11 @@
       }
       const place = isRanked ? rank : '—';
       const badges = [];
-      if (row.isBaseline) badges.push('<span class="placeholder-badge">baseline</span>');
+      if (row.isBaseline) {
+        badges.push('<span class="placeholder-badge">Baseline</span>');
+      } else if (row.team) {
+        badges.push(`<span class="team-badge">${escapeHTML(row.team)}</span>`);
+      }
       if (row.status === 'example') badges.push('<span class="placeholder-badge">example row</span>');
       if (!row.isConfirmed) badges.push('<span class="unconfirmed-badge" title="This result has not yet been independently verified by the organizers.">⚠ Unconfirmed</span>');
       const note = badges.join(' ');
@@ -136,7 +140,7 @@
         : '—';
       return `<tr>
         <td class="rank ${rank <= 3 && isRanked ? 'top' : ''}">${place}</td>
-        <td class="algorithm-cell"><strong>${escapeHTML(row.algorithm)}</strong><small>${escapeHTML(row.team || '')}</small>${note}</td>
+        <td class="algorithm-cell"><strong>${escapeHTML(row.algorithm)}</strong>${note}</td>
         <td>${escapeHTML(row.model || '—')}</td>
         <td class="metric-value primary-value">${formatScore(row.tdsN)}</td>
         <td class="metric-value tie-break-value">${formatScore(row.ndcgN)}</td>
