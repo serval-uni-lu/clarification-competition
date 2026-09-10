@@ -5,17 +5,17 @@
   "private_results_message": "Private test-set scores are not shown during the competition. They will be evaluated and published only at the end, after the final submission deadline.",
   "dates": [
     {
-      "date": "TBA",
+      "date": "Sep 11th",
       "label": "Competition opens",
       "description": "Repository, SDK, and public development data available."
     },
     {
-      "date": "TBA",
-      "label": "Validation leaderboard opens",
-      "description": "Approved public-validation submissions start appearing here."
+      "date": "Oct 9th",
+      "label": "Registration deadline",
+      "description": "Create a pull request to register your system."
     },
     {
-      "date": "TBA",
+      "date": "Nov 6th",
       "label": "Submission deadline",
       "description": "Final pull requests must be submitted by the announced cutoff."
     },
@@ -25,7 +25,7 @@
       "description": "Organizers evaluate eligible systems on the hidden test set."
     },
     {
-      "date": "TBA",
+      "date": "Nov 20th",
       "label": "Final results",
       "description": "Private-test rankings and winners are published."
     }
