@@ -20,23 +20,21 @@ Structure
 
 from __future__ import annotations
 
-import os
-import sys
-
-import fire
 import hashlib
-import json
-import time
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Callable, Union, Any
 import importlib.util
 import inspect
-
-import json, re
+import json
+import os
+import queue
+import re
+import sys
+import threading
 import traceback
-import queue, threading
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Union
 
+import fire
 from rich._spinners import SPINNERS
 from rich.console import Console
 from rich.markdown import Markdown
@@ -46,11 +44,13 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
-
 from clarify.baselines.base import ClarificationAlgorithmBase
+from clarify.env import (
+    ClarificationConfiguration,
+    TooManyQuestionException,
+    _ClarificationEnvironment,
+)
 from clarify.llm import LanguageModel
-from clarify.env import _ClarificationEnvironment, ClarificationConfiguration, TooManyQuestionException
-
 
 console = Console()
 
@@ -548,11 +548,14 @@ def parse_router_output(raw: str, original_message: str) -> tuple[str, str | Non
 # ---------------------------------------------------------------------------
 
 @dataclass
-class Question:  text: str
+class Question:  
+    text: str
 @dataclass
-class Finished: result: str
+class Finished: 
+    result: str
 @dataclass
-class Failed:   error: BaseException
+class Failed:   
+    error: BaseException
 
 
 class InteractiveEnvironment(_ClarificationEnvironment):

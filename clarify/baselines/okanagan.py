@@ -4,10 +4,11 @@ https://arxiv.org/abs/2406.00215
 """
 
 from __future__ import annotations
+
 from typing import Any
 
-from clarify.env import ClarificationEnvironment, TooManyQuestionException
 from clarify.baselines.base import ClarificationAlgorithmBase
+from clarify.env import ClarificationEnvironment, TooManyQuestionException
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 CODE_PROMPT_TEMPLATE = """

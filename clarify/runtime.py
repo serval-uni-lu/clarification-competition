@@ -1,15 +1,13 @@
 import os
-import uuid
 import subprocess
+import uuid
 
 try:
     import evalplus
-
-    from evalplus.evaluate import get_groundtruth
-    from evalplus.data.mbpp import get_mbpp_plus_hash
     from evalplus.data import get_human_eval_plus_hash
-
+    from evalplus.data.mbpp import get_mbpp_plus_hash
     from evalplus.eval._special_oracle import MBPP_OUTPUT_NOT_NONE_TASKS, MBPP_OUTPUT_SET_EQ_TASKS
+    from evalplus.evaluate import get_groundtruth
 except ImportError:
     evalplus = None
 
@@ -46,16 +44,16 @@ class EvalPlusEvaluator:
 
         try:
             problem = self.problems[task_id]
-        except KeyError:
-            raise ValueError(f"Problem {task_id} is unknown.")
+        except KeyError as e:
+            raise ValueError(f"Problem {task_id} is unknown.") from e
 
         try:
             gt = self.ground_truth[task_id]
-        except KeyError:
+        except KeyError as e:
             if "test_cases" in problem:
                 gt = problem["test_cases"]
             else:
-                raise ValueError(f"Problem {task_id} does not have a ground truth.")
+                raise ValueError(f"Problem {task_id} does not have a ground truth.") from e
                     
         return EvalPlusDockerInstanceEvaluator(problem, gt)
 
@@ -167,7 +165,7 @@ class EvalPlusDockerInstanceEvaluator:
         
         if "Timeout" in output:
             return (False,
-                f"The provided implementation ran into a timeout during the testing process.")
+                "The provided implementation ran into a timeout during the testing process.")
     
         return (False,
             f"The provided implementation failed. Output:\n```{output}```")  
@@ -211,10 +209,7 @@ def eval_script(container_id: str, command: str, path: str, stdin_input : str | 
             input = encoded_input,    
         )
 
-        if output.returncode == 0:
-            status = "OK"
-        else:
-            status = "Exception"
+        if output.returncode != 0:
             output_message += "Exception:\n"
         output_message += output.stdout.decode('utf-8') if output.stdout else ""
         output_message += output.stderr.decode('utf-8') if output.stderr else ""
@@ -269,7 +264,7 @@ def copy_code(code: str, container_id: str) -> str:
     """    
     try:
         filename = f"temp_script_{container_id}.py"
-        container_path = f"/app/temp_script.py"
+        container_path = "/app/temp_script.py"
         with open(filename, 'w') as f:
             f.write(code)
             f.flush()

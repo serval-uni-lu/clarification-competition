@@ -1,23 +1,20 @@
-import os
-import fire
-import json
-import sys
 import hashlib
-
 import importlib.util
 import inspect
+import json
+import os
+import sys
 import traceback
 
+import fire
+from rich.console import Console
+from rich.panel import Panel
 from tqdm import tqdm
 
 from clarify.baselines.base import ClarificationAlgorithmBase
-
-from clarify.env import ClarificationEnvironment, ClarificationConfiguration
-from clarify.data import preprocess_benchmark, load_split
+from clarify.data import load_split, preprocess_benchmark
+from clarify.env import ClarificationConfiguration, ClarificationEnvironment
 from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
-
-from rich.console import Console
-from rich.panel import Panel
 
 console = Console()
 
@@ -322,7 +319,8 @@ def main(
                     pbar.update(1)
         
     finally:
-        if batched_worker: batched_worker.close()
+        if batched_worker: 
+            batched_worker.close()
     
     
 

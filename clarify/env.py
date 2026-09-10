@@ -7,6 +7,7 @@ from typing import Any
 from clarify.llm import LanguageModel
 from clarify.runtime import EvalPlusDockerInstanceEvaluator
 
+
 @dataclass(frozen=True)
 class ClarificationConfiguration:
 
@@ -158,7 +159,7 @@ class _ClarificationEnvironment:
 
     def llm(self, messages : list[dict[str, str]] | str) -> str:
         if self.prompt_cost >= self.prompt_budget:
-            raise LimitsExceededException(f"You exceeded the prompt budget.")
+            raise LimitsExceededException("You exceeded the prompt budget.")
 
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]

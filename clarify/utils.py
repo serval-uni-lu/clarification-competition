@@ -1,11 +1,13 @@
-import time
-import os
-import threading
-
 import multiprocessing as mp
-from concurrent.futures import ProcessPoolExecutor, as_completed, wait, FIRST_COMPLETED
+import threading
+import time
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    CancelledError,
+    ProcessPoolExecutor,
+    wait,
+)
 from concurrent.futures.process import BrokenProcessPool
-from concurrent.futures import CancelledError
 
 # Batch runner ------------------------------------------------------------
 
@@ -88,7 +90,8 @@ class BatchParallelProcessor:
         def _watch():
             while not abort_event.is_set():
                 abort_event.wait(timeout = self.poll_interval)
-                if abort_event.is_set(): break
+                if abort_event.is_set(): 
+                    break
                 now = time.monotonic()
                 stuck = [
                     (fut, tid) for fut, tid in futures.items()
@@ -96,7 +99,7 @@ class BatchParallelProcessor:
                 ]
                 if stuck:
                     print(f">> Detected stuck tasks: {sorted(t for _, t in stuck)}")
-                    for fut, tid in stuck:
+                    for _fut, tid in stuck:
                         timeout_tids.append(tid)
 
                     abort_event.set()
@@ -115,7 +118,8 @@ class BatchParallelProcessor:
 
         while pending:
             if self._restarts >= self.max_restarts:
-                raise BrokenProcessPool(f"Exceeded restart limit of {self.max_restarts}. Exceptions:\n{'\n'.join(f"- {str(e)}" for e in self._restart_exceptions)}")
+                exceptions = '\n'.join(f'- {str(e)}' for e in self._restart_exceptions)
+                raise BrokenProcessPool(f"Exceeded restart limit of {self.max_restarts}. Exceptions:\n{exceptions}")
             
             futures = {}
             start_times = {}

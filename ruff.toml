@@ -1,0 +1,20 @@
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = [
+  "E",  # pycodestyle errors
+  "F",  # Pyflakes
+  "I",  # import sorting
+  "B",  # flake8-bugbear
+]
+
+# Keep the competition contribution rules practical rather than stylistic.
+ignore = [
+  "E501",  # formatting handles line wrapping; do not fail lint on long lines
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

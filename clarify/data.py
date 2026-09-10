@@ -1,12 +1,11 @@
-import os
 import json
+import os
 from glob import glob
 
 try:
     import evalplus
-
-    from evalplus.data.mbpp import get_mbpp_plus, mbpp_deserialize_inputs
     from evalplus.data import get_human_eval_plus
+    from evalplus.data.mbpp import get_mbpp_plus, mbpp_deserialize_inputs
 except ImportError:
     evalplus = None
 
@@ -102,7 +101,7 @@ def _preprocess_mbpp(dataset):
             preprocessed_example = task
             if "base_input" in task:
                 preprocessed_example["base_input"] = [
-                    [[[tuple(l) for l in lst] for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
+                    [[[tuple(elem) for elem in lst] for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
                 ]
                 preprocessed_example["plus_input"] = []
 
@@ -154,7 +153,8 @@ def _preprocess_humaneval(benchmark):
 
 
 def _preprocess_references(benchmark):
-    import base64, zlib
+    import base64
+    import zlib
 
     for task in benchmark:
         if "reference_prompt" in task and task["reference_prompt"].startswith("REF_"):

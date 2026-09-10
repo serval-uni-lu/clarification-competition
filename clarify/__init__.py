@@ -1,1 +1,1 @@
-from .baselines import ClarificationAlgorithmBase
+from .baselines import ClarificationAlgorithmBase as ClarificationAlgorithmBase

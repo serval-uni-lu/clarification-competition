@@ -1,21 +1,19 @@
-import os
-import fire
+import csv
 import json
 import math
-import csv
-
-from tqdm import tqdm
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 
-from datetime import datetime, timezone
-
-from clarify.data import preprocess_benchmark, load_split
-from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
-from clarify.runtime import init_evalplus_evaluator
-
+import fire
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from tqdm import tqdm
+
+from clarify.data import load_split, preprocess_benchmark
+from clarify.runtime import init_evalplus_evaluator
+from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
 
 console = Console()
 
@@ -55,7 +53,7 @@ class EvaluationFunction:
             console.print(Panel(prompt_result, title=f"✅ Success ({result['task_id']})", border_style="green"))
         else:
             output = f"{prompt_result}\n\nTest Result:\n{status}"
-            console.print(Panel(output, title=f"❌ Failure ({result["task_id"]})", border_style="red"))
+            console.print(Panel(output, title=f"❌ Failure ({result['task_id']})", border_style="red"))
 
         result["success"], result["test_result"] = success, status
         return result
@@ -247,7 +245,7 @@ def submit_to_benchmark(output_path, split = None, team = None, trusted = False)
         return
 
     if len(result_index) != len(benchmark_index):
-        print(f"> The result set does not match the benchmark; leaderboard was not updated.")
+        print("> The result set does not match the benchmark; leaderboard was not updated.")
         return
 
     repo_root = _find_repo_root()
@@ -392,7 +390,8 @@ def main(
                     pbar.update(1)
         
     finally:
-        if batched_worker: batched_worker.close()
+        if batched_worker: 
+            batched_worker.close()
         print_statistics(output_path)
         if submit:
             submit_to_benchmark(output_path, split, team = submit, trusted = trusted)

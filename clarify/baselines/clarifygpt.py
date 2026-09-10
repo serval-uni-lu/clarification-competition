@@ -4,10 +4,11 @@ https://arxiv.org/abs/2310.10996
 """
 
 from __future__ import annotations
+
 from typing import Any
 
-from clarify.env import ClarificationEnvironment, TooManyQuestionException
 from clarify.baselines.base import ClarificationAlgorithmBase
+from clarify.env import ClarificationEnvironment, TooManyQuestionException
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 DEFAULT_MBPP_TEMPLATE = """
@@ -136,7 +137,8 @@ class ClarifyGPT(ClarificationAlgorithmBase):
             try:
                 test_cases = _validate_and_parse_evalplus_result(response)
                 test_result = self._test_candidate(env, candidate, test_cases)
-                if test_result != "success": raise ValueError(test_result)
+                if test_result != "success": 
+                    raise ValueError(test_result)
                 return test_cases
             except ValueError as e:
                 messages += [{"role": "user", "content": str(e)}]
@@ -181,9 +183,11 @@ class ClarifyGPT(ClarificationAlgorithmBase):
             for _ in range(self.config.get("cluster_size", 25) - 1):
                 alternative_candidate = self._generate_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
                 test_result = self._test_candidate(env, alternative_candidate, seed_test_cases)
-                if test_result != "success": break
+                if test_result != "success": 
+                    break
 
-            if test_result == "success": return seed_candidate # Clear description
+            if test_result == "success": 
+                return seed_candidate # Clear description
 
             clarifying_question = self._generate_clarifying_question(
                 env, current_prompt, seed_candidate, alternative_candidate, test_result
