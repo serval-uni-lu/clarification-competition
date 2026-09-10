@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Cedric Richter <cedric.richter@uni.lu>
 #
 # SPDX-License-Identifier: MIT
+
 """LLM baseline.
 
 A simple baseline implementation of an LLM-based clarification algorithm.
