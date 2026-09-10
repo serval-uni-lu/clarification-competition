@@ -43,10 +43,28 @@ source .venv/bin/activate
 uv sync
 ```
 
-The SDK integrates with `liteLLM` to give access to LLMs and the clarification API. Provide your API keys in the environment, e.g.:
+The SDK integrates with LiteLLM to provide a unified interface to many hosted and local LLM providers. LiteLLM supports 100+ providers behind a common API.
+
+Set the credentials for the provider(s) you want to use:
 ```bash
+# OpenAI
 export OPENAI_API_KEY="sk-proj-..."
+
+# Anthropic
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Google Gemini / AI Studio 
+export GEMINI_API_KEY="..."
+
+# Mistral 
+export MISTRAL_API_KEY="..."
 ```
+
+Use local models e.g. via Ollama Serve:
+```bash
+export OLLAMA_API_BASE=https://localhost:PORT
+```
+with the model name `ollama/MODEL`.
 
 For code execution, please ensure that Docker is installed, the `docker` command is available, and you have pulled the following image:
 ```bash

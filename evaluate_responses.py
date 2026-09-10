@@ -221,7 +221,7 @@ def _compute_output_row(results):
         "pass_at_1": pass_at_1,
         "ndcg": ndcg,
         "clarification_rate": clarification_rate,
-        "overasking_rate": overasking_rate,
+        "over_asking_rate": overasking_rate,
         "avg_cost_usd": prompt_cost,
         "is_baseline": baseline,
         "submission_url": f"https://github.com/serval-uni-lu/clarification-competition/tree/main/{path}"

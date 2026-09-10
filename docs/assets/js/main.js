@@ -39,7 +39,14 @@
   const numberOrNull = value => value === '' || value === undefined ? null : Number(value);
   const formatPercent = value => value === null ? '—' : `${(value * 100).toFixed(1)}%`;
   const formatScore = value => value === null ? '—' : value.toFixed(3);
-  const formatCost = value => value === null ? '—' : `$${value.toFixed(value < 1 ? 3 : 2)}`;
+  const formatCost = value => {
+    if (value === null) return '—';
+
+    const decimals = value < 1 ? 4 : 2;
+    const factor = 10 ** decimals;
+
+    return `$${(Math.ceil(value * factor) / factor).toFixed(decimals)}`;
+  };
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
   function normalizedRows(rawRows) {
