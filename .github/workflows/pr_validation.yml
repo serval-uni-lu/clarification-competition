@@ -1,0 +1,60 @@
+name: PR validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+# PR code never needs write access for these checks.
+permissions:
+  contents: read
+
+# If a contributor pushes again, cancel the obsolete run.
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate submission
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: latest-known
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Check lockfile
+        run: uv lock --check
+
+      - name: Install project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Validate repository
+        run: uv run python scripts/validate_repository.py
+
+      - name: Ruff lint
+        run: uvx ruff check .
+
+      - name: Ruff format
+        run: uvx ruff format --check .
+
+      - name: Run tests when available
+        shell: bash
+        run: |
+          if uv run python -c "import pytest" >/dev/null 2>&1; then
+            if find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit 2>/dev/null | grep -q .; then
+              uv run pytest -q
+            else
+              echo "pytest is installed, but no tests were found; skipping."
+            fi
+          else
+            echo "pytest is not installed in this project; skipping."
+          fi
