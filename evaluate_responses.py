@@ -2,9 +2,12 @@ import os
 import fire
 import json
 import math
-
+import csv
 
 from tqdm import tqdm
+from pathlib import Path
+
+from datetime import datetime, timezone
 
 from clarify.data import preprocess_benchmark, load_split
 from clarify.utils import BatchParallelProcessor, BatchSequentialProcessor
@@ -26,6 +29,8 @@ DEFAULT_SPLITS = {
     "val"   : "data/splits/validation.txt"
 }
 
+PUBLIC_LEADERBOARD = Path("docs/data/leaderboard.csv")
+PRIVATE_LEADERBOARD = Path("docs/data/private-leaderboard.csv")
 
 class EvaluationFunction:
 
@@ -134,13 +139,20 @@ def print_statistics(output_path):
     table.add_row("Total", str(total))
 
     table.add_row("Turn Discounted Success", f"{_turn_discounted_sucess(results):.4f}")
-    table.add_row("TKQR", f"{_turn_discounted_key_question_rate(results):.4f}" )
+    table.add_row("nDCG", f"{_turn_discounted_key_question_rate(results):.4f}" )
 
     pass_at_1 = sum(r["success"] for r in results)
     table.add_row("Pass@1", f"{100 * pass_at_1 / total:.2f}")
 
     clarification_rate = sum(len(r["clarification_history"]) > 0 for r in results)
     table.add_row("Clarification rate", f"{100 * clarification_rate / total:.2f}%")
+
+    overask_result = [r for r in results if r.get("need_clarification", False)]
+    overasking_rate = 0.0
+    if overask_result:
+        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(overask_result)
+
+    table.add_row("Overasking rate", f"{100 * overasking_rate:.2f}%")
 
     if clarification_rate > 0:
         high_quality_clarification = sum(all(e[2] == "3" for e in r["clarification_history"])
@@ -154,6 +166,156 @@ def print_statistics(output_path):
     
 # --------------------
 
+def _find_repo_root() -> Path:
+    """Find the repository root containing docs/data/leaderboard.csv."""
+    starts = (Path(__file__).resolve().parent, Path.cwd().resolve())
+    seen: set[Path] = set()
+    for start in starts:
+        for candidate in (start, *start.parents):
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            if (candidate / PUBLIC_LEADERBOARD).is_file():
+                return candidate
+    raise FileNotFoundError(
+        f"Could not find {PUBLIC_LEADERBOARD}. Run from inside the competition repository."
+    )
+
+
+def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or [])
+        return fieldnames, [dict(row) for row in reader]
+
+def _compute_output_row(results):
+    algorithms = set(r["algorithm"] for r in results)
+    assert len(algorithms) == 1, f"Expected only one algorithm in results, but got {algorithms}"
+    models = set(r["model"] for r in results)
+    assert len(models) == 1, f"Expected only one model in results, but got {models}"
+    paths = set(r["algorithm_path"] for r in results)
+    assert len(paths) == 1, f"Expected only one algorithm path in results, but got {paths}"
+
+    algorithm, path, model = next(iter(algorithms)), next(iter(paths)), next(iter(models))
+    baseline = "baseline" in path
+
+    total = len(results)
+    tds = _turn_discounted_sucess(results)
+    ndcg = _turn_discounted_key_question_rate(results)
+
+    pass_at_1 = sum(r["success"] for r in results) / total
+    clarification_rate = sum(len(r["clarification_history"]) > 0 for r in results) / total
+
+    overask_result = [r for r in results if r.get("need_clarification", False)]
+    overasking_rate = 0.0
+    if overask_result:
+        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(overask_result)
+
+    prompt_cost = sum(r.get("prompt_cost", 0.0) for r in results) / total
+
+    return {
+        "track": "main",
+        "algorithm": algorithm,
+        "model": model,
+        "tds":  tds,
+        "pass_at_1": pass_at_1,
+        "ndcg": ndcg,
+        "clarification_rate": clarification_rate,
+        "overasking_rate": overasking_rate,
+        "avg_cost_usd": prompt_cost,
+        "is_baseline": baseline,
+        "submission_url": f"https://github.com/serval-uni-lu/clarification-competition/tree/main/{path}"
+    }
+
+
+def submit_to_benchmark(output_path, split = None, team = None):
+    if split not in {"val", "test"}:
+        print("> Split must be either 'val' or 'test'; leaderboard was not updated.")
+        return
+
+    split = DEFAULT_SPLITS.get(split, split)
+    benchmark = load_split(split)
+    benchmark_index = set((ex["task_id"], ex["prompt"]) for ex in benchmark)
+
+    with open(output_path, "r") as lines:
+        results = [json.loads(line) for line in lines]
+
+    result_index = set((result["task_id"], result["prompt"]) for result in results)
+    difference = benchmark_index.difference(result_index)
+    if difference:
+        print(f"> Results are missing entries for {difference}; leaderboard was not updated.")
+        return
+
+    if len(result_index) != len(benchmark_index):
+        print(f"> The result set does not match the benchmark; leaderboard was not updated.")
+        return
+
+    repo_root = _find_repo_root()
+    public_path = repo_root / PUBLIC_LEADERBOARD
+    target_path = repo_root / (PUBLIC_LEADERBOARD if "val" in split else PRIVATE_LEADERBOARD)
+
+    fieldnames, _ = _read_csv(public_path)
+
+    if target_path.exists():
+        _, rows = _read_csv(target_path)
+    else:
+        rows = []
+
+    result = _compute_output_row(results)
+
+    algorithm = str(result.get("algorithm", "")).strip()
+    model = str(result.get("model", "")).strip()
+
+    evaluated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    insert_defaults = {field: "" for field in fieldnames}
+    insert_defaults.update(
+        {
+            "track": "main",
+            "algorithm": algorithm,
+            "model": model,
+            "date": evaluated_at[:10],
+            "team": team if team is isinstance(team, str) else "",
+            "evaluated_at": evaluated_at,
+            "is_baseline": "false",
+        }
+    )
+
+    normalized_result = {
+            key: (str(value).lower() if isinstance(value, bool) else str(value))
+            for key, value in result.items()
+            if key in fieldnames and value is not None
+        }
+    normalized_result.update(
+        {
+            "algorithm": algorithm,
+            "model": model,
+            "date": evaluated_at[:10],
+            "evaluated_at": evaluated_at,
+        }
+    )
+
+    updated = False
+    for index, row in enumerate(rows):
+        if row.get("algorithm", "").strip() == algorithm and row.get("model", "").strip() == model:
+            merged = {field: row.get(field, "") for field in fieldnames}
+            merged.update(normalized_result)
+            rows[index] = merged
+            updated = True
+            break
+
+    if not updated:
+        insert_defaults.update(normalized_result)
+        rows.append(insert_defaults)
+
+    with target_path.open("w") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print("Success! Wrote to the leaderboard.")
+
+
 def main(
     benchmark_path : str = "data/mbpp_demo_test.jsonl",
     generation_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
@@ -162,9 +324,12 @@ def main(
     max_workers : int = 1,
     force_rerun : bool = False,
     split : str | None = None,
+    submit : str | bool = False,
 ):
     if os.path.exists(output_path) and not force_rerun:
         print_statistics(output_path)
+        if submit:
+            submit_to_benchmark(output_path, split, team = submit)
         exit(0)
     
     batch_size = max(batch_size, max_workers)
@@ -173,8 +338,8 @@ def main(
     if split:
         if benchmark_path != DEFAULT_DATASET_PATH:
             print(f"WARNING: split '{split}' is overwritting your benchmark path.")
-        split = DEFAULT_SPLITS.get(split, split)
-        benchmark = load_split(split)
+        split_path = DEFAULT_SPLITS.get(split, split)
+        benchmark = load_split(split_path)
     else:
         with open(benchmark_path, "r") as lines:
             benchmark = [json.loads(line) for line in lines]
@@ -227,6 +392,8 @@ def main(
     finally:
         if batched_worker: batched_worker.close()
         print_statistics(output_path)
+        if submit:
+            submit_to_benchmark(output_path, split)
     
 
 if __name__ == "__main__":

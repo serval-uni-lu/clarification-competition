@@ -63,9 +63,10 @@ def _load_clarification_algorithm(path_to_algorithm: str):
             raise
 
     candidates = [
-        obj for _, obj in inspect.getmembers(module, inspect.isclass)
+        obj for name, obj in inspect.getmembers(module, inspect.isclass)
         if issubclass(obj, ClarificationAlgorithmBase) and obj is not ClarificationAlgorithmBase
         and obj.__module__ == module_name  # exclude re-imported subclasses from elsewhere
+        and not name.startswith("_")  # exclude candidates prefixed with "_"
     ]
 
     if not candidates:
@@ -173,7 +174,7 @@ class SimulationFunction:
 
         result = {"task_id": environment_definition["task_id"], 
                   "prompt": environment_definition["prompt"]}
-
+        
         try:
             clarification_algorithm = self._get_algorithm()
             algorithm_name = clarification_algorithm.__class__.__name__
@@ -181,13 +182,16 @@ class SimulationFunction:
                 prompt_result = clarification_algorithm.run(
                     environment, problem_definition
                 )
-
+                
             result.update({
                 "algorithm": algorithm_name,
+                "model": self.config["environment_config"].language_model,
+                "algorithm_path": self.config["clarification_algorithm_path"],
                 "prompt_result": prompt_result,
+                "need_clarification": len(environment_definition.get("clarifications", [None])) > 0,
                 "clarification_history": environment.history,
                 "prompt_cost": environment.prompt_cost,
-                "clarification_cost": environment.clarification_cost or 0.0
+                "clarification_cost": environment.clarification_cost or 0.0,
             })
 
             return result
