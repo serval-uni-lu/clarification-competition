@@ -9,8 +9,13 @@ from clarify.env import ClarificationEnvironment
 
 class ClarificationAlgorithmBase(ABC):
 
+    DEFAULT_CONFIG: dict[str, Any] = {}
+
     def __init__(self, config: Mapping[str, Any] | None = None):
-        self.config : dict[str, Any] = dict(config or {})
+        overrides = dict(config or {})
+        if unknown := set(overrides) - set(self.DEFAULT_CONFIG):
+            raise ValueError(f"Unknown config option(s) for {type(self).__name__}: {sorted(unknown)}")
+        self.config : dict[str, Any] = {**self.DEFAULT_CONFIG, **overrides}
 
     @abstractmethod
     def run(self, env: ClarificationEnvironment, problem : dict[str, str]) -> str:

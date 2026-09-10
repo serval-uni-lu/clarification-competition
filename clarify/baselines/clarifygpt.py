@@ -39,7 +39,7 @@ Do not repeat the implementation.
 
 CLARIFICATION_PROMPT = """
 You will be given a user requirement and its candidate solutions. Your task is to clarify this requirement by asking clarifying questions.
-Specifically, you will first analyze the functionality of each solution. Then, by comparing their differences, you can determine which parts in the requirement are ambiguous and ask targeted clarification questions.
+Specifically, you will first analyze the functionality of each solution. Then, by comparing their differences, you can determine which parts in the requirement are ambiguous and ask ONE targeted clarification question.
 
 ### User Requirement:
 
@@ -61,6 +61,12 @@ Enclose your set of questions in ``` and ```. If the solutions are identical, si
 
 
 class ClarifyGPT(ClarificationAlgorithmBase):
+
+    DEFAULT_CONFIG = {
+        "generation_attempts": 3,
+        "test_attempts": 3,
+        "cluster_size": 25,
+    }
 
     def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
@@ -106,7 +112,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
 
         messages += [{"role": "assistant", "content": response}]
 
-        while True:
+        for _ in range(self.config.get("generation_attempts", 3)):
             try:
                 return _validate_and_parse_evalplus_result(response)
             except ValueError as e:
@@ -126,14 +132,13 @@ class ClarifyGPT(ClarificationAlgorithmBase):
 
         response = env.llm(messages)
         messages += [{"role": "assistant", "content": response}]
-        while True:
+        for _ in range(self.config.get("test_attempts", 3)):
             try:
                 test_cases = _validate_and_parse_evalplus_result(response)
                 test_result = self._test_candidate(env, candidate, test_cases)
                 if test_result != "success": raise ValueError(test_result)
                 return test_cases
             except ValueError as e:
-                # The response might not contain an answer, assume a question is raised.
                 messages += [{"role": "user", "content": str(e)}]
                 response = env.llm(messages)
                 messages += [{"role": "assistant", "content": response}]
@@ -173,7 +178,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
             seed_test_cases = self._generate_seed_test_cases(env, current_prompt, seed_candidate)
 
             test_result = "success"
-            for _ in range(24):
+            for _ in range(self.config.get("cluster_size", 25) - 1):
                 alternative_candidate = self._generate_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
                 test_result = self._test_candidate(env, alternative_candidate, seed_test_cases)
                 if test_result != "success": break

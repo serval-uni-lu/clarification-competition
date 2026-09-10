@@ -275,7 +275,7 @@ def submit_to_benchmark(output_path, split = None, team = None, trusted = False)
             "algorithm": algorithm,
             "model": model,
             "date": evaluated_at[:10],
-            "team": team if team is isinstance(team, str) else "",
+            "team": team if isinstance(team, str) else "",
             "evaluated_at": evaluated_at,
             "is_baseline": "false",
             "confirmed": trusted,

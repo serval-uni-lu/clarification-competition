@@ -110,7 +110,7 @@ class SimulationFunction:
         if path not in self._algorithm_cache:
             cls = _load_clarification_algorithm(path)
             kwargs = self.config.get("clarification_algorithm_kwargs", {})
-            self._algorithm_cache[path] = cls(**kwargs)
+            self._algorithm_cache[path] = cls(kwargs)
         return self._algorithm_cache[path]
 
     def batch(self, environment_definitions):
@@ -143,7 +143,10 @@ class SimulationFunction:
                     environment = envs[i]
                     results[i].update({
                         "algorithm": algorithm_name,
+                        "model": self.config["environment_config"].language_model,
+                        "algorithm_path": self.config["clarification_algorithm_path"],
                         "prompt_result": prompt_result,
+                        "need_clarification": len(environment_definition.get("clarifications", [None])) > 0,
                         "clarification_history": environment.history,
                         "prompt_cost": environment.prompt_cost,
                         "clarification_cost": environment.clarification_cost or 0.0
@@ -182,7 +185,7 @@ class SimulationFunction:
                 prompt_result = clarification_algorithm.run(
                     environment, problem_definition
                 )
-                
+
             result.update({
                 "algorithm": algorithm_name,
                 "model": self.config["environment_config"].language_model,

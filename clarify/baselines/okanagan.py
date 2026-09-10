@@ -42,6 +42,8 @@ Given the above conversations, generate Python code directly (Markdown) to solve
 
 class Okanagan(ClarificationAlgorithmBase):
 
+    DEFAULT_CONFIG = {"generation_attempts": 3}
+
     def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
             {"role": "user", "content": (
@@ -58,7 +60,7 @@ class Okanagan(ClarificationAlgorithmBase):
 
         messages += [{"role": "assistant", "content": response}]
 
-        while True:
+        for _ in range(self.config.get("generation_attempts", 3)):
             try:
                 return _validate_and_parse_evalplus_result(response)
             except ValueError:
@@ -88,7 +90,7 @@ class Okanagan(ClarificationAlgorithmBase):
 
         messages += [{"role": "assistant", "content": response}]
 
-        while True:
+        for _ in range(self.config.get("generation_attempts", 3)):
             try:
                 return _validate_and_parse_evalplus_result(response)
             except ValueError as e:
