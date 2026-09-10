@@ -39,14 +39,7 @@
   const numberOrNull = value => value === '' || value === undefined ? null : Number(value);
   const formatPercent = value => value === null ? '—' : `${(value * 100).toFixed(1)}%`;
   const formatScore = value => value === null ? '—' : value.toFixed(3);
-  const formatCost = value => {
-    if (value === null) return '—';
-
-    const decimals = value < 1 ? 4 : 2;
-    const factor = 10 ** decimals;
-
-    return `$${(Math.ceil(value * factor) / factor).toFixed(decimals)}`;
-  };
+  const formatCost = value => value === null ? '—' : `$${value.toFixed(value < 1 ? 3 : 2)}`;
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
   function normalizedRows(rawRows) {
@@ -58,7 +51,10 @@
       clarifyN: numberOrNull(row.clarification_rate),
       overAskN: numberOrNull(row.over_asking_rate),
       costN: numberOrNull(row.avg_cost_usd),
-      isBaseline: String(row.is_baseline || '').toLowerCase() === 'true'
+      isBaseline: String(row.is_baseline || '').toLowerCase() === 'true',
+      // Most leaderboard results are organizer-verified. Only an explicit
+      // `confirmed=false` marks a row as awaiting verification.
+      isConfirmed: String(row.confirmed || '').toLowerCase() !== 'false'
     }));
   }
 
@@ -107,7 +103,7 @@
       ? (state.track === 'single'
         ? 'Single-turn track · at most one clarification turn (confirm final organizer constraint).'
         : 'Multi-turn track · iterative clarification within the organizer-defined budget.')
-      : 'One shared clarification track for all eligible systems.';
+      : 'Official competition leaderboard.';
 
     if (!rows.length) {
       const file = state.resultSet === 'private' ? 'data/private-leaderboard.csv' : 'data/leaderboard.csv';
@@ -133,6 +129,7 @@
       const badges = [];
       if (row.isBaseline) badges.push('<span class="placeholder-badge">baseline</span>');
       if (row.status === 'example') badges.push('<span class="placeholder-badge">example row</span>');
+      if (!row.isConfirmed) badges.push('<span class="unconfirmed-badge" title="This result has not yet been independently verified by the organizers.">⚠ Unconfirmed</span>');
       const note = badges.join(' ');
       const submission = row.submission_url
         ? `<a class="submission-link" href="${escapeHTML(row.submission_url)}" target="_blank" rel="noreferrer">View ↗</a>`
@@ -238,13 +235,43 @@
       if (Object.prototype.hasOwnProperty.call(data, key)) el.textContent = data[key];
     });
 
+    const finalDeadline = $('#hero-final-deadline');
+    const finalDeadlineNote = $('#hero-final-deadline-note');
+    const submissionDeadline = Array.isArray(data.dates)
+      ? data.dates.find(item => /submission deadline/i.test(item.label || ''))
+      : null;
+    if (finalDeadline) finalDeadline.textContent = submissionDeadline?.date || 'TBA';
+    if (finalDeadlineNote) finalDeadlineNote.textContent = submissionDeadline?.description || 'Final competition submission cutoff';
+
     const timeline = $('#timeline-list');
     if (Array.isArray(data.dates)) {
-      timeline.innerHTML = data.dates.map(item => `<article class="timeline-item">
+      timeline.innerHTML = data.dates.map(item => {
+        const isFinalDeadline = /submission deadline/i.test(item.label || '');
+        return `<article class="timeline-item${isFinalDeadline ? ' is-final-deadline' : ''}">
+        <div class="timeline-date">${escapeHTML(item.date)}</div>
+        <h3>${escapeHTML(item.label)}</h3>
+        <p>${escapeHTML(item.description || '')}</p>
+      </article>`;
+      }).join('');
+    }
+
+    const icseTimeline = $('#icse-timeline-list');
+    if (icseTimeline && Array.isArray(data.icse_dates)) {
+      icseTimeline.innerHTML = data.icse_dates.map(item => `<article class="timeline-item">
         <div class="timeline-date">${escapeHTML(item.date)}</div>
         <h3>${escapeHTML(item.label)}</h3>
         <p>${escapeHTML(item.description || '')}</p>
       </article>`).join('');
+    }
+
+    const faqList = $('#faq-list');
+    if (faqList && Array.isArray(data.faq)) {
+      faqList.innerHTML = data.faq.map(item => {
+        const link = item.link_url
+          ? ` <a href="${escapeHTML(item.link_url)}" target="_blank" rel="noreferrer">${escapeHTML(item.link_text || 'Learn more ↗')}</a>`
+          : '';
+        return `<details><summary>${escapeHTML(item.question || '')}</summary><p>${escapeHTML(item.answer || '')}${link}</p></details>`;
+      }).join('');
     }
   }
 

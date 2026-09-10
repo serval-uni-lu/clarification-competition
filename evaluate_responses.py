@@ -228,7 +228,7 @@ def _compute_output_row(results):
     }
 
 
-def submit_to_benchmark(output_path, split = None, team = None):
+def submit_to_benchmark(output_path, split = None, team = None, trusted = False):
     if split not in {"val", "test"}:
         print("> Split must be either 'val' or 'test'; leaderboard was not updated.")
         return
@@ -278,6 +278,7 @@ def submit_to_benchmark(output_path, split = None, team = None):
             "team": team if team is isinstance(team, str) else "",
             "evaluated_at": evaluated_at,
             "is_baseline": "false",
+            "confirmed": trusted,
         }
     )
 
@@ -325,11 +326,12 @@ def main(
     force_rerun : bool = False,
     split : str | None = None,
     submit : str | bool = False,
+    trusted : bool = False,
 ):
     if os.path.exists(output_path) and not force_rerun:
         print_statistics(output_path)
         if submit:
-            submit_to_benchmark(output_path, split, team = submit)
+            submit_to_benchmark(output_path, split, team = submit, trusted = trusted)
         exit(0)
     
     batch_size = max(batch_size, max_workers)
@@ -393,7 +395,7 @@ def main(
         if batched_worker: batched_worker.close()
         print_statistics(output_path)
         if submit:
-            submit_to_benchmark(output_path, split)
+            submit_to_benchmark(output_path, split, team = submit, trusted = trusted)
     
 
 if __name__ == "__main__":

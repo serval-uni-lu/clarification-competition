@@ -18,9 +18,11 @@
       </a>
       <nav class="nav" aria-label="Main navigation">
         <a href="#leaderboard">Leaderboard</a>
-        <a href="#rules">Rules</a>
-        <a href="#timeline">Deadlines</a>
         <a href="#participate">Participate</a>
+        <a href="#prizes">Prizes</a>
+        <a href="#timeline">Deadlines</a>
+        <a href="#faq">FAQ</a>
+        <a href="#organizers">Organizers</a>
         <a class="nav-github" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">GitHub ↗</a>
       </nav>
     </div>
@@ -30,17 +32,18 @@
     <section class="hero" id="top">
       <div class="container hero-grid">
         <div>
-          <div class="eyebrow">Research competition · LLM coding assistants</div>
+          <div class="eyebrow">ICSE 2027 Competition · Dublin, Ireland</div>
           <h1>Can your coding assistant <span>ask the right question</span>?</h1>
           <p class="hero-summary" data-content="summary">Loading competition summary…</p>
+          <a class="deadline-banner" href="#timeline" aria-label="Jump to final submission deadline">
+            <span class="deadline-kicker">Final submission deadline</span>
+            <strong id="hero-final-deadline">TBA</strong>
+            <span id="hero-final-deadline-note">Final competition submission cutoff</span>
+            <b aria-hidden="true">→</b>
+          </a>
           <div class="hero-actions">
             <a class="button button-primary" href="#leaderboard">View leaderboard</a>
-            <a class="button button-secondary" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Get the SDK ↗</a>
-          </div>
-          <div class="hero-facts" aria-label="Competition facts">
-            <div><strong id="hero-track-count">1</strong><span id="hero-track-label">competition track</span></div>
-            <div><strong>770</strong><span>public validation examples</span></div>
-            <div><strong>1 file</strong><span>to submit an algorithm</span></div>
+            <a class="button button-secondary" href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Participate on GitHub ↗</a>
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
@@ -83,7 +86,7 @@
 
           <div id="leaderboard-results">
             <div class="table-note">
-              <span id="track-description">One shared clarification track for all eligible systems.</span>
+              <span id="track-description">Clarification systems are evaluated on the public validation benchmark.</span>
               <span>Rank by <strong>TDS ↑</strong> · tie-break by <strong>nDCG ↑</strong></span>
             </div>
             <div class="table-scroll">
@@ -93,12 +96,12 @@
                     <th class="rank-col">#</th>
                     <th>Algorithm</th>
                     <th>Model used</th>
-                    <th title="Primary ranking metric: Turn-discounted success">TDS ↑</th>
-                    <th title="Tie-breaker when TDS is equal">nDCG ↑ <span class="metric-role">tie-break</span></th>
-                    <th>Pass@1 ↑</th>
-                    <th title="Percentage of tasks with at least one clarification">Clarify ↑</th>
-                    <th title="Percentage of sufficiently specified tasks where the system still asks">Over-ask ↓</th>
-                    <th title="Average model/API cost per task">Avg. cost ↓</th>
+                    <th><abbr title="Turn-discounted success: primary score; rewards successful solutions while discounting additional clarification turns.">TDS</abbr> ↑</th>
+                    <th><abbr title="Normalized discounted cumulative gain: measures clarification quality/order; used only to break TDS ties.">nDCG</abbr> ↑ <span class="metric-role">tie-break</span></th>
+                    <th><abbr title="Pass@1: percentage of first generated solutions that pass the tests.">Pass@1</abbr> ↑</th>
+                    <th><abbr title="Clarification rate: percentage of tasks where the system asks at least one clarification question.">Clarify</abbr> ↑</th>
+                    <th><abbr title="Over-asking rate: percentage of sufficiently specified tasks where the system asks unnecessarily.">Over-ask</abbr> ↓</th>
+                    <th><abbr title="Average model/API cost per evaluated task.">Avg. cost</abbr> ↓</th>
                     <th>Submission</th>
                   </tr>
                 </thead>
@@ -107,7 +110,21 @@
                 </tbody>
               </table>
             </div>
-            <p class="data-footnote">Leaderboard order is determined by TDS, with nDCG breaking TDS ties. Baselines are shown for reference and never receive a rank. A submitted approach receives a rank only if it matches or outperforms the strongest baseline under this ordering. Pass@1, clarification rate, over-asking rate, and cost are reported for transparency but do not affect rank.</p>
+            <div class="metric-legend" aria-label="Leaderboard metric guide">
+              <div class="metric-legend-head">
+                <strong>How to read the metrics</strong>
+                <span>↑ higher is better · ↓ lower is better</span>
+              </div>
+              <div class="metric-legend-grid">
+                <div><strong>TDS</strong><span>Turn-discounted success. Measures task success while discounting extra clarification turns. <b>Primary ranking metric.</b></span></div>
+                <div><strong>nDCG</strong><span>Clarification quality/order relative to the ideal ordering. <b>TDS tie-breaker only.</b></span></div>
+                <div><strong>Pass@1</strong><span>Share of first generated solutions that pass the tests.</span></div>
+                <div><strong>Clarify</strong><span>Share of tasks where the system asks at least one clarification.</span></div>
+                <div><strong>Over-ask</strong><span>Share of already-specified tasks where the system asks unnecessarily.</span></div>
+                <div><strong>Avg. cost</strong><span>Average model/API cost per evaluated task.</span></div>
+              </div>
+              <p class="ranking-note">Only TDS and, for ties, nDCG affect rank. Baselines are reference rows and remain unranked; submissions below the strongest baseline are also shown without a rank.</p>
+            </div>
           </div>
 
           <div id="private-results" class="private-placeholder" hidden>
@@ -120,24 +137,24 @@
             </div>
           </div>
         </div>
+
+        <aside class="eligibility-panel" aria-label="Leaderboard rank eligibility">
+          <div class="eligibility-icon" aria-hidden="true">#</div>
+          <div>
+            <div class="eyebrow">Rank eligibility</div>
+            <h3>Beat the baseline to earn a competition rank</h3>
+            <p>Organizer baselines are displayed for reference but never receive a rank. A participant submission is ranked only when it matches or outperforms the strongest baseline under the official ordering: <strong>TDS first, nDCG as the tie-breaker</strong>. Only ranked submissions are eligible to submit an ICSE 2027 solution paper.</p>
+          </div>
+        </aside>
       </div>
     </section>
 
     <section class="section" id="rules">
       <div class="container">
-        <div class="section-heading">
-          <div class="eyebrow">Competition format</div>
-          <h2>Rules & format</h2>
-          <p>Keep the algorithm small, reproducible, and focused on the central problem: recognizing when a requirement needs clarification.</p>
-        </div>
-
-        <div class="track-grid track-grid-single" id="main-track-card">
-          <article class="track-card featured">
-            <div class="track-number">01</div>
-            <div class="track-tag">Clarification track</div>
-            <h3>One shared leaderboard</h3>
-            <p data-content="main_track">All eligible systems compete on one shared clarification leaderboard.</p>
-          </article>
+        <div class="section-heading rules-heading">
+          <div class="eyebrow">Competition rules</div>
+          <h2>What you need to know</h2>
+          <p>A few simple requirements keep submissions comparable and reproducible. Technical details live in the repository.</p>
         </div>
 
         <div class="track-grid" id="multi-track-cards" hidden>
@@ -145,25 +162,26 @@
             <div class="track-number">01</div>
             <div class="track-tag">Single-turn track</div>
             <h3>One chance to clarify</h3>
-            <p data-content="single_track">The system may make at most one clarification turn before returning its implementation. Exact organizer constraints can be updated in <code>data/competition.json</code>.</p>
+            <p data-content="single_track">The system may make at most one clarification turn before returning its implementation.</p>
           </article>
           <article class="track-card">
             <div class="track-number">02</div>
             <div class="track-tag">Multi-turn track</div>
             <h3>Clarify iteratively</h3>
-            <p data-content="multi_track">The system may ask multiple targeted clarification questions within the organizer-defined turn budget. Exact budget: TBA.</p>
+            <p data-content="multi_track">The system may ask multiple targeted clarification questions within the organizer-defined turn budget.</p>
           </article>
         </div>
 
         <div class="rules-grid">
-          <article class="rule-card"><span>1</span><h3>Submit one algorithm file</h3><p>Implement a class inheriting from <code>ClarificationAlgorithmBase</code>. Competition submissions live in <code>clarify/algorithms/&lt;name&gt;.py</code>.</p></article>
-          <article class="rule-card"><span>2</span><h3>Use the provided environment</h3><p>Your algorithm interacts through the SDK, including <code>env.llm(...)</code>, <code>env.ask_human(...)</code>, and the provided execution interface.</p></article>
-          <article class="rule-card"><span>3</span><h3>Submit through a pull request</h3><p>Fork the repository, add your algorithm, include the required submission header and team metadata, then open a pull request.</p></article>
-          <article class="rule-card"><span>4</span><h3>Public first, private last</h3><p>Develop against the training split and public validation set. Private-test scores are held back and revealed only at final evaluation.</p></article>
+          <article class="rule-card"><span>1</span><h3>Implement the SDK interface</h3><p>Submit an algorithm inheriting from <code>ClarificationAlgorithmBase</code> and use the provided competition environment.</p></article>
+          <article class="rule-card"><span>2</span><h3>Submit through GitHub</h3><p>Add your algorithm and required team metadata, then open a pull request before the final deadline.</p></article>
+          <article class="rule-card"><span>3</span><h3>Make the run reproducible</h3><p>Keep dependencies and model configuration explicit so organizers can reproduce the submitted system.</p></article>
+          <article class="rule-card"><span>4</span><h3>Keep the private test set private</h3><p>Develop on the released data and public validation set. Organizers run the hidden test set only for final evaluation.</p></article>
         </div>
 
-        <div class="callout">
-          <strong>Benchmark.</strong> Tasks are derived from MBPP and HumanEval and include variants with ambiguous, incomplete, or contradictory specifications. The repository currently documents 7,961 training examples and 770 validation examples.
+        <div class="rules-footer">
+          <p><strong>Benchmark:</strong> tasks are derived from MBPP and HumanEval and include underspecified, ambiguous, or contradictory requirements.</p>
+          <a href="https://github.com/serval-uni-lu/clarification-competition" target="_blank" rel="noreferrer">Full technical rules on GitHub ↗</a>
         </div>
       </div>
     </section>
@@ -186,16 +204,63 @@
       </div>
     </section>
 
+
+    <section class="section prizes-section" id="prizes">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Prizes &amp; recognition</div>
+          <h2>Compete, publish, and present at ICSE 2027</h2>
+          <p>Strong competition entries are recognized not only on the leaderboard, but also through participation in the ICSE 2027 program in Dublin.</p>
+        </div>
+        <div class="prize-grid">
+          <article class="prize-card winner-prize">
+            <div class="prize-icon" aria-hidden="true">1</div>
+            <div>
+              <div class="prize-label">Winner prize</div>
+              <h3>Free ICSE registration</h3>
+              <p>The winning team receives one complimentary registration to ICSE 2027.</p>
+            </div>
+          </article>
+          <article class="prize-card recognition-prize">
+            <div class="prize-icon" aria-hidden="true">↗</div>
+            <div>
+              <div class="prize-label">For every ranked entry</div>
+              <h3>Solution paper &amp; ICSE presentation</h3>
+              <p>Every eligible candidate — i.e. every submission that receives a leaderboard rank — can submit a solution paper for the ICSE 2027 Competition Track and present the approach in the competition session in Dublin.</p>
+            </div>
+          </article>
+        </div>
+        <div class="solution-paper-note">
+          <div>
+            <div class="eyebrow">ICSE solution papers</div>
+            <h3>4 pages, reviewed for technical correctness</h3>
+          </div>
+          <p>ICSE 2027 Competition Track solution papers are limited to <strong>4 pages including references</strong> and follow ICSE formatting. Papers are reviewed for technical correctness, with an opportunity to address reviewer comments before final acceptance. Accepted papers appear in the conference proceedings. <a href="https://conf.researchr.org/track/icse-2027/icse-2027-competition-track" target="_blank" rel="noreferrer">Official ICSE Competition Track details ↗</a></p>
+        </div>
+        <div class="sponsor-callout">
+          <span>Competition sponsor</span>
+          <strong>University of Luxembourg</strong>
+          <p>The Clarification Challenge is sponsored by the University of Luxembourg.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="timeline">
       <div class="container">
         <div class="section-heading">
           <div class="eyebrow">Schedule</div>
           <h2>Important dates</h2>
-          <p>Dates are deliberately data-driven so you can change them without touching the page layout.</p>
+          <p>The <strong>final submission deadline</strong> is the key cutoff for competition entries. Dates remain data-driven so organizers can update them without changing the page layout.</p>
         </div>
+        <h3 class="timeline-group-title">Competition timeline</h3>
         <div class="timeline" id="timeline-list">
           <div class="timeline-item"><div class="timeline-date">TBA</div><h3>Loading…</h3></div>
         </div>
+        <h3 class="timeline-group-title timeline-group-title-secondary">ICSE 2027 solution-paper timeline</h3>
+        <div class="timeline icse-timeline" id="icse-timeline-list">
+          <div class="timeline-item"><div class="timeline-date">4 Dec 2026</div><h3>Solution papers</h3></div>
+        </div>
+        <p class="timeline-footnote">ICSE Competition Track deadlines are 23:59 AoE (UTC−12) unless stated otherwise. Competition-specific deadlines above are maintained separately.</p>
       </div>
     </section>
 
@@ -211,8 +276,22 @@
           <li><span>01</span><div><strong>Fork & install</strong><p>Fork the repository, install the SDK with <code>uv</code>, and configure your model API key.</p></div></li>
           <li><span>02</span><div><strong>Implement</strong><p>Add a single clarification algorithm that inherits from <code>ClarificationAlgorithmBase</code>.</p></div></li>
           <li><span>03</span><div><strong>Evaluate</strong><p>Run response generation and evaluation on the available train/validation splits.</p></div></li>
-          <li><span>04</span><div><strong>Submit</strong><p>Open a pull request with the required team and licensing header. Approved public results can then be added to the CSV leaderboard.</p></div></li>
+          <li><span>04</span><div><strong>Submit</strong><p>Open a pull request with the required team and licensing header before the final submission deadline.</p></div></li>
+          <li><span>05</span><div><strong>Final evaluation</strong><p>The organizers freeze eligible submissions, evaluate them on the hidden private test set, and publish the final leaderboard.</p></div></li>
         </ol>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">FAQ</div>
+          <h2>Common questions</h2>
+          <p>Short answers for participation and evaluation. The repository remains the source of truth for implementation details.</p>
+        </div>
+        <div class="faq-list" id="faq-list">
+          <details><summary>Loading FAQ…</summary><p>FAQ entries are loaded from <code>data/competition.json</code>.</p></details>
+        </div>
       </div>
     </section>
 
@@ -220,7 +299,8 @@
       <div class="container">
         <div class="section-heading">
           <div class="eyebrow">Organizers</div>
-          <h2>Contact</h2>
+          <h2>Competition organizers</h2>
+          <p>The competition is organized by researchers from the University of Luxembourg and Michigan Technological University.</p>
         </div>
         <div class="organizer-grid">
           <div><strong>Amal AKLI</strong><span>University of Luxembourg</span></div>
@@ -236,7 +316,7 @@
   <footer class="site-footer">
     <div class="container footer-wrap">
       <span>© <span id="year"></span> The Clarification Challenge</span>
-      <span>Built as a dependency-free GitHub Pages site.</span>
+      <span>ICSE 2027 Competition · Dublin, Ireland · Sponsored by University of Luxembourg</span>
     </div>
   </footer>
 

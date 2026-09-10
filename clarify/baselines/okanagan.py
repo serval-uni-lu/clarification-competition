@@ -19,7 +19,7 @@ Enclose your solution in ```python and ```.
 """.strip()
 
 CLARIFICATION_PROMPT_TEMPLATE = """
-Given the programming problem and a generated candidate, ask clarifying questions if the requirements in the given problem description are incomplete, inconsistent or ambiguous 
+Given the programming problem and a generated candidate, ask ONE clarifying question if the requirements in the given problem description are incomplete, inconsistent or ambiguous 
 for solving the problem correctly and passing the tests.
 If no need to ask clarifying questions, return strictly ’NO_QUESTIONS’ only. Otherwise, return the clarifying questions.
 
@@ -36,7 +36,7 @@ REGEN_CODE_PROMPT_TEMPLATE = """
 {prompt}
 {clarification}
 
-Given the above conversations, generate Python code directly (Markdown) to solve the coding problem:
+Given the above conversations, generate Python code directly (Markdown) to solve the coding problem implementing `{entry_point}`:
 """
 
 
@@ -78,6 +78,7 @@ class Okanagan(ClarificationAlgorithmBase):
                 REGEN_CODE_PROMPT_TEMPLATE
                 .replace("{prompt}", problem["prompt"])
                 .replace("{clarification}", "\n".join(clarifications))
+                .replace("{entry_point}", problem["entry_point"])
             )}
         ]
 

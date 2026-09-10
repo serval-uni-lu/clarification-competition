@@ -32,5 +32,73 @@
     }
   ],
   "multiple_tracks_enabled": false,
-  "main_track": "All eligible systems compete on one shared leaderboard, ranked by the competition’s official clarification metrics."
+  "main_track": "All eligible systems compete on one shared leaderboard, ranked by the competition’s official clarification metrics.",
+  "conference": "ICSE 2027",
+  "conference_location": "Dublin, Ireland",
+  "conference_dates": "25 April – 1 May 2027",
+  "sponsor": "University of Luxembourg",
+  "icse_dates": [
+    {
+      "date": "4 Dec 2026",
+      "label": "Solution papers due",
+      "description": "Ranked teams may submit a 4-page solution paper to the ICSE 2027 Competition Track."
+    },
+    {
+      "date": "16 Dec 2026",
+      "label": "Reviewer response",
+      "description": "Reviews for solution papers and organizer reports are released."
+    },
+    {
+      "date": "6 Jan 2027",
+      "label": "Revisions due",
+      "description": "Revised solution papers are due."
+    },
+    {
+      "date": "13 Jan 2027",
+      "label": "Final notification",
+      "description": "Final decisions for solution papers are announced."
+    },
+    {
+      "date": "20 Jan 2027",
+      "label": "Camera-ready",
+      "description": "Camera-ready solution papers are due."
+    },
+    {
+      "date": "25 Apr – 1 May 2027",
+      "label": "ICSE 2027 in Dublin",
+      "description": "In-person competition sessions, presentations, and results at ICSE 2027."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Which models can I use?",
+      "answer": "During development and validation, you may use any LiteLLM-supported hosted or locally served model. For the final private-test evaluation, the organizers will run all eligible submissions using the same fixed model and evaluation setup."
+    },
+    {
+      "question": "Can I compete with my own model?",
+      "answer": "Yes. For the public validation leaderboard, you may evaluate your system with any LiteLLM-supported hosted or locally served model and submit the results together with your system. These results are marked as unconfirmed until they are reproduced by the organizers. Final private-test evaluation is performed by the organizers using the official fixed model and evaluation setup."
+    },
+    {
+      "question": "What determines my rank?",
+      "answer": "TDS is the primary metric. nDCG is used only to break TDS ties. Pass@1, clarification rate, over-asking rate, and cost are reported but do not affect rank."
+    },
+    {
+      "question": "Why does a leaderboard entry show no rank?",
+      "answer": "Organizer baselines are never ranked. Participant systems below the strongest baseline under the TDS → nDCG ordering are also shown without a rank."
+    },
+    {
+      "question": "How is the private test set used?",
+      "answer": "The private test set is withheld during development. Organizers evaluate eligible final submissions after the competition deadline and publish private-test results at the end."
+    },
+    {
+      "question": "Who may submit an ICSE solution paper?",
+      "answer": "Any eligible submission that receives a competition rank may submit a solution paper. The paper then follows the ICSE 2027 Competition Track review and revision process."
+    },
+    {
+      "question": "Where are the technical setup instructions?",
+      "answer": "Installation, API keys, SDK interfaces, local model configuration, and submission examples are maintained in the competition repository.",
+      "link_text": "Competition repository ↗",
+      "link_url": "https://github.com/serval-uni-lu/clarification-competition"
+    }
+  ]
 }
