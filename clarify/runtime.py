@@ -12,13 +12,12 @@ except ImportError:
     evalplus = None
 
 
-
-def init_evalplus_evaluator(dataset, train = False):
+def init_evalplus_evaluator(dataset, train=False):
     if evalplus is None:
         raise ImportError("Install evalplus (`pip install evalplus`) to use the runtime evaluator.")
 
     dataset_deduplicated = {ex["task_id"]: ex for ex in dataset}
-    dataset_ids  = set(task_id.split("/", 1)[0] for task_id in dataset_deduplicated)
+    dataset_ids = set(task_id.split("/", 1)[0] for task_id in dataset_deduplicated)
     ground_truth = {}
 
     for dataset_id in dataset_ids:
@@ -30,7 +29,7 @@ def init_evalplus_evaluator(dataset, train = False):
             hash = get_human_eval_plus_hash() + ("_train" if train else "")
             gt = get_groundtruth(dataset, hash, [])
         ground_truth.update(gt)
-        
+
     return EvalPlusEvaluator(dataset_deduplicated, ground_truth)
 
 
@@ -54,7 +53,7 @@ class EvalPlusEvaluator:
                 gt = problem["test_cases"]
             else:
                 raise ValueError(f"Problem {task_id} does not have a ground truth.") from e
-                    
+
         return EvalPlusDockerInstanceEvaluator(problem, gt)
 
     def evaluate(self, example, response):
@@ -63,7 +62,7 @@ class EvalPlusEvaluator:
 
 # Docker evaluator -------------------------------------------------------------------------------------
 
-TEST_TRIGGER = '''
+TEST_TRIGGER = """
 import numpy as np 
 from math import inf
 
@@ -91,18 +90,17 @@ results = {results}
 for i, (inp, exp) in enumerate(zip(inputs, results)):
     assertion({entry_point}(*inp), exp, {atol}, inp)
 print("PASSED TESTS")
-'''
+"""
 
 
 class EvalPlusDockerInstanceEvaluator:
-
     def __init__(self, problem, ground_truth):
         self.problem = problem
         self.ground_truth = ground_truth
-    
+
     def _oracle(self):
         entry_point = self.problem["entry_point"]
-        
+
         if "are_equivalent" == entry_point:  # Mbpp/164 special oracle
             return "out == exp or True"
         elif "sum_div" == entry_point:  # Mbpp/295 special oracle
@@ -111,10 +109,10 @@ class EvalPlusDockerInstanceEvaluator:
             return "set(out) == set(exp)"
         elif entry_point in MBPP_OUTPUT_NOT_NONE_TASKS:
             return "out == exp if isinstance(out, bool) else exp == (out is not None)"
-        
+
         return "out == exp"
-    
-    def _construct_tests(self, test_trigger = TEST_TRIGGER):
+
+    def _construct_tests(self, test_trigger=TEST_TRIGGER):
         if not self.ground_truth:
             raise RuntimeError("The evaluator does not have access to the ground truth.")
 
@@ -122,11 +120,13 @@ class EvalPlusDockerInstanceEvaluator:
             inputs = self.problem["base_input"] + list(self.problem["plus_input"])
             results = self.ground_truth["base"] + list(self.ground_truth["plus"])
 
-            for key, value in [("entry_point", self.problem["entry_point"]),
-                            ("inputs", inputs),
-                            ("results", results),
-                            ("atol", self.problem.get("atol", "0")),
-                            ("oracle", self._oracle())]:
+            for key, value in [
+                ("entry_point", self.problem["entry_point"]),
+                ("inputs", inputs),
+                ("results", results),
+                ("atol", self.problem.get("atol", "0")),
+                ("oracle", self._oracle()),
+            ]:
                 test_trigger = test_trigger.replace("{%s}" % key, str(value))
         except (KeyError, TypeError):
             if isinstance(self.ground_truth, str):
@@ -136,58 +136,56 @@ class EvalPlusDockerInstanceEvaluator:
 
         return test_trigger
 
-
     def exec_code(self, complete_script):
-        docker_image = 'ganler/evalplus'
-        container_tag = f'pytester_{uuid.uuid4()}'
+        docker_image = "ganler/evalplus"
+        container_tag = f"pytester_{uuid.uuid4()}"
         start_docker_container(container_tag, docker_image)
 
         try:
             filepath = copy_code(complete_script, container_tag)
-            status = eval_script(container_tag, 'python3', filepath)
+            status = eval_script(container_tag, "python3", filepath)
         finally:
             remove_docker_container(container_tag)
-        
+
         return status
 
-
-    def _run_tests(self, solution_code, trigger_code = TEST_TRIGGER):
+    def _run_tests(self, solution_code, trigger_code=TEST_TRIGGER):
         complete_test_script = f"""{solution_code}\n{self._construct_tests(trigger_code)}"""
         return self.exec_code(complete_test_script)
-    
 
     def evaluate(self, example, response):
         solution = _validate_and_parse_evalplus_result(response)
         output = self._run_tests(solution)
-        
+
         if ("PASSED TESTS" in output) and ("FAILED TESTS" not in output):
             return True, "The provided implementation passed all tests."
-        
-        if "Timeout" in output:
-            return (False,
-                "The provided implementation ran into a timeout during the testing process.")
-    
-        return (False,
-            f"The provided implementation failed. Output:\n```{output}```")  
 
+        if "Timeout" in output:
+            return (
+                False,
+                "The provided implementation ran into a timeout during the testing process.",
+            )
+
+        return (False, f"The provided implementation failed. Output:\n```{output}```")
 
 
 def _validate_and_parse_evalplus_result(result):
     if "```python" not in result:
         raise ValueError("Expected the result to be enclosed in ```python and ```")
-    
+
     _, result = result.split("```python", 1)
 
     if "```" not in result:
         raise ValueError("Expected the result to be enclosed in ```python and ```")
-    
+
     result, _ = result.split("```", 1)
     return result
 
 
 # Test Utils ----------------------
 
-def eval_script(container_id: str, command: str, path: str, stdin_input : str | None = None) -> str:
+
+def eval_script(container_id: str, command: str, path: str, stdin_input: str | None = None) -> str:
     """
     Implementation adapted from eval_r.py from the MultiPL-E project (https://github.com/nuprl/MultiPL-E)
 
@@ -197,38 +195,42 @@ def eval_script(container_id: str, command: str, path: str, stdin_input : str | 
     :return: The output of the script execution
     """
     output_message = ""
-    docker_cmd = ['docker', 'exec', '-i', container_id, command, path] if stdin_input is not None \
-        else ['docker', 'exec', container_id, command, path]
-    encoded_input = stdin_input.encode('utf-8') if stdin_input is not None else None
+    docker_cmd = (
+        ["docker", "exec", "-i", container_id, command, path]
+        if stdin_input is not None
+        else ["docker", "exec", container_id, command, path]
+    )
+    encoded_input = stdin_input.encode("utf-8") if stdin_input is not None else None
 
-    try: 
+    try:
         output = subprocess.run(
             docker_cmd,
-            capture_output=True, 
+            capture_output=True,
             timeout=30,
-            input = encoded_input,    
+            input=encoded_input,
         )
 
         if output.returncode != 0:
             output_message += "Exception:\n"
-        output_message += output.stdout.decode('utf-8') if output.stdout else ""
-        output_message += output.stderr.decode('utf-8') if output.stderr else ""
+        output_message += output.stdout.decode("utf-8") if output.stdout else ""
+        output_message += output.stderr.decode("utf-8") if output.stderr else ""
     except subprocess.TimeoutExpired as exc:
         output_message += "Timeout during the execution of the test suite.\n"
-        output_message += exc.stdout.decode('utf-8') if exc.stdout else ""
-        output_message += exc.stderr.decode('utf-8') if exc.stderr else ""
+        output_message += exc.stdout.decode("utf-8") if exc.stdout else ""
+        output_message += exc.stderr.decode("utf-8") if exc.stderr else ""
     except subprocess.CalledProcessError as exc:
         output_message += "Error:\n"
-        output_message += exc.stdout.decode('utf-8') if exc.stdout else ""
-        output_message += exc.stderr.decode('utf-8') if exc.stderr else ""
+        output_message += exc.stdout.decode("utf-8") if exc.stdout else ""
+        output_message += exc.stderr.decode("utf-8") if exc.stderr else ""
 
     # Remove the file after running the script
-    subprocess.run(['docker', 'exec', container_id, 'rm', '-f', path])
+    subprocess.run(["docker", "exec", container_id, "rm", "-f", path])
 
     return output_message
 
 
 # Utils ----------------------------
+
 
 def start_docker_container(container_id: str, container_image: str) -> None:
     """
@@ -237,7 +239,10 @@ def start_docker_container(container_id: str, container_image: str) -> None:
     :param container_id: The container id
     :param container_image: The container image
     """
-    result = subprocess.run(f'docker run -m 8g --memory-swap=8g  --platform=linux/amd64 --name {container_id} --entrypoint tail -d {container_image} -f /dev/null', shell=True)
+    result = subprocess.run(
+        f"docker run -m 8g --memory-swap=8g  --platform=linux/amd64 --name {container_id} --entrypoint tail -d {container_image} -f /dev/null",
+        shell=True,
+    )
     if result.returncode != 0:
         raise Exception(f"Error creating the container {container_image}")
 
@@ -249,7 +254,7 @@ def remove_docker_container(container_id: str) -> None:
     :param container_id: The container id
     """
 
-    result = subprocess.run(f'docker rm -f {container_id}', shell=True)
+    result = subprocess.run(f"docker rm -f {container_id}", shell=True)
     if result.returncode != 0:
         raise Exception(f"Error removing the container {container_id}")
 
@@ -261,20 +266,23 @@ def copy_code(code: str, container_id: str) -> str:
     :param code: The content of the source code to copy
     :param container_id: The container id where the code will be copied
     :return: The path of the copied script in the container
-    """    
+    """
     try:
         filename = f"temp_script_{container_id}.py"
         container_path = "/app/temp_script.py"
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write(code)
             f.flush()
-            result = subprocess.run(f'docker cp {filename} {container_id}:{container_path}', shell=True)
+            result = subprocess.run(
+                f"docker cp {filename} {container_id}:{container_path}", shell=True
+            )
             if result.returncode != 0:
                 raise Exception("Error copying the file to the container")
     finally:
         os.remove(filename)
-    
+
     return container_path
 
+
 def on_script_finished():
-    remove_docker_container('py-test-container')
+    remove_docker_container("py-test-container")

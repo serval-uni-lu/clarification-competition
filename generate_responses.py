@@ -22,10 +22,7 @@ CLARIFICATION_PATH = "data/clarifications.jsonl"
 
 DEFAULT_DATASET_PATH = "data/mbpp_demo_test.jsonl"
 
-DEFAULT_SPLITS = {
-    "train" : "data/splits/train.txt",
-    "val"   : "data/splits/validation.txt"
-}
+DEFAULT_SPLITS = {"train": "data/splits/train.txt", "val": "data/splits/validation.txt"}
 
 
 def _module_name_for_path(path_to_algorithm: str) -> str:
@@ -60,16 +57,16 @@ def _load_clarification_algorithm(path_to_algorithm: str):
             raise
 
     candidates = [
-        obj for name, obj in inspect.getmembers(module, inspect.isclass)
-        if issubclass(obj, ClarificationAlgorithmBase) and obj is not ClarificationAlgorithmBase
+        obj
+        for name, obj in inspect.getmembers(module, inspect.isclass)
+        if issubclass(obj, ClarificationAlgorithmBase)
+        and obj is not ClarificationAlgorithmBase
         and obj.__module__ == module_name  # exclude re-imported subclasses from elsewhere
         and not name.startswith("_")  # exclude candidates prefixed with "_"
     ]
 
     if not candidates:
-        raise ValueError(
-            f"No ClarificationAlgorithmBase subclass defined in {path_to_algorithm}."
-        )
+        raise ValueError(f"No ClarificationAlgorithmBase subclass defined in {path_to_algorithm}.")
     if len(candidates) > 1:
         raise ValueError(
             f"Expected exactly one ClarificationAlgorithmBase subclass in "
@@ -78,7 +75,9 @@ def _load_clarification_algorithm(path_to_algorithm: str):
 
     return candidates[0]
 
+
 # Hooks ---------------
+
 
 def llm_console_hook(message: dict[str, str]):
     if message["role"] == "user":
@@ -92,6 +91,7 @@ def clarification_console_hook(message: dict[str, str]):
         console.print(Panel(message["content"], title="Question", border_style="green"))
     if message["role"] == "assistant":
         console.print(Panel(message["content"], title="Clarification", border_style="orange3"))
+
 
 # ---------------------
 
@@ -121,33 +121,48 @@ class SimulationFunction:
         for environment_definition in environment_definitions:
             envs.append(
                 ClarificationEnvironment(
-                    self.config["environment_config"], environment_definition,
-                    llm_api_hook = llm_console_hook,
-                    clarification_api_hook = clarification_console_hook,
+                    self.config["environment_config"],
+                    environment_definition,
+                    llm_api_hook=llm_console_hook,
+                    clarification_api_hook=clarification_console_hook,
                 )
             )
 
-            problem_definitions.append({
-                "prompt": environment_definition["prompt"],
-                "entry_point": environment_definition.get("entry_point", "unknown")
-            })
+            problem_definitions.append(
+                {
+                    "prompt": environment_definition["prompt"],
+                    "entry_point": environment_definition.get("entry_point", "unknown"),
+                }
+            )
 
-            results.append({"task_id": environment_definition["task_id"], "prompt": environment_definition["prompt"]})
+            results.append(
+                {
+                    "task_id": environment_definition["task_id"],
+                    "prompt": environment_definition["prompt"],
+                }
+            )
 
         try:
             with console.status(f"Run {algorithm_name} ({len(envs)} instances)..."):
-                for i, prompt_result in enumerate(clarification_algorithm.batch_run(envs, problem_definitions)):
+                for i, prompt_result in enumerate(
+                    clarification_algorithm.batch_run(envs, problem_definitions)
+                ):
                     environment = envs[i]
-                    results[i].update({
-                        "algorithm": algorithm_name,
-                        "model": self.config["environment_config"].language_model,
-                        "algorithm_path": self.config["clarification_algorithm_path"],
-                        "prompt_result": prompt_result,
-                        "need_clarification": len(environment_definition.get("clarifications", [None])) > 0,
-                        "clarification_history": environment.history,
-                        "prompt_cost": environment.prompt_cost,
-                        "clarification_cost": environment.clarification_cost or 0.0
-                    })
+                    results[i].update(
+                        {
+                            "algorithm": algorithm_name,
+                            "model": self.config["environment_config"].language_model,
+                            "algorithm_path": self.config["clarification_algorithm_path"],
+                            "prompt_result": prompt_result,
+                            "need_clarification": len(
+                                environment_definition.get("clarifications", [None])
+                            )
+                            > 0,
+                            "clarification_history": environment.history,
+                            "prompt_cost": environment.prompt_cost,
+                            "clarification_cost": environment.clarification_cost or 0.0,
+                        }
+                    )
 
                 return results
         except Exception as e:
@@ -159,40 +174,43 @@ class SimulationFunction:
                 result["prompt_result"] = f"[EXCEPTION] {e}"
             return results
 
-
     def __call__(self, environment_definition):
         environment = ClarificationEnvironment(
-            self.config["environment_config"], environment_definition,
-            llm_api_hook = llm_console_hook,
-            clarification_api_hook = clarification_console_hook,
+            self.config["environment_config"],
+            environment_definition,
+            llm_api_hook=llm_console_hook,
+            clarification_api_hook=clarification_console_hook,
         )
 
         problem_definition = {
             "prompt": environment_definition["prompt"],
-            "entry_point": environment_definition.get("entry_point", "unknown")
+            "entry_point": environment_definition.get("entry_point", "unknown"),
         }
 
-        result = {"task_id": environment_definition["task_id"], 
-                  "prompt": environment_definition["prompt"]}
-        
+        result = {
+            "task_id": environment_definition["task_id"],
+            "prompt": environment_definition["prompt"],
+        }
+
         try:
             clarification_algorithm = self._get_algorithm()
             algorithm_name = clarification_algorithm.__class__.__name__
             with console.status(f"Run {algorithm_name}..."):
-                prompt_result = clarification_algorithm.run(
-                    environment, problem_definition
-                )
+                prompt_result = clarification_algorithm.run(environment, problem_definition)
 
-            result.update({
-                "algorithm": algorithm_name,
-                "model": self.config["environment_config"].language_model,
-                "algorithm_path": self.config["clarification_algorithm_path"],
-                "prompt_result": prompt_result,
-                "need_clarification": len(environment_definition.get("clarifications", [None])) > 0,
-                "clarification_history": environment.history,
-                "prompt_cost": environment.prompt_cost,
-                "clarification_cost": environment.clarification_cost or 0.0,
-            })
+            result.update(
+                {
+                    "algorithm": algorithm_name,
+                    "model": self.config["environment_config"].language_model,
+                    "algorithm_path": self.config["clarification_algorithm_path"],
+                    "prompt_result": prompt_result,
+                    "need_clarification": len(environment_definition.get("clarifications", [None]))
+                    > 0,
+                    "clarification_history": environment.history,
+                    "prompt_cost": environment.prompt_cost,
+                    "clarification_cost": environment.clarification_cost or 0.0,
+                }
+            )
 
             return result
 
@@ -206,43 +224,41 @@ class SimulationFunction:
 
 
 def main(
-    clarify_py : str,
-    dataset_path : str = DEFAULT_DATASET_PATH,
-    output_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
-    batch_size : int = 1,
-    max_workers : int = 1,
-    max_clarification_turns : int = 1,
-    language_model      : str = "openai/gpt-4.1-mini",
-    temperature : float = 0.7,
-    clarification_model : str | None = None,
-    fail_on_exception : bool = False,
-    max_prompt_budget : float = 1.0,
-    max_clarification_budget : float = 1.0,
-    num_samples : int = 1,
-    split : str | None = None,
-    **kwargs
+    clarify_py: str,
+    dataset_path: str = DEFAULT_DATASET_PATH,
+    output_path: str = "data/mbpp_demo_test_clarify_output.jsonl",
+    batch_size: int = 1,
+    max_workers: int = 1,
+    max_clarification_turns: int = 1,
+    language_model: str = "openai/gpt-4.1-mini",
+    temperature: float = 0.7,
+    clarification_model: str | None = None,
+    fail_on_exception: bool = False,
+    max_prompt_budget: float = 1.0,
+    max_clarification_budget: float = 1.0,
+    num_samples: int = 1,
+    split: str | None = None,
+    **kwargs,
 ):
     batch_size = max(batch_size, max_workers)
 
     environment_config = ClarificationConfiguration(
-        max_clarification_turns = max_clarification_turns,
-        language_model = language_model,
-        temperature = temperature,
-        clarification_model = clarification_model,
-        max_clarification_budget = max_clarification_budget,
-        max_prompt_budget = max_prompt_budget,
+        max_clarification_turns=max_clarification_turns,
+        language_model=language_model,
+        temperature=temperature,
+        clarification_model=clarification_model,
+        max_clarification_budget=max_clarification_budget,
+        max_prompt_budget=max_prompt_budget,
     )
-    
+
     # Load clarification algorithm and use kwargs as config options
-    clarification_algorithm_class = _load_clarification_algorithm(
-        clarify_py
-    )
+    clarification_algorithm_class = _load_clarification_algorithm(clarify_py)
 
     algorithm_name = clarification_algorithm_class.__name__
     print(f"Loaded `{algorithm_name}` clarification algorithm...")
 
     # Load data ----------------------
-    
+
     if split:
         if dataset_path != DEFAULT_DATASET_PATH:
             print(f"WARNING: split '{split}' is overwritting your dataset path.")
@@ -261,9 +277,9 @@ def main(
         with open(CLARIFICATION_PATH, "r") as lines:
             for line in lines:
                 example = json.loads(line)
-                clarification_index[
-                    (example["task_id"], example["prompt"])
-                ] = example["clarifications"]
+                clarification_index[(example["task_id"], example["prompt"])] = example[
+                    "clarifications"
+                ]
 
         for example in benchmark:
             if (example["task_id"], example["prompt"]) in clarification_index:
@@ -272,10 +288,10 @@ def main(
                 ]
 
     simulation_function = SimulationFunction(
-        clarification_algorithm_path = clarify_py,
-        clarification_algorithm_kwargs = kwargs,
-        environment_config = environment_config,
-        fail_on_exception = fail_on_exception
+        clarification_algorithm_path=clarify_py,
+        clarification_algorithm_kwargs=kwargs,
+        environment_config=environment_config,
+        fail_on_exception=fail_on_exception,
     )
 
     def _duplicate(dataset, k: int = 1):
@@ -284,45 +300,46 @@ def main(
                 example["sample_id"] = i
                 yield example
 
-    def batched_iterator(k : int = 1):
+    def batched_iterator(k: int = 1):
         current_batch = []
         for example in _duplicate(benchmark, k):
             current_batch.append(example)
             if len(current_batch) >= batch_size:
                 yield current_batch
                 current_batch = []
-        
+
         if len(current_batch) > 0:
             yield current_batch
 
     if max_workers > 1:
-        batched_worker = BatchParallelProcessor(simulation_function, max_workers = max_workers)
+        batched_worker = BatchParallelProcessor(simulation_function, max_workers=max_workers)
     else:
         batched_worker = BatchSequentialProcessor(simulation_function)
 
     prompt_cost, clarification_cost = 0.0, 0.0
     try:
-        with open(output_path, "w") as o, tqdm(total = len(benchmark)) as pbar:
-            for task_batch in batched_iterator(k = num_samples):
+        with open(output_path, "w") as o, tqdm(total=len(benchmark)) as pbar:
+            for task_batch in batched_iterator(k=num_samples):
                 try:
                     results = simulation_function.batch(task_batch)
                 except ValueError:
                     results = batched_worker(task_batch)
 
                 for result in results:
-                    o.write(json.dumps(result, default = str) + "\n")
+                    o.write(json.dumps(result, default=str) + "\n")
 
-                    prompt_cost += result.get("prompt_cost", 0.0) 
-                    clarification_cost += result.get("clarification_cost", 0.0) 
+                    prompt_cost += result.get("prompt_cost", 0.0)
+                    clarification_cost += result.get("clarification_cost", 0.0)
 
-                    pbar.set_description(f"{algorithm_name} | Prompt ($): {prompt_cost+clarification_cost:.4f}, Clarification ($): {clarification_cost:.4f}")
+                    pbar.set_description(
+                        f"{algorithm_name} | Prompt ($): {prompt_cost + clarification_cost:.4f}, Clarification ($): {clarification_cost:.4f}"
+                    )
                     pbar.update(1)
-        
+
     finally:
-        if batched_worker: 
+        if batched_worker:
             batched_worker.close()
-    
-    
+
 
 if __name__ == "__main__":
     fire.Fire(main)

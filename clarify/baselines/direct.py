@@ -16,19 +16,19 @@ Enclose your solution in ```python and ```.
 
 
 class LLMClarification(ClarificationAlgorithmBase):
-
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         messages = [
-            {"role": "user", "content": (
-                DEFAULT_MBPP_TEMPLATE
-                    .replace("{prompt}", problem["prompt"])
-                    .replace("{entry_point}", problem["entry_point"])
-            )}
+            {
+                "role": "user",
+                "content": (
+                    DEFAULT_MBPP_TEMPLATE.replace("{prompt}", problem["prompt"]).replace(
+                        "{entry_point}", problem["entry_point"]
+                    )
+                ),
+            }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -44,5 +44,3 @@ class LLMClarification(ClarificationAlgorithmBase):
                     messages += [{"role": "assistant", "content": response}]
                 except TooManyQuestionException:
                     return response
-
-

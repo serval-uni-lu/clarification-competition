@@ -42,22 +42,23 @@ Given the above conversations, generate Python code directly (Markdown) to solve
 
 
 class Okanagan(ClarificationAlgorithmBase):
-
     DEFAULT_CONFIG = {"generation_attempts": 3}
 
-    def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
+    def _generate_seed_candidate(
+        self, env: ClarificationEnvironment, problem: dict[str, str]
+    ) -> str:
         messages = [
-            {"role": "user", "content": (
-                CODE_PROMPT_TEMPLATE
-                    .replace("{prompt}", problem["prompt"])
-                    .replace("{entry_point}", problem["entry_point"])
-                )
+            {
+                "role": "user",
+                "content": (
+                    CODE_PROMPT_TEMPLATE.replace("{prompt}", problem["prompt"]).replace(
+                        "{entry_point}", problem["entry_point"]
+                    )
+                ),
             }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -74,20 +75,22 @@ class Okanagan(ClarificationAlgorithmBase):
                 except TooManyQuestionException:
                     return response
 
-    def _generate_candidate(self, env: ClarificationEnvironment, problem: dict[str, str], clarifications: list[str]) -> str:
+    def _generate_candidate(
+        self, env: ClarificationEnvironment, problem: dict[str, str], clarifications: list[str]
+    ) -> str:
 
         messages = [
-            {"role": "user", "content": (
-                REGEN_CODE_PROMPT_TEMPLATE
-                .replace("{prompt}", problem["prompt"])
-                .replace("{clarification}", "\n".join(clarifications))
-                .replace("{entry_point}", problem["entry_point"])
-            )}
+            {
+                "role": "user",
+                "content": (
+                    REGEN_CODE_PROMPT_TEMPLATE.replace("{prompt}", problem["prompt"])
+                    .replace("{clarification}", "\n".join(clarifications))
+                    .replace("{entry_point}", problem["entry_point"])
+                ),
+            }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -102,9 +105,10 @@ class Okanagan(ClarificationAlgorithmBase):
 
     def _generate_clarifying_question(self, env, prompt, candidate):
         response = env.llm(
-            (CLARIFICATION_PROMPT_TEMPLATE
-                .replace("{prompt}", prompt)
-                .replace("{candidate}", candidate)
+            (
+                CLARIFICATION_PROMPT_TEMPLATE.replace("{prompt}", prompt).replace(
+                    "{candidate}", candidate
+                )
             )
         )
 
@@ -115,14 +119,13 @@ class Okanagan(ClarificationAlgorithmBase):
         return response
 
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
-    
+
         clarifications = []
         while True:
-
             if clarifications:
                 candidate = self._generate_candidate(env, problem, clarifications)
             else:
-                candidate  = self._generate_seed_candidate(env, problem)
+                candidate = self._generate_seed_candidate(env, problem)
 
             if not env.can_ask():
                 return candidate
@@ -137,7 +140,5 @@ class Okanagan(ClarificationAlgorithmBase):
             clarification = env.ask_human(clarification_question)
             num_rounds = len(clarifications)
             clarifications += [
-                f"Questions #{num_rounds+1}:\n{clarification_question}\nAnswers:\n{clarification}\n"
+                f"Questions #{num_rounds + 1}:\n{clarification_question}\nAnswers:\n{clarification}\n"
             ]
-
-

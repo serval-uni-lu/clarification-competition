@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -65,7 +64,9 @@ class LanguageModel:
 
     def _check_truncation(self, choices: list[Any]) -> None:
         if any(getattr(c, "finish_reason", None) == "length" for c in choices):
-            max_tok = self.completion_kwargs.get("max_tokens") or self.completion_kwargs.get("max_completion_tokens")
+            max_tok = self.completion_kwargs.get("max_tokens") or self.completion_kwargs.get(
+                "max_completion_tokens"
+            )
             logger.warning(
                 f"LM response was truncated (finish_reason='length', max_tokens={max_tok}). "
                 "Consider increasing max_tokens for better results."
@@ -123,7 +124,7 @@ class LanguageModel:
             )
 
         return content
-    
+
     def batch_complete(
         self, messages_list: list[list[dict[str, Any]]], max_workers: int = 10, **kwargs: Any
     ) -> list[str]:
@@ -158,10 +159,8 @@ class LanguageModel:
         for i, resp in enumerate(responses):
             self._check_truncation(resp.choices)
 
-            if resp.choices[0].message.content is None: # Failed
-                results.append(
-                    self(messages_list[i])
-                )
+            if resp.choices[0].message.content is None:  # Failed
+                results.append(self(messages_list[i]))
             else:
                 results.append(resp.choices[0].message.content.strip())
                 try:
@@ -185,5 +184,3 @@ class LanguageModel:
         for k, v in self.completion_kwargs.items():
             params.append(f"{k}={v!r}")
         return f"LM({', '.join(params)})"
-
-    

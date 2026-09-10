@@ -10,15 +10,15 @@ from clarify.runtime import EvalPlusDockerInstanceEvaluator
 
 @dataclass(frozen=True)
 class ClarificationConfiguration:
-
-    language_model      : str = "openai/gpt-4.1-mini"
-    temperature         : float = 0.7
-    clarification_model : str | None = None
+    language_model: str = "openai/gpt-4.1-mini"
+    temperature: float = 0.7
+    clarification_model: str | None = None
 
     # Budget constraints
-    max_clarification_turns : int = 1
+    max_clarification_turns: int = 1
     max_clarification_budget: float = 1.0
-    max_prompt_budget       : float = 1.0
+    max_prompt_budget: float = 1.0
+
 
 class TooManyQuestionException(Exception):
     pass
@@ -78,22 +78,22 @@ Return nothing else.
 
 
 class _ClarificationEnvironment:
-
-    def __init__(self, 
-                 config : ClarificationConfiguration, 
-                 problem : dict[str, Any],
-                 llm_api_hook : callable = None,
-                 clarification_api_hook : callable = None):
+    def __init__(
+        self,
+        config: ClarificationConfiguration,
+        problem: dict[str, Any],
+        llm_api_hook: callable = None,
+        clarification_api_hook: callable = None,
+    ):
         self._config = config
         self._problem = problem
 
-        self._llm = LanguageModel(config.language_model, temperature = config.temperature)
+        self._llm = LanguageModel(config.language_model, temperature=config.temperature)
         self._clarify_llm = LanguageModel(
-            config.clarification_model or config.language_model,
-            temperature = 0.0
+            config.clarification_model or config.language_model, temperature=0.0
         )
-        self._num_clarification_turns    = 0
-        self._clarification_history      = []
+        self._num_clarification_turns = 0
+        self._clarification_history = []
         self._clarification_chat_history = None
 
         self._clarification_hook = clarification_api_hook
@@ -124,23 +124,25 @@ class _ClarificationEnvironment:
     def _build_human_system_prompt(self):
         if "clarifications" in self._problem:
             requirement_fragments = [
-                f"[Q-{i//2 + 1}]: {content}" if i % 2 == 0 else f"[A-{i//2+1}]: {content}\n"
+                f"[Q-{i // 2 + 1}]: {content}" if i % 2 == 0 else f"[A-{i // 2 + 1}]: {content}\n"
                 for i, content in enumerate(self._problem["clarifications"])
             ]
-            requirements = "\n".join(requirement_fragments) if requirement_fragments else "_(no hidden requirements)_"
+            requirements = (
+                "\n".join(requirement_fragments)
+                if requirement_fragments
+                else "_(no hidden requirements)_"
+            )
         else:
             requirements = self._problem.get("reference_prompt", "[REDACTED]")
 
         return HUMAN_SYSTEM_PROMPT.replace(
             "{problem}", self._problem.get("prompt", "[REDACTED]")
-        ).replace(
-            "{requirements}", requirements
-        )
+        ).replace("{requirements}", requirements)
 
     def _parse_human_response(self, completion_content):
-        question_quality = re.findall(r'QUALITY\s*=?\s*(\d+)', completion_content)
-        requirements_id = re.findall(r'ID\s*=?\s*(\S+)', completion_content)
-        answers = re.findall(r'ANSWERS\s*=?\s*`(.+?)`', completion_content, flags=re.DOTALL)
+        question_quality = re.findall(r"QUALITY\s*=?\s*(\d+)", completion_content)
+        requirements_id = re.findall(r"ID\s*=?\s*(\S+)", completion_content)
+        answers = re.findall(r"ANSWERS\s*=?\s*`(.+?)`", completion_content, flags=re.DOTALL)
         answer_str = answers[0] if answers else ""
         question_quality_str = question_quality[0] if question_quality else ""
         requirements_id_str = requirements_id[0] if requirements_id else "none"
@@ -153,11 +155,10 @@ class _ClarificationEnvironment:
     def _notify_llm_hook(self, message: dict) -> None:
         if self._llm_hook:
             self._llm_hook(message)
-    
 
     # Main API -----------------------------------------------------------------
 
-    def llm(self, messages : list[dict[str, str]] | str) -> str:
+    def llm(self, messages: list[dict[str, str]] | str) -> str:
         if self.prompt_cost >= self.prompt_budget:
             raise LimitsExceededException("You exceeded the prompt budget.")
 
@@ -169,10 +170,11 @@ class _ClarificationEnvironment:
         self._notify_llm_hook({"role": "assistant", "content": response})
         return response
 
-    
-    def ask_human(self, query : str) -> str:
+    def ask_human(self, query: str) -> str:
         if not self.can_ask():
-            raise TooManyQuestionException("You exceeded the clarification budget by asking too many or overly complex questions.")
+            raise TooManyQuestionException(
+                "You exceeded the clarification budget by asking too many or overly complex questions."
+            )
 
         if self._clarification_chat_history is None:
             self._clarification_chat_history = [
@@ -184,8 +186,7 @@ class _ClarificationEnvironment:
         self._notify_clarification_hook(user_message)
 
         seen_requirements = set(
-            requirement_id
-            for _, requirement_id, _, _ in self._clarification_history
+            requirement_id for _, requirement_id, _, _ in self._clarification_history
         )
 
         try:
@@ -207,14 +208,11 @@ class _ClarificationEnvironment:
         finally:
             self._num_clarification_turns += 1
 
-    def exec_code(self, complete_code : str) -> str:
-        return EvalPlusDockerInstanceEvaluator(
-            self._problem, None
-        ).exec_code(complete_code)
+    def exec_code(self, complete_code: str) -> str:
+        return EvalPlusDockerInstanceEvaluator(self._problem, None).exec_code(complete_code)
 
 
 class ClarificationEnvironment:
-
     def __init__(self, *args, **kwargs):
         protected_env = _ClarificationEnvironment(*args, **kwargs)
         object.__setattr__(self, "_env", protected_env)

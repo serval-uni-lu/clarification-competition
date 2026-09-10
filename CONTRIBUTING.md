@@ -112,10 +112,9 @@ Declare **all** parameters together with their defaults in a single `DEFAULT_CON
 
 ```python
 class MyClarification(ClarificationAlgorithmBase):
-
     DEFAULT_CONFIG = {
-        "num_candidates": 5,   # candidate implementations sampled per round
-        "max_tests": 10,       # LLM-generated tests used for clustering
+        "num_candidates": 5,  # candidate implementations sampled per round
+        "max_tests": 10,  # LLM-generated tests used for clustering
     }
 
     def __init__(self, config=None):

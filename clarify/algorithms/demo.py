@@ -6,7 +6,7 @@
 
 A simple baseline implementation of an LLM-based clarification algorithm.
 The LLM is asked for a solution to the coding problem. If it abstains on its
-own, the respond is sent as a clarification request to the user. 
+own, the respond is sent as a clarification request to the user.
 Otherwise, the answer of the LLM is returned.
 
 Team: Organizers
@@ -32,19 +32,19 @@ Enclose your solution in ```python and ```.
 
 
 class LLMClarification(ClarificationAlgorithmBase):
-
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         messages = [
-            {"role": "user", "content": (
-                DEFAULT_MBPP_TEMPLATE
-                    .replace("{prompt}", problem["prompt"])
-                    .replace("{entry_point}", problem["entry_point"])
-            )}
+            {
+                "role": "user",
+                "content": (
+                    DEFAULT_MBPP_TEMPLATE.replace("{prompt}", problem["prompt"]).replace(
+                        "{entry_point}", problem["entry_point"]
+                    )
+                ),
+            }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -60,5 +60,3 @@ class LLMClarification(ClarificationAlgorithmBase):
                     messages += [{"role": "assistant", "content": response}]
                 except TooManyQuestionException:
                     return response
-
-

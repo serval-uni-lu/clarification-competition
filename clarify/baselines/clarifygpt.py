@@ -62,25 +62,27 @@ Enclose your set of questions in ``` and ```. If the solutions are identical, si
 
 
 class ClarifyGPT(ClarificationAlgorithmBase):
-
     DEFAULT_CONFIG = {
         "generation_attempts": 3,
         "test_attempts": 3,
         "cluster_size": 25,
     }
 
-    def _generate_seed_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
+    def _generate_seed_candidate(
+        self, env: ClarificationEnvironment, problem: dict[str, str]
+    ) -> str:
         messages = [
-            {"role": "user", "content": (
-                DEFAULT_MBPP_TEMPLATE
-                    .replace("{prompt}", problem["prompt"])
-                    .replace("{entry_point}", problem["entry_point"])
-            )}
+            {
+                "role": "user",
+                "content": (
+                    DEFAULT_MBPP_TEMPLATE.replace("{prompt}", problem["prompt"]).replace(
+                        "{entry_point}", problem["entry_point"]
+                    )
+                ),
+            }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -97,19 +99,19 @@ class ClarifyGPT(ClarificationAlgorithmBase):
                 except TooManyQuestionException:
                     return response
 
-
     def _generate_candidate(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         messages = [
-            {"role": "user", "content": (
-                DEFAULT_MBPP_TEMPLATE
-                    .replace("{prompt}", problem["prompt"])
-                    .replace("{entry_point}", problem["entry_point"])
-            )}
+            {
+                "role": "user",
+                "content": (
+                    DEFAULT_MBPP_TEMPLATE.replace("{prompt}", problem["prompt"]).replace(
+                        "{entry_point}", problem["entry_point"]
+                    )
+                ),
+            }
         ]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -122,13 +124,16 @@ class ClarifyGPT(ClarificationAlgorithmBase):
                 response = env.llm(messages)
                 messages += [{"role": "assistant", "content": response}]
 
-
-    def _generate_seed_test_cases(self, env: ClarificationEnvironment, prompt: str, candidate : str) -> str:
+    def _generate_seed_test_cases(
+        self, env: ClarificationEnvironment, prompt: str, candidate: str
+    ) -> str:
         messages = [
-            {"role": "user", 
-             "content": (GEN_FROM_PROGRAM
-                         .replace("{prompt}", prompt)
-                         .replace("{candidate}", candidate))}
+            {
+                "role": "user",
+                "content": (
+                    GEN_FROM_PROGRAM.replace("{prompt}", prompt).replace("{candidate}", candidate)
+                ),
+            }
         ]
 
         response = env.llm(messages)
@@ -137,7 +142,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
             try:
                 test_cases = _validate_and_parse_evalplus_result(response)
                 test_result = self._test_candidate(env, candidate, test_cases)
-                if test_result != "success": 
+                if test_result != "success":
                     raise ValueError(test_result)
                 return test_cases
             except ValueError as e:
@@ -146,7 +151,7 @@ class ClarifyGPT(ClarificationAlgorithmBase):
                 messages += [{"role": "assistant", "content": response}]
 
     def _test_candidate(self, env, candidate, test_cases):
-        test_code = f"{candidate}\n{test_cases}\nprint(\"TEST SUCCESS\")"
+        test_code = f'{candidate}\n{test_cases}\nprint("TEST SUCCESS")'
         test_result = env.exec_code(test_code)
         if "TEST SUCCESS" in test_result:
             return "success"
@@ -154,11 +159,12 @@ class ClarifyGPT(ClarificationAlgorithmBase):
 
     def _generate_clarifying_question(self, env, prompt, candidate, alternative, test_result):
         response = env.llm(
-            (CLARIFICATION_PROMPT
-                .replace("{prompt}", prompt)
+            (
+                CLARIFICATION_PROMPT.replace("{prompt}", prompt)
                 .replace("{target}", candidate)
                 .replace("{alternative}", alternative)
-                .replace("{test_result}", test_result))
+                .replace("{test_result}", test_result)
+            )
         )
 
         if "```" in response:
@@ -168,11 +174,13 @@ class ClarifyGPT(ClarificationAlgorithmBase):
         return response
 
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
-    
+
         clarifications = []
         while True:
             current_prompt = "\n".join([problem["prompt"]] + clarifications)
-            seed_candidate  = self._generate_seed_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
+            seed_candidate = self._generate_seed_candidate(
+                env, {"prompt": current_prompt, "entry_point": problem["entry_point"]}
+            )
 
             if not env.can_ask():
                 return seed_candidate
@@ -181,13 +189,15 @@ class ClarifyGPT(ClarificationAlgorithmBase):
 
             test_result = "success"
             for _ in range(self.config.get("cluster_size", 25) - 1):
-                alternative_candidate = self._generate_candidate(env, {"prompt": current_prompt, "entry_point": problem["entry_point"]})
+                alternative_candidate = self._generate_candidate(
+                    env, {"prompt": current_prompt, "entry_point": problem["entry_point"]}
+                )
                 test_result = self._test_candidate(env, alternative_candidate, seed_test_cases)
-                if test_result != "success": 
+                if test_result != "success":
                     break
 
-            if test_result == "success": 
-                return seed_candidate # Clear description
+            if test_result == "success":
+                return seed_candidate  # Clear description
 
             clarifying_question = self._generate_clarifying_question(
                 env, current_prompt, seed_candidate, alternative_candidate, test_result
@@ -196,7 +206,5 @@ class ClarifyGPT(ClarificationAlgorithmBase):
             clarification = env.ask_human(clarifying_question)
             num_rounds = len(clarifications)
             clarifications += [
-                f"Questions #{num_rounds+1}:\n{clarifying_question}\nAnswers:\n{clarification}\n"
+                f"Questions #{num_rounds + 1}:\n{clarifying_question}\nAnswers:\n{clarification}\n"
             ]
-
-

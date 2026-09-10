@@ -22,16 +22,13 @@ console = Console()
 
 DEFAULT_DATASET_PATH = "data/mbpp_demo_test.jsonl"
 
-DEFAULT_SPLITS = {
-    "train" : "data/splits/train.txt",
-    "val"   : "data/splits/validation.txt"
-}
+DEFAULT_SPLITS = {"train": "data/splits/train.txt", "val": "data/splits/validation.txt"}
 
 PUBLIC_LEADERBOARD = Path("docs/data/leaderboard.csv")
 PRIVATE_LEADERBOARD = Path("docs/data/private-leaderboard.csv")
 
-class EvaluationFunction:
 
+class EvaluationFunction:
     def __init__(self, **config):
         self.config = config
 
@@ -45,20 +42,26 @@ class EvaluationFunction:
 
         # Execute
         with console.status(f"Run tests for {result['task_id']}"):
-            success, status = evaluator.evaluate(
-                None, prompt_result
-            )
+            success, status = evaluator.evaluate(None, prompt_result)
 
         if success:
-            console.print(Panel(prompt_result, title=f"✅ Success ({result['task_id']})", border_style="green"))
+            console.print(
+                Panel(
+                    prompt_result, title=f"✅ Success ({result['task_id']})", border_style="green"
+                )
+            )
         else:
             output = f"{prompt_result}\n\nTest Result:\n{status}"
-            console.print(Panel(output, title=f"❌ Failure ({result['task_id']})", border_style="red"))
+            console.print(
+                Panel(output, title=f"❌ Failure ({result['task_id']})", border_style="red")
+            )
 
         result["success"], result["test_result"] = success, status
         return result
 
+
 # Statistics ---------
+
 
 def _print_test_overview(results):
     clarify_map = {"3": "✅", "2": "🌀", "1": "☠️"}
@@ -72,11 +75,11 @@ def _print_test_overview(results):
         table = Table(title="Test Results")
 
     table.add_column("Task ID")
-    table.add_column("Status", justify = "center")
-    table.add_column("Clarify?", justify = "center")
-    table.add_column("Output", no_wrap = True)
+    table.add_column("Status", justify="center")
+    table.add_column("Clarify?", justify="center")
+    table.add_column("Output", no_wrap=True)
 
-    for result in sorted(results, key = lambda x: x["task_id"]):
+    for result in sorted(results, key=lambda x: x["task_id"]):
         output = result["test_result"]
 
         clarification = "❌"
@@ -85,10 +88,10 @@ def _print_test_overview(results):
             clarification = clarify_map.get(clarification, clarification)
 
         table.add_row(
-            result["task_id"], 
+            result["task_id"],
             "✅" if result["success"] else ("⏲️" if "timeout" in output else "❌"),
             clarification,
-            output[:40] + "..." if len(output) > 40 else output
+            output[:40] + "..." if len(output) > 40 else output,
         )
 
     console.print(table)
@@ -110,15 +113,15 @@ def _turn_discounted_key_question_rate(results):
         indicator = [e[2] == "3" for e in result["clarification_history"]]
 
         discounted_cumulative_gain = 0.0
-        idealized_cumulative_gain  = 0.0
+        idealized_cumulative_gain = 0.0
         for turn, high_quality in enumerate(indicator):
-            gain = 1 /  (math.log(turn + 2) / math.log(2))
-            if high_quality: 
+            gain = 1 / (math.log(turn + 2) / math.log(2))
+            if high_quality:
                 discounted_cumulative_gain += gain
             idealized_cumulative_gain += gain
 
         if idealized_cumulative_gain > 0:
-            tkqr += (discounted_cumulative_gain / idealized_cumulative_gain)
+            tkqr += discounted_cumulative_gain / idealized_cumulative_gain
 
     return tkqr / len(results)
 
@@ -137,7 +140,7 @@ def print_statistics(output_path):
     table.add_row("Total", str(total))
 
     table.add_row("Turn Discounted Success", f"{_turn_discounted_sucess(results):.4f}")
-    table.add_row("nDCG", f"{_turn_discounted_key_question_rate(results):.4f}" )
+    table.add_row("nDCG", f"{_turn_discounted_key_question_rate(results):.4f}")
 
     pass_at_1 = sum(r["success"] for r in results)
     table.add_row("Pass@1", f"{100 * pass_at_1 / total:.2f}")
@@ -148,21 +151,35 @@ def print_statistics(output_path):
     overask_result = [r for r in results if r.get("need_clarification", False)]
     overasking_rate = 0.0
     if overask_result:
-        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(overask_result)
+        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(
+            overask_result
+        )
 
     table.add_row("Overasking rate", f"{100 * overasking_rate:.2f}%")
 
     if clarification_rate > 0:
-        high_quality_clarification = sum(all(e[2] == "3" for e in r["clarification_history"])
-                                        for r in results if len(r["clarification_history"]) > 0)
-        table.add_row("High quality clarification", f"{100 * high_quality_clarification / clarification_rate:.2f}%")
+        high_quality_clarification = sum(
+            all(e[2] == "3" for e in r["clarification_history"])
+            for r in results
+            if len(r["clarification_history"]) > 0
+        )
+        table.add_row(
+            "High quality clarification",
+            f"{100 * high_quality_clarification / clarification_rate:.2f}%",
+        )
 
-        clarification_length = sum(sum(len(e[3]) for e in r["clarification_history"]) for r in results)
-        table.add_row("Average clarification length", f"{clarification_length / clarification_rate:.2f}")
+        clarification_length = sum(
+            sum(len(e[3]) for e in r["clarification_history"]) for r in results
+        )
+        table.add_row(
+            "Average clarification length", f"{clarification_length / clarification_rate:.2f}"
+        )
 
     console.print(table)
-    
+
+
 # --------------------
+
 
 def _find_repo_root() -> Path:
     """Find the repository root containing docs/data/leaderboard.csv."""
@@ -186,6 +203,7 @@ def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
         fieldnames = list(reader.fieldnames or [])
         return fieldnames, [dict(row) for row in reader]
 
+
 def _compute_output_row(results):
     algorithms = set(r["algorithm"] for r in results)
     assert len(algorithms) == 1, f"Expected only one algorithm in results, but got {algorithms}"
@@ -207,7 +225,9 @@ def _compute_output_row(results):
     overask_result = [r for r in results if r.get("need_clarification", False)]
     overasking_rate = 0.0
     if overask_result:
-        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(overask_result)
+        overasking_rate = sum(len(r["clarification_history"]) > 0 for r in overask_result) / len(
+            overask_result
+        )
 
     prompt_cost = sum(r.get("prompt_cost", 0.0) for r in results) / total
 
@@ -215,18 +235,18 @@ def _compute_output_row(results):
         "track": "main",
         "algorithm": algorithm,
         "model": model,
-        "tds":  tds,
+        "tds": tds,
         "pass_at_1": pass_at_1,
         "ndcg": ndcg,
         "clarification_rate": clarification_rate,
         "over_asking_rate": overasking_rate,
         "avg_cost_usd": prompt_cost,
         "is_baseline": baseline,
-        "submission_url": f"https://github.com/serval-uni-lu/clarification-competition/tree/main/{path}"
+        "submission_url": f"https://github.com/serval-uni-lu/clarification-competition/tree/main/{path}",
     }
 
 
-def submit_to_benchmark(output_path, split = None, team = None, trusted = False):
+def submit_to_benchmark(output_path, split=None, team=None, trusted=False):
     if split not in {"val", "test"}:
         print("> Split must be either 'val' or 'test'; leaderboard was not updated.")
         return
@@ -281,10 +301,10 @@ def submit_to_benchmark(output_path, split = None, team = None, trusted = False)
     )
 
     normalized_result = {
-            key: (str(value).lower() if isinstance(value, bool) else str(value))
-            for key, value in result.items()
-            if key in fieldnames and value is not None
-        }
+        key: (str(value).lower() if isinstance(value, bool) else str(value))
+        for key, value in result.items()
+        if key in fieldnames and value is not None
+    }
     normalized_result.update(
         {
             "algorithm": algorithm,
@@ -316,22 +336,22 @@ def submit_to_benchmark(output_path, split = None, team = None, trusted = False)
 
 
 def main(
-    benchmark_path : str = "data/mbpp_demo_test.jsonl",
-    generation_path : str = "data/mbpp_demo_test_clarify_output.jsonl",
-    output_path : str = "data/mbpp_demo_test_clarify_output_results.jsonl",
-    batch_size : int = 1,
-    max_workers : int = 1,
-    force_rerun : bool = False,
-    split : str | None = None,
-    submit : str | bool = False,
-    trusted : bool = False,
+    benchmark_path: str = "data/mbpp_demo_test.jsonl",
+    generation_path: str = "data/mbpp_demo_test_clarify_output.jsonl",
+    output_path: str = "data/mbpp_demo_test_clarify_output_results.jsonl",
+    batch_size: int = 1,
+    max_workers: int = 1,
+    force_rerun: bool = False,
+    split: str | None = None,
+    submit: str | bool = False,
+    trusted: bool = False,
 ):
     if os.path.exists(output_path) and not force_rerun:
         print_statistics(output_path)
         if submit:
-            submit_to_benchmark(output_path, split, team = submit, trusted = trusted)
+            submit_to_benchmark(output_path, split, team=submit, trusted=trusted)
         exit(0)
-    
+
     batch_size = max(batch_size, max_workers)
 
     # Load data ----------------------
@@ -345,7 +365,7 @@ def main(
             benchmark = [json.loads(line) for line in lines]
 
         benchmark = list(preprocess_benchmark(benchmark).values())
-    
+
     evaluator = init_evalplus_evaluator(benchmark)
     print(f"Loaded {len(benchmark)} instances...")
 
@@ -366,36 +386,36 @@ def main(
             if len(current_batch) >= batch_size:
                 yield current_batch
                 current_batch = []
-        
+
         if len(current_batch) > 0:
             yield current_batch
 
     if max_workers > 1:
-        batched_worker = BatchParallelProcessor(evaluation_function, max_workers = max_workers)
+        batched_worker = BatchParallelProcessor(evaluation_function, max_workers=max_workers)
     else:
         batched_worker = BatchSequentialProcessor(evaluation_function)
 
     num_success, total = 0, 0
     try:
-        with open(output_path, "w") as o, tqdm(total = len(benchmark)) as pbar:
+        with open(output_path, "w") as o, tqdm(total=len(benchmark)) as pbar:
             for task_batch in batched_iterator():
                 results = batched_worker(task_batch)
                 for result in results:
-                    o.write(json.dumps(result, default = str) + "\n")
+                    o.write(json.dumps(result, default=str) + "\n")
 
                     num_success += 1.0 if result.get("success", False) else 0.0
                     total += 1
 
                     pbar.set_description(f"Pass@1: {100 * num_success / total:.2f}")
                     pbar.update(1)
-        
+
     finally:
-        if batched_worker: 
+        if batched_worker:
             batched_worker.close()
         print_statistics(output_path)
         if submit:
-            submit_to_benchmark(output_path, split, team = submit, trusted = trusted)
-    
+            submit_to_benchmark(output_path, split, team=submit, trusted=trusted)
+
 
 if __name__ == "__main__":
     fire.Fire(main)

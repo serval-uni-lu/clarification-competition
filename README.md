@@ -81,16 +81,12 @@ from clarify.env import ClarificationEnvironment, TooManyQuestionException
 from clarify.baselines.base import ClarificationAlgorithmBase
 from clarify.runtime import _validate_and_parse_evalplus_result
 
+
 class QuickStartClarification(ClarificationAlgorithmBase):
-
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
-        messages = [
-            {"role": "user", "content": problem["prompt"]}
-        ]
+        messages = [{"role": "user", "content": problem["prompt"]}]
 
-        response = env.llm(
-            messages
-        )
+        response = env.llm(messages)
 
         messages += [{"role": "assistant", "content": response}]
 
@@ -156,12 +152,11 @@ python chat.py clarify/baselines/okanagan.py
 > API for implementing clarification algorithm
 ```python
 class ClarificationAlgorithmBase(ABC):
-
     def __init__(self, config: Mapping[str, Any] | None = None):
-        self.config : dict[str, Any] = dict(config or {})
+        self.config: dict[str, Any] = dict(config or {})
 
     @abstractmethod
-    def run(self, env: ClarificationEnvironment, problem : dict[str, str]) -> str:
+    def run(self, env: ClarificationEnvironment, problem: dict[str, str]) -> str:
         pass
 ```
 Every clarification algorithm should implement the `run` function. The function is provided with a `ClarificationEnvironment` and a `problem` dict. The `problem` dict contains the `prompt` given by the user and a `entry_point` which can be used to refine the initial prompt. The `entry_point` needs to be implemented by the LLM to be evaluated by the test cases during evaluation.
@@ -170,14 +165,13 @@ Every clarification algorithm should implement the `run` function. The function 
 > API for the clarification environment to interact with
 ```python
 class ClarificationEnvironment:
-
     def can_ask(self):
         """
         Checks if `ask_human` is available or the clarification budget is exhausted.
         `can_ask() == True` ensures that `ask_human` returns a response.
         """
 
-    def ask_human(self, query : str) -> str:
+    def ask_human(self, query: str) -> str:
         """
         Returns a response to a clarifying query (str).
 
@@ -185,7 +179,7 @@ class ClarificationEnvironment:
         TooManyQuestionsException - too many questions where asked (`can_ask() == False`).
         """
 
-    def llm(self, messages : list[dict[str, str]] | str) -> str:
+    def llm(self, messages: list[dict[str, str]] | str) -> str:
         """
         Simple API to query the underlying LLM.
 
@@ -194,12 +188,12 @@ class ClarificationEnvironment:
                    Message history: [{'role': 'system', 'content': ...}, {'role': 'user', 'content': ...}, ...]
         """
 
-    def exec_code(self, complete_code : str) -> str:
+    def exec_code(self, complete_code: str) -> str:
         """
         Executes the given `complete_code` in a Docker environment.
-        `complete_code` needs to be self-contained and cannot import libraries other than the Python standard library. 
+        `complete_code` needs to be self-contained and cannot import libraries other than the Python standard library.
 
-        Returns: 
+        Returns:
         A string representing std out of the Docker environment.
         """
 ```
@@ -214,7 +208,7 @@ Fork our project, implement your clarification algorithm in `clarify/algorithms/
 
 """Algorithm name.
 
-Short description of the main mechanism of the implemented algorithm. 
+Short description of the main mechanism of the implemented algorithm.
 This does not need to go into details, but should capture the core idea.
 
 Team: Your Team Name

@@ -97,15 +97,15 @@ def _load_clarification_algorithm(path_to_algorithm: str):
             raise
 
     candidates = [
-        obj for _, obj in inspect.getmembers(module, inspect.isclass)
-        if issubclass(obj, ClarificationAlgorithmBase) and obj is not ClarificationAlgorithmBase
+        obj
+        for _, obj in inspect.getmembers(module, inspect.isclass)
+        if issubclass(obj, ClarificationAlgorithmBase)
+        and obj is not ClarificationAlgorithmBase
         and obj.__module__ == module_name  # exclude re-imported subclasses from elsewhere
     ]
 
     if not candidates:
-        raise ValueError(
-            f"No ClarificationAlgorithmBase subclass defined in {path_to_algorithm}."
-        )
+        raise ValueError(f"No ClarificationAlgorithmBase subclass defined in {path_to_algorithm}.")
     if len(candidates) > 1:
         raise ValueError(
             f"Expected exactly one ClarificationAlgorithmBase subclass in "
@@ -119,20 +119,25 @@ def _load_clarification_algorithm(path_to_algorithm: str):
 # Response types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ClarificationQuestion:
     """The assistant needs more information before it can implement."""
+
     question: str
+
 
 @dataclass
 class Response:
     """The assistant gave a regular non-coding answer."""
+
     text: str
 
 
 @dataclass
 class Implementation:
     """The assistant is confident enough to propose code."""
+
     code: str
     language: str = "python"
     explanation: str = ""
@@ -146,6 +151,7 @@ Message = dict[str, str]  # {"role": "user" | "assistant", "content": str}
 # ---------------------------------------------------------------------------
 # Assistant interface
 # ---------------------------------------------------------------------------
+
 
 class Assistant:
     """
@@ -195,17 +201,20 @@ COMMANDS: dict[str, Command] = {}
 
 def command(name: str, help: str, usage: str = "", aliases: tuple[str, ...] = ()):
     """Register a method of ChatCLI as a slash command."""
+
     def decorator(fn: CommandHandler) -> CommandHandler:
         cmd = Command(name, help, usage or f"/{name}", fn, aliases)
         for key in (name, *aliases):
             COMMANDS[key] = cmd
         return fn
+
     return decorator
 
 
 # ---------------------------------------------------------------------------
 # Session state
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Session:
@@ -227,6 +236,7 @@ class Session:
 # ---------------------------------------------------------------------------
 
 IMPLEMENT = "--<IMPLEMENT>---"
+
 
 class ChatCLI:
     PROMPT = "[bold cyan]you ›[/] "
@@ -284,35 +294,38 @@ class ChatCLI:
                 return
 
         self.session.responses.append(response)
-        self.session.history.append(
-            {"role": "assistant", "content": response_to_text(response)}
-        )
+        self.session.history.append({"role": "assistant", "content": response_to_text(response)})
         self.render_response(response)
 
     # -- rendering ---------------------------------------------------------
 
     def render_response(self, response: AssistantResponse) -> None:
         if isinstance(response, ClarificationQuestion):
-            console.print(Panel(
-                Text(response.question),
-                title="❓ Clarification question",
-                subtitle="[dim]answer below, or /implement to force code[/]",
-                border_style="green",
-            ))
+            console.print(
+                Panel(
+                    Text(response.question),
+                    title="❓ Clarification question",
+                    subtitle="[dim]answer below, or /implement to force code[/]",
+                    border_style="green",
+                )
+            )
         elif isinstance(response, Response):
-            console.print(Panel(
-                Text(response.text),
-                title="Assistant's Answer",
-                border_style="green",
-            ))
+            console.print(
+                Panel(
+                    Text(response.text),
+                    title="Assistant's Answer",
+                    border_style="green",
+                )
+            )
         else:
-            body = Syntax(response.code, response.language, line_numbers=True,
-                          theme="monokai", word_wrap=True)
-            console.print(Panel(body, title="🛠  Implementation attempt",
-                                border_style="purple"))
+            body = Syntax(
+                response.code, response.language, line_numbers=True, theme="monokai", word_wrap=True
+            )
+            console.print(Panel(body, title="🛠  Implementation attempt", border_style="purple"))
             if response.explanation:
-                console.print(Panel(Markdown(response.explanation),
-                                    title="Explanation", border_style="dim"))
+                console.print(
+                    Panel(Markdown(response.explanation), title="Explanation", border_style="dim")
+                )
         console.print()
 
     def render_history(self) -> None:
@@ -321,20 +334,31 @@ class ChatCLI:
             return
         for msg in self.session.history:
             if msg["role"] == "user":
-                console.print(Panel(Text(msg["content"]), title="you",
-                                    border_style="cyan", title_align="left"))
+                console.print(
+                    Panel(
+                        Text(msg["content"]), title="you", border_style="cyan", title_align="left"
+                    )
+                )
             else:
-                console.print(Panel(Markdown(msg["content"]), title=self.assistant.name,
-                                    border_style="magenta", title_align="left"))
+                console.print(
+                    Panel(
+                        Markdown(msg["content"]),
+                        title=self.assistant.name,
+                        border_style="magenta",
+                        title_align="left",
+                    )
+                )
 
     def print_welcome(self) -> None:
-        console.print(Panel.fit(
-            "[bold]The Clarification Challenge[/] — interactive playground\n\n"
-            "Describe what you want implemented. The assistant either asks a\n"
-            "[green]clarification question[/] or returns an [purple]implementation[/].\n"
-            "Type [bold]/help[/] for commands, [bold]/quit[/] to leave.",
-            border_style="bright_blue",
-        ))
+        console.print(
+            Panel.fit(
+                "[bold]The Clarification Challenge[/] — interactive playground\n\n"
+                "Describe what you want implemented. The assistant either asks a\n"
+                "[green]clarification question[/] or returns an [purple]implementation[/].\n"
+                "Type [bold]/help[/] for commands, [bold]/quit[/] to leave.",
+                border_style="bright_blue",
+            )
+        )
         self.info(f"Assistant: [bold]{self.assistant.name}[/]")
         if self.dataset:
             self.info(f"{len(self.dataset)} tasks loaded — pick one with /task <id>")
@@ -390,35 +414,44 @@ class ChatCLI:
         console.clear()
         self.print_welcome()
 
-    @command("implement", "Ask the assistant to stop asking and produce code now",
-             aliases=("impl", "go"))
+    @command(
+        "implement", "Ask the assistant to stop asking and produce code now", aliases=("impl", "go")
+    )
     def cmd_implement(self, args: list[str]) -> None:
         if not self.session.history:
             self.warn("Nothing to implement yet — describe a task first.")
             return
         self.send_message(IMPLEMENT)
 
-
-    @command("trace", "Show the last trace of clarification",
-                 aliases=("t", "tr"))
+    @command("trace", "Show the last trace of clarification", aliases=("t", "tr"))
     def cmd_trace(self, args: list[str]) -> None:
         try:
             trace = self.assistant.env.trace()
         except Exception:
             self.warn("No trace available — interact with the assistant first.")
             return
-        
+
         for i, conversation in enumerate(trace):
             console.print(Text(f"==== Conversation #{i} ===="))
             for msg in conversation:
                 if msg["role"] == "user":
-                    console.print(Panel(Text(msg["content"]), title="you",
-                                        border_style="cyan", title_align="left"))
+                    console.print(
+                        Panel(
+                            Text(msg["content"]),
+                            title="you",
+                            border_style="cyan",
+                            title_align="left",
+                        )
+                    )
                 else:
-                    console.print(Panel(Markdown(msg["content"]), title=self.assistant.name,
-                                        border_style="magenta", title_align="left"))
-
-
+                    console.print(
+                        Panel(
+                            Markdown(msg["content"]),
+                            title=self.assistant.name,
+                            border_style="magenta",
+                            title_align="left",
+                        )
+                    )
 
     @command("task", "Load a task from the dataset and send its prompt", usage="/task <id>")
     def cmd_task(self, args: list[str]) -> None:
@@ -436,7 +469,9 @@ class ChatCLI:
             self.warn("No dataset loaded.")
             return
         limit = int(args[0]) if args else 20
-        table = Table(title=f"Tasks ({len(self.dataset)} total, showing {min(limit, len(self.dataset))})")
+        table = Table(
+            title=f"Tasks ({len(self.dataset)} total, showing {min(limit, len(self.dataset))})"
+        )
         table.add_column("id", style="bold")
         table.add_column("prompt")
         for task_id, row in list(self.dataset.items())[:limit]:
@@ -474,6 +509,7 @@ class ChatCLI:
     @command("quit", "Exit", aliases=("exit", "q"))
     def cmd_quit(self, args: list[str]) -> None:
         self.running = False
+
 
 # ---------------------------------------------------------------------------
 # Router
@@ -533,7 +569,7 @@ def parse_router_output(raw: str, original_message: str) -> tuple[str, str | Non
     if kind == "task":
         prompt = str(data.get("prompt") or "").strip() or original_message.strip()
         entry_point = str(data.get("entry_point") or "").strip()
-        if not _IDENT.match(entry_point):          # "", "foo(x)", "unknown"...
+        if not _IDENT.match(entry_point):  # "", "foo(x)", "unknown"...
             entry_point = UNKNOWN_ENTRY_POINT
         return prompt, entry_point
 
@@ -547,34 +583,36 @@ def parse_router_output(raw: str, original_message: str) -> tuple[str, str | Non
 # Chat Assistant
 # ---------------------------------------------------------------------------
 
+
 @dataclass
-class Question:  
+class Question:
     text: str
+
+
 @dataclass
-class Finished: 
+class Finished:
     result: str
+
+
 @dataclass
-class Failed:   
+class Failed:
     error: BaseException
 
 
 class InteractiveEnvironment(_ClarificationEnvironment):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.to_cli   : queue.Queue = queue.Queue()
-        self.from_cli : queue.Queue = queue.Queue()
+        self.to_cli: queue.Queue = queue.Queue()
+        self.from_cli: queue.Queue = queue.Queue()
         self.implement_requested = threading.Event()
         self._trace = []
 
-    def llm(self, messages : list[dict[str, str]] | str) -> str:
+    def llm(self, messages: list[dict[str, str]] | str) -> str:
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
         response = super().llm(messages)
-        self._trace.append(
-            list(messages) + [{"role": "assistant", "content": response}]
-        )
+        self._trace.append(list(messages) + [{"role": "assistant", "content": response}])
         return response
 
     def trace(self) -> list[list[dict[str, Any]]]:
@@ -585,7 +623,9 @@ class InteractiveEnvironment(_ClarificationEnvironment):
 
     def ask_human(self, question: str) -> str:
         if not self.can_ask():
-            raise TooManyQuestionException("You exceeded the clarification budget by asking too many or overly complex questions.")
+            raise TooManyQuestionException(
+                "You exceeded the clarification budget by asking too many or overly complex questions."
+            )
         self.to_cli.put(Question(question))
         answer = self.from_cli.get()
         if IMPLEMENT in answer:
@@ -597,9 +637,7 @@ class InteractiveEnvironment(_ClarificationEnvironment):
 class AlgorithmRunner:
     def __init__(self, algorithm, env: InteractiveEnvironment, problem: dict):
         self.env = env
-        self.thread = threading.Thread(
-            target = self._target, args = (algorithm, problem), daemon=True
-        )
+        self.thread = threading.Thread(target=self._target, args=(algorithm, problem), daemon=True)
 
     def _target(self, algorithm, problem):
         try:
@@ -621,44 +659,44 @@ class AlgorithmRunner:
         self.env.from_cli.put(text)
 
 
-
 class ChatAssistant(Assistant):
+    name: str = "assistant"
 
-    name : str = "assistant"
-
-    def __init__(self, config: ClarificationConfiguration, clarification_algorithm: ClarificationAlgorithmBase):
+    def __init__(
+        self,
+        config: ClarificationConfiguration,
+        clarification_algorithm: ClarificationAlgorithmBase,
+    ):
         self.config = config
         self.clarification_algorithm = clarification_algorithm
         self.name = clarification_algorithm.__class__.__name__
 
         self._llm = LanguageModel(self.config.language_model, temperature=self.config.temperature)
 
-        self._coding_session : AlgorithmRunner | None = None
-        self.env : InteractiveEnvironment = None
+        self._coding_session: AlgorithmRunner | None = None
+        self.env: InteractiveEnvironment = None
 
-    def _parse_init_message(self, message: str, history: list[dict[str, str]]) -> tuple[str, str | None]:
-        raw = self._llm([
-            {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
-        ] + history)
+    def _parse_init_message(
+        self, message: str, history: list[dict[str, str]]
+    ) -> tuple[str, str | None]:
+        raw = self._llm(
+            [
+                {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
+            ]
+            + history
+        )
         return parse_router_output(raw, original_message=message)
 
     def _init_session(self, problem: dict[str, str]):
-        self.env = InteractiveEnvironment(
-            self.config, problem
-        )
-        self._coding_session = AlgorithmRunner(
-            self.clarification_algorithm, self.env, problem
-        )
+        self.env = InteractiveEnvironment(self.config, problem)
+        self._coding_session = AlgorithmRunner(self.clarification_algorithm, self.env, problem)
         self._coding_session.start()
-
 
     def respond(self, history: list[Message]) -> AssistantResponse:
         message = history[-1]["content"]
 
         if self._coding_session is None:
-            prompt_or_respond, entry_point = self._parse_init_message(
-                message, history = history
-            )
+            prompt_or_respond, entry_point = self._parse_init_message(message, history=history)
             if not entry_point:
                 return Response(prompt_or_respond)
 
@@ -681,31 +719,32 @@ class ChatAssistant(Assistant):
             self._coding_session = None
             raise event.error
 
-        
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
-def main(clarify_py: str,
-         dataset_path: str | None = None, 
-         task_id: str | None = None,
-         model_name : str = "openai/gpt-4.1-mini",
-         temperature : float = 0.7,
-         **kwargs: Any) -> None:
+
+def main(
+    clarify_py: str,
+    dataset_path: str | None = None,
+    task_id: str | None = None,
+    model_name: str = "openai/gpt-4.1-mini",
+    temperature: float = 0.7,
+    **kwargs: Any,
+) -> None:
 
     config = ClarificationConfiguration(
-        language_model = model_name,
-        temperature = temperature,
-        max_clarification_turns = 1000,
-        max_clarification_budget = 2.0,
-        max_prompt_budget = 2.0
+        language_model=model_name,
+        temperature=temperature,
+        max_clarification_turns=1000,
+        max_clarification_budget=2.0,
+        max_prompt_budget=2.0,
     )
 
     # Load clarification algorithm and use kwargs as config options
-    clarification_algorithm_class = _load_clarification_algorithm(
-        clarify_py
-    )
-    
+    clarification_algorithm_class = _load_clarification_algorithm(clarify_py)
+
     assistant = ChatAssistant(config, clarification_algorithm_class(kwargs))
     cli = ChatCLI(assistant, dataset_path=dataset_path)
     if task_id is not None:

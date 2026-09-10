@@ -16,11 +16,13 @@ def _load_humaneval_datasets(base_path):
             dataset = [json.loads(line) for line in lines]
         yield preprocess_benchmark(dataset)
 
+
 def _load_mbpp_datasets(base_path):
     for mbpp_path in glob(os.path.join(base_path, "mbpp", "*.jsonl")):
         with open(mbpp_path, "r") as lines:
             dataset = [json.loads(line) for line in lines]
         yield preprocess_benchmark(dataset)
+
 
 def _load_datasets(base_path, dataset_id):
     if dataset_id == "HumanEval":
@@ -37,9 +39,9 @@ def load_split(split_path):
 
     base_dir = split_path
     while "split" in base_dir:
-        base_dir  = os.path.dirname(base_dir)
+        base_dir = os.path.dirname(base_dir)
 
-    datasets  = set(task_id.split("/", 1)[0] for task_id in task_ids)
+    datasets = set(task_id.split("/", 1)[0] for task_id in task_ids)
 
     benchmark = []
     for dataset_id in datasets:
@@ -52,9 +54,8 @@ def load_split(split_path):
 
 
 def preprocess_benchmark(dataset):
-    tasks = set(example["task_id"].split("/", 1)[0]
-                    for example in dataset)
-    
+    tasks = set(example["task_id"].split("/", 1)[0] for example in dataset)
+
     assert len(tasks) == 1, f"Can only support one type of tasks, but got {tasks}"
 
     task_identifier = next(iter(tasks))
@@ -73,7 +74,7 @@ def _preprocess_mbpp(dataset):
         raise ImportError("To support MBPP, you need to install the Python package `evalplus`.")
 
     dataset = _preprocess_references(dataset)
-    
+
     mbpp = get_mbpp_plus()
     preprocessed_benchmark = {}
     for task in dataset:
@@ -93,7 +94,8 @@ def _preprocess_mbpp(dataset):
             preprocessed_example = task
             if "base_input" in task:
                 preprocessed_example["base_input"] = [
-                    [[tuple(lst) for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
+                    [[tuple(lst) for lst in lst_lst] for lst_lst in inp]
+                    for inp in task["base_input"]
                 ]
                 preprocessed_example["plus_input"] = []
 
@@ -101,7 +103,8 @@ def _preprocess_mbpp(dataset):
             preprocessed_example = task
             if "base_input" in task:
                 preprocessed_example["base_input"] = [
-                    [[[tuple(elem) for elem in lst] for lst in lst_lst] for lst_lst in inp] for inp in task["base_input"]
+                    [[[tuple(elem) for elem in lst] for lst in lst_lst] for lst_lst in inp]
+                    for inp in task["base_input"]
                 ]
                 preprocessed_example["plus_input"] = []
 
@@ -123,16 +126,18 @@ def _preprocess_mbpp(dataset):
 
         preprocessed_example["prompt"] = preprocessed_example["prompt"].strip() + "\n"
         preprocessed_benchmark[task["task_id"]] = preprocessed_example
-    
+
     return preprocessed_benchmark
 
 
 def _preprocess_humaneval(benchmark):
     if not evalplus:
-        raise ImportError("To support HumanEval, you need to install the Python package `evalplus`.")
+        raise ImportError(
+            "To support HumanEval, you need to install the Python package `evalplus`."
+        )
 
     benchmark = _preprocess_references(benchmark)
-    
+
     humaneval = get_human_eval_plus()
 
     preprocessed_benchmark = {}
@@ -148,7 +153,7 @@ def _preprocess_humaneval(benchmark):
             raise ValueError(f"Unknown HumanEval task `{task['task_id']}`")
 
         preprocessed_benchmark[task["task_id"]] = preprocessed_example
-    
+
     return preprocessed_benchmark
 
 
@@ -158,11 +163,9 @@ def _preprocess_references(benchmark):
 
     for task in benchmark:
         if "reference_prompt" in task and task["reference_prompt"].startswith("REF_"):
-            reference_prompt = task["reference_prompt"][len("REF_"):]
+            reference_prompt = task["reference_prompt"][len("REF_") :]
             reference_prompt = zlib.decompress(
-                base64.b64decode(
-                    reference_prompt.encode("ascii")
-                )
+                base64.b64decode(reference_prompt.encode("ascii"))
             ).decode("utf-8")
             task["reference_prompt"] = reference_prompt
 
