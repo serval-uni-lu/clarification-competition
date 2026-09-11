@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+
 @dataclass(frozen=True)
 class Finding:
     path: Path
@@ -23,8 +24,7 @@ class Finding:
     def github_error(self) -> str:
         rel = self.path.relative_to(ROOT)
         return (
-            f"::error file={rel},line={self.line},col={self.col},"
-            f"title={self.rule}::{self.message}"
+            f"::error file={rel},line={self.line},col={self.col},title={self.rule}::{self.message}"
         )
 
 
@@ -63,6 +63,7 @@ def string_literal(node: ast.AST) -> str | None:
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return node.value
     return None
+
 
 class AntiCheatVisitor(ast.NodeVisitor):
     """Reject syntactic access to competition-internal names prefixed with "_"."""

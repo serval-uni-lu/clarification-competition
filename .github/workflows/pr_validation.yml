@@ -24,12 +24,10 @@ jobs:
       - name: Check out pull request
         uses: actions/checkout@v4
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v10
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          version: latest-known
-          enable-cache: true
-          cache-dependency-glob: uv.lock
+          version: "latest"
 
       - name: Check lockfile
         run: uv lock --check
