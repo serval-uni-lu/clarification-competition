@@ -51,7 +51,7 @@ List every key of `DEFAULT_CONFIG` (everything read from `self.config`). The def
 - [ ] The defaults in this table match `DEFAULT_CONFIG` in the code.
 - [ ] No parameter is read from environment variables, files, or hard-coded elsewhere.
 
-## Evaluation settings used for the reported results
+## OPTIONAL - Evaluation settings used for the reported results
 
 Exact `generate_responses.py` options used to produce the numbers below (fill in even if you used the defaults).
 
@@ -74,7 +74,7 @@ python generate_responses.py clarify/algorithms/<name>.py --split val --output_p
 python evaluate_responses.py --split val --generation_path ... --output_path ...
 ```
 
-## Validation results
+## OPTIONAL - Validation results
 
 Results of `evaluate_responses.py` on the public validation split (770 tasks).
 
