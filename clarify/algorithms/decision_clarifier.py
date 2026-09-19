@@ -26,7 +26,6 @@ from typing import Any
 from clarify.baselines import ClarificationAlgorithmBase
 from clarify.env import ClarificationEnvironment
 
-
 _SUCCESS_MARKER = "DECISION_CLARIFIER_CHECKS_OK_7C82B09E"
 
 
@@ -54,10 +53,7 @@ def _valid_code(code: str, entry_point: str) -> bool:
         compile(tree, "<candidate>", "exec")
     except (SyntaxError, ValueError, TypeError, RecursionError):
         return False
-    return any(
-        isinstance(node, ast.FunctionDef) and node.name == entry_point
-        for node in tree.body
-    )
+    return any(isinstance(node, ast.FunctionDef) and node.name == entry_point for node in tree.body)
 
 
 def _extract_code(response: str | None, entry_point: str) -> str:
@@ -86,11 +82,7 @@ def _question(decision: dict[str, Any], threshold: float, max_chars: int) -> str
     ):
         return ""
     gain = decision.get("expected_gain")
-    if (
-        isinstance(gain, bool)
-        or not isinstance(gain, (int, float))
-        or not threshold <= gain <= 1.0
-    ):
+    if isinstance(gain, bool) or not isinstance(gain, (int, float)) or not threshold <= gain <= 1.0:
         return ""
     alternatives = decision.get("alternatives")
     witness = decision.get("witness")
@@ -128,7 +120,11 @@ class DecisionClarifier(ClarificationAlgorithmBase):
         # These are the only problem fields read by the submission.
         prompt = problem["prompt"]
         entry_point = problem["entry_point"]
-        if not isinstance(entry_point, str) or not entry_point.isidentifier() or keyword.iskeyword(entry_point):
+        if (
+            not isinstance(entry_point, str)
+            or not entry_point.isidentifier()
+            or keyword.iskeyword(entry_point)
+        ):
             raise ValueError("entry_point must be a Python function name")
         max_calls = self.config["max_llm_calls"]
         max_questions = self.config["max_questions"]
@@ -141,7 +137,11 @@ class DecisionClarifier(ClarificationAlgorithmBase):
             raise ValueError("max_questions must be 0 or 1")
         if type(ambiguity_limit) is not int or not 1 <= ambiguity_limit <= 8:
             raise ValueError("ambiguity_limit must be an integer from 1 to 8")
-        if isinstance(threshold, bool) or not isinstance(threshold, (float, int)) or not 0 <= threshold <= 1:
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (float, int))
+            or not 0 <= threshold <= 1
+        ):
             raise ValueError("min_expected_gain must be between 0 and 1")
         if type(max_chars) is not int or max_chars < 32:
             raise ValueError("max_question_chars must be an integer of at least 32")
@@ -169,10 +169,12 @@ class DecisionClarifier(ClarificationAlgorithmBase):
                 return None
             calls += 1
             try:
-                return env.llm([
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
-                ])
+                return env.llm(
+                    [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+                    ]
+                )
             except Exception:
                 # Includes SDK budget exhaustion and provider failures. Preserve
                 # the last structurally valid program and make no further calls.
@@ -251,7 +253,8 @@ class DecisionClarifier(ClarificationAlgorithmBase):
             decision = _json_object(critique)
         elif can_ask:
             eligible = [
-                hypothesis for hypothesis in hypotheses
+                hypothesis
+                for hypothesis in hypotheses
                 if isinstance(hypothesis, dict) and _question(hypothesis, threshold, max_chars)
             ]
             if eligible:
@@ -297,11 +300,16 @@ class DecisionClarifier(ClarificationAlgorithmBase):
             best_code = final_code
         failure = ""
         if final is not None and not final_code:
-            failure = "The final response was not valid Python with the required top-level function."
+            failure = (
+                "The final response was not valid Python with the required top-level function."
+            )
         checks = _json_object(final).get("checks", "")
         if (
-            final_code and self.config["sandbox_checks"] and isinstance(checks, str)
-            and checks.strip() and model_available()
+            final_code
+            and self.config["sandbox_checks"]
+            and isinstance(checks, str)
+            and checks.strip()
+            and model_available()
         ):
             try:
                 ast.parse(checks)
@@ -312,7 +320,9 @@ class DecisionClarifier(ClarificationAlgorithmBase):
                     output = env.exec_code(
                         final_code + "\n\n" + checks + f'\nprint("{_SUCCESS_MARKER}")\n'
                     )
-                    if not any(line.strip() == _SUCCESS_MARKER for line in str(output).splitlines()):
+                    if not any(
+                        line.strip() == _SUCCESS_MARKER for line in str(output).splitlines()
+                    ):
                         failure = "Self-generated checks failed. Sandbox output:\n" + str(output)
                 except Exception:
                     # Sandbox infrastructure errors are not evidence of a code bug.
