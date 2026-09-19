@@ -15,7 +15,6 @@ import re
 from clarify.baselines import ClarificationAlgorithmBase
 from clarify.env import TooManyQuestionException
 
-
 ANALYZE = """Analyze the public programming requirement, not any hidden benchmark.
 Do not write code yet. Identify at most {limit} independent unresolved behavioral
 choices. Do not invent ambiguity when the prompt, examples, or conventional meaning
