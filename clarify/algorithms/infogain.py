@@ -2,14 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""InfoGain Clarifier.
+"""InfoGain clarifier.
 
-Samples several candidate implementations, executes them on shared probe
-inputs to find where they behave differently, and asks the single atomic
-question whose answer is expected to remove the most behavioural uncertainty
-(expected information gain over behaviour clusters). Remaining unasked
-decisions are resolved with a default-interpretation prior; the final program
-is selected by tests derived from the user's answer.
+Sample a few programs, run them on the same inputs, and ask about the open
+decision that best explains where they disagree. Decisions we don't ask about
+fall back to the auditor's default. The final program is picked with asserts
+written from the user's answer.
 
 Team: RankOne
 Team Members: Md Zahidul Haque
@@ -113,7 +111,7 @@ def _timeout(signum, frame):
 
 
 def _call(fn, seconds):
-    # Re-arm on every call: a candidate may have replaced the handler or cancelled the alarm.
+    # re-arm every call, a candidate may have reset the handler or the alarm
     signal.signal(signal.SIGALRM, _timeout)
     signal.alarm(seconds)
     saved = sys.stdout
@@ -199,7 +197,7 @@ def _timeout(signum, frame):
 
 
 def _call(fn, seconds):
-    # Re-arm on every call: a candidate may have replaced the handler or cancelled the alarm.
+    # re-arm every call, a candidate may have reset the handler or the alarm
     signal.signal(signal.SIGALRM, _timeout)
     signal.alarm(seconds)
     saved = sys.stdout
@@ -242,7 +240,7 @@ for _t in _TESTS:
     _emit(_out)
 """
 
-# The sandbox kills a run after 30 s; stop starting new rows well before that.
+# the sandbox kills the process at 30s, so stop early
 EXEC_DEADLINE_SECONDS = 15
 
 
@@ -291,14 +289,14 @@ def entropy(counts: list[float]) -> float:
 
 class InfoGainClarifier(ClarificationAlgorithmBase):
     DEFAULT_CONFIG = {
-        "num_candidates": 4,  # candidate programs sampled before asking
-        "num_probes": 8,  # probe inputs used to cluster candidate behaviour
-        "num_final": 3,  # candidate programs sampled after the clarification
-        "residual_prior": True,  # fix unasked decisions to the auditor's default interpretation
-        "use_answer_tests": True,  # select the final program by tests derived from the answer
+        "num_candidates": 4,  # programs sampled before asking
+        "num_probes": 8,  # inputs used to compare them
+        "num_final": 3,  # programs sampled after the answer
+        "residual_prior": True,  # pass defaults for unasked decisions
+        "use_answer_tests": True,  # pick the final program with asserts from the answer
     }
 
-    # LLM helpers -----------------------------------------------------------
+    # llm helpers
 
     def ask_json(self, env, prompt):
         response = env.llm(prompt)
@@ -360,12 +358,12 @@ class InfoGainClarifier(ClarificationAlgorithmBase):
             return None
         return [p if isinstance(p, list | tuple) else [p] for p in probes]
 
-    # Execution ---------------------------------------------------------------
+    # execution
 
     def execute(self, env, template, **fields):
         try:
             output = env.exec_code(template.format(**fields))
-        except Exception:  # a sandbox failure degrades this step, not the whole task
+        except Exception:  # docker hiccup, skip this step instead of failing the task
             return None
         if "__RESULT__" not in output:
             return None
@@ -394,10 +392,10 @@ class InfoGainClarifier(ClarificationAlgorithmBase):
         ids = {sig: i for i, sig in enumerate(dict.fromkeys(signatures.values()))}
         return {name: ids[sig] for name, sig in signatures.items()}
 
-    # Question selection ------------------------------------------------------
+    # question selection
 
     def information_gain(self, decision_id, labels, clusters, num_options):
-        """Coverage-weighted H(cluster) - E_option[H(cluster | option)] over labelled candidates."""
+        """Info gain of asking decision_id, scaled by the share of candidates with a valid label."""
         known = {}
         for name, cluster in clusters.items():
             row = labels.get(name)
@@ -446,7 +444,7 @@ class InfoGainClarifier(ClarificationAlgorithmBase):
 
         return max(enumerate(decisions), key=score)[1]
 
-    # Final selection -----------------------------------------------------------
+    # final selection
 
     def answer_tests(self, env, problem, question, answer):
         response = env.llm(
@@ -497,10 +495,10 @@ class InfoGainClarifier(ClarificationAlgorithmBase):
             )
         best = max(scores.values(), default=0)
         pool = [c for i, c in enumerate(finals) if scores.get(f"c{i}", 0) == best] or finals
-        # Tie-break: most common program text after normalisation, else the first.
+        # tie-break: most common program, else the first
         return Counter(pool).most_common(1)[0][0]
 
-    # Main ----------------------------------------------------------------------
+    # main
 
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         decisions = self.audit(env, problem)
