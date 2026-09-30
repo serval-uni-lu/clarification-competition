@@ -43,19 +43,71 @@ from clarify.env import ClarificationEnvironment, LimitsExceededException, TooMa
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 # Used once per round, to get something concrete to judge: a plain implementation, no self-tests.
-# TODO: prompt text.
-SEED_CODE_PROMPT = ""
+SEED_CODE_PROMPT = """
+Please provide a self-contained Python script implementing `{entry_point}` that solves the following problem:
 
-# TODO: prompt text. Ends in exactly one line, QUESTION: <...> or NO_QUESTION - see
+{prompt}
+
+The function must be named exactly `{entry_point}`.
+Return only the code the solution needs (imports, constants, helpers and `{entry_point}`), with no example usage, prints or tests.
+
+Enclose your solution in ```python and ```.
+""".strip()
+
 # _parse_judge_response below, which depends on that exact format.
-JUDGE_PROMPT = ""
+JUDGE_PROMPT = """
+You are deciding what to ask, if anything, before the Python function `{entry_point}` is implemented. Asking is cheap and a wrong guess is costly, so ask unless the requirement leaves nothing to guess.
+
+Requirement:
+
+{prompt}
+
+A candidate implementation:
+
+```python
+{candidate}
+```
+{evidence_block}
+Evaluate the requirement against these 4 dimensions in strict order. To prevent the illusion of clarity, for each dimension you MUST brainstorm a "Primary Interpretation" and a "Plausible Alternative Interpretation" that would change the output.
+If the prompt and examples do not explicitly rule out the Plausible Alternative, you MUST mark it UNSTATED. Format your analysis exactly like this:
+
+1. Algorithmic Logic (math rules, core operations, ambiguous semantics)
+- Primary: <your primary interpretation>
+- Alternative: <a mathematically/logically different interpretation that is equally plausible given the vague text>
+- Status: STATED or UNSTATED
+
+2. Constraints (edge cases, zeroes, negatives, all-bits-set; DO NOT waste this on empty inputs)
+- Primary: <your primary interpretation>
+- Alternative: <a different edge-case behavior>
+- Status: STATED or UNSTATED
+
+3. Prompt Defects (contradictions between text and examples)
+- Primary: <your primary interpretation>
+- Alternative: <a contradictory interpretation based on examples>
+- Status: STATED or UNSTATED
+
+4. Input/Output (exact types and formats; rely on Python's duck typing where possible)
+- Primary: <your primary interpretation>
+- Alternative: <a different parameter shape, or a different return type/order>
+- Status: STATED or UNSTATED
+{priority_override}
+Decision:
+Priority order is 1, 2, 3, 4, unless the IMPORTANT note above (if present) puts 4 first instead. Find the FIRST dimension in that priority order that is UNSTATED. You MUST ask about the unstated fact from this highest-priority dimension. Do not skip to a lower-priority dimension.
+If every dimension is STATED, your final line is NO_QUESTION.
+
+End your response with exactly one line, and write nothing after it:
+QUESTION: <exactly ONE atomic, objective question about ONE specific unstated fact. NEVER use "and" to combine questions. NEVER ask for two things. Its answer cannot be inferred from the requirement>
+or
+NO_QUESTION
+""".strip()
 
 # Inserted into JUDGE_PROMPT only when the requirement has neither a worked `>>>` example NOR a
 # typed `def` signature: without either, nothing anchors exact parameter/return shape, so
 # Input/Output (normally 4th) must be checked first instead, and defaults to UNSTATED unless the
 # prose spells the shape out explicitly.
-# TODO: prompt text.
-_NO_SHAPE_SIGNAL_PRIORITY_OVERRIDE = ""
+_NO_SHAPE_SIGNAL_PRIORITY_OVERRIDE = """
+IMPORTANT: the requirement above gives no worked example (no `>>>` call) and no typed function signature (no type hints in a `def` line). Without either, exact parameter shape (e.g. a single bound vs a full collection) and exact return type/order (e.g. list vs tuple, which side comes first) cannot be safely assumed from prose alone. Check dimension 4 FIRST, ahead of 1-3, and mark it UNSTATED unless the parameter shape and return type/order are stated in so many words.
+""".strip()
 
 # The verdict must start its line (markdown decoration allowed), so "NO_QUESTION: <reason>" and
 # mid-sentence mentions of the word are never mistaken for a question.
@@ -63,8 +115,24 @@ _QUESTION_RE = re.compile(r"^[ \t>*_`#-]*QUESTION[ \t]*:[ \t*_`]*(.+)$", re.IGNO
 _NO_QUESTION_RE = re.compile(r"\bNO_QUESTION\b", re.IGNORECASE)
 
 # Used for the final generation, after the ask/no-ask decision.
-# TODO: prompt text.
-CODE_PROMPT = ""
+CODE_PROMPT = """
+Please provide a self-contained Python script implementing `{entry_point}` that solves the following problem:
+
+{prompt}
+
+The function must be named exactly `{entry_point}`.
+
+IMPORTANT:
+1. Before writing the code, you MUST write a step-by-step logic plan inside a Python docstring or comment. Discuss how you will handle edge cases (empty lists, negative numbers, ties) and the core algorithm.
+2. Where an answer to a clarification question conflicts with the original requirement, the answer is authoritative.
+3. You MUST include an `if __name__ == '__main__':` block at the end of the script containing your tests.
+
+When writing the tests inside this block, you MUST follow these rules in order:
+1. EXTRACT ALL EXAMPLES AND TESTS from the prompt above (like `>>>` doctests or assertions) and write them as strict `assert` statements. If the user provided a test case, it MUST be executed.
+2. After the user's tests, write at least 3-5 of your own additional `assert` statements covering boundary cases (e.g., empty inputs, negatives, zeroes) and stress testing.
+
+Enclose your entire solution in ```python and ```.
+""".strip()
 
 
 @dataclass
