@@ -16,7 +16,7 @@ The gate matters as much as the question: when the readings agree, the
 algorithm stays silent and returns the first implementation, keeping the
 turn-discount penalty at zero for already-specified requirements.
 
-Team: zhangchuang4
+Team: zhangchuangnankai
 Team Members: Zhang Chuang (Lenovo)
 Main Contact: zhangchuang@lenovo.com
 """
