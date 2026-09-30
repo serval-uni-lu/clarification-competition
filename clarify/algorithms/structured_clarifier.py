@@ -54,7 +54,8 @@ Return only the code the solution needs (imports, constants, helpers and `{entry
 Enclose your solution in ```python and ```.
 """.strip()
 
-# _parse_judge_response below, which depends on that exact format.
+# Must end in exactly one line, `QUESTION: <...>` or `NO_QUESTION` - parse_judge_response below
+# depends on that exact format.
 JUDGE_PROMPT = """
 You are deciding what to ask, if anything, before the Python function `{entry_point}` is implemented. Asking is cheap and a wrong guess is costly, so ask unless the requirement leaves nothing to guess.
 
@@ -164,12 +165,12 @@ class StructuredClarifier(ClarificationAlgorithmBase):
             for _ in range(self.config["max_questions"]):
                 if not env.can_ask():
                     break
-                spec = self._with_clarifications(prompt, resolved)
-                seed = self._generate_seed(env, spec, entry_point)
+                spec = self.with_clarifications(prompt, resolved)
+                seed = self.generate_seed(env, spec, entry_point)
                 if seed is None:
                     break
-                evidence = self._doctest_evidence(env, spec, seed)
-                question = self._judge(env, spec, entry_point, seed, evidence)
+                evidence = self.doctest_evidence(env, spec, seed)
+                question = self.judge(env, spec, entry_point, seed, evidence)
                 if question is None:
                     break
                 answer = env.ask_human(question)
@@ -177,12 +178,12 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         except (TooManyQuestionException, LimitsExceededException):
             pass
 
-        spec = self._with_clarifications(prompt, resolved)
-        return self._generate(env, spec, entry_point)
+        spec = self.with_clarifications(prompt, resolved)
+        return self.generate(env, spec, entry_point)
 
     # --- Seed + Judge ---
 
-    def _generate_seed(self, env: ClarificationEnvironment, prompt: str, entry_point: str) -> str | None:
+    def generate_seed(self, env: ClarificationEnvironment, prompt: str, entry_point: str) -> str | None:
         messages = [
             {"role": "user", "content": SEED_CODE_PROMPT.format(entry_point=entry_point, prompt=prompt)}
         ]
@@ -190,7 +191,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         for _ in range(self.config["generation_attempts"]):
             response = env.llm(messages)
             try:
-                return self._strip_main_block(_validate_and_parse_evalplus_result(response))
+                return self.strip_main_block(_validate_and_parse_evalplus_result(response))
             except ValueError as error:
                 messages += [
                     {"role": "assistant", "content": response},
@@ -198,11 +199,11 @@ class StructuredClarifier(ClarificationAlgorithmBase):
                 ]
         return None
 
-    def _doctest_evidence(self, env: ClarificationEnvironment, prompt: str, seed: str) -> str:
-        asserts = self._extract_doctest_asserts(prompt)
+    def doctest_evidence(self, env: ClarificationEnvironment, prompt: str, seed: str) -> str:
+        asserts = self.extract_doctest_asserts(prompt)
         if not asserts:
             return ""
-        report = self._check_doctests(env, seed, asserts)
+        report = self.check_doctests(env, seed, asserts)
         if not report.ran:
             return (
                 f"Note: the candidate crashed before any of the {report.total} worked example(s) "
@@ -217,7 +218,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         )
 
     @staticmethod
-    def _extract_doctest_asserts(prompt: str) -> list[str]:
+    def extract_doctest_asserts(prompt: str) -> list[str]:
         """Best-effort, non-LLM extraction of the prompt's own `>>>` examples as assert lines.
 
         Never raises: a prompt with no doctests, or malformed ones, just yields an empty list.
@@ -253,7 +254,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
             asserts.append(f"assert ({source}) == {expected!r}")
         return asserts
 
-    def _check_doctests(
+    def check_doctests(
         self, env: ClarificationEnvironment, seed_code: str, asserts: list[str]
     ) -> _DoctestReport:
         if not asserts:
@@ -274,9 +275,9 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         )
 
     @staticmethod
-    def _has_worked_example(prompt: str) -> bool:
+    def has_worked_example(prompt: str) -> bool:
         """Whether the requirement shows a `>>>` call at all, regardless of whether it's well-formed
-        enough for `_extract_doctest_asserts` to turn into a checkable assert.
+        enough for `extract_doctest_asserts` to turn into a checkable assert.
 
         HumanEval prompts almost always have one; Mbpp's one-liners almost never do. Purely
         mechanical (a substring check), so this costs nothing extra to compute.
@@ -284,7 +285,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         return ">>>" in prompt
 
     @staticmethod
-    def _has_typed_signature(prompt: str, entry_point: str) -> bool:
+    def has_typed_signature(prompt: str, entry_point: str) -> bool:
         """Whether the requirement itself opens with a `def {entry_point}(...)` line that already
         carries a type annotation - a parameter's `: type` or a `-> type` return annotation.
 
@@ -298,7 +299,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         params, return_annotation = match.group(1), match.group(2)
         return bool(return_annotation) or ":" in params
 
-    def _judge(
+    def judge(
         self,
         env: ClarificationEnvironment,
         prompt: str,
@@ -307,7 +308,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         evidence: str,
     ) -> str | None:
         no_shape_signal = not (
-            self._has_worked_example(prompt) or self._has_typed_signature(prompt, entry_point)
+            self.has_worked_example(prompt) or self.has_typed_signature(prompt, entry_point)
         )
         judge_prompt = JUDGE_PROMPT.format(
             entry_point=entry_point,
@@ -319,13 +320,13 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         # A formatting slip in the judge's reply must not silently become "don't ask": only an
         # explicit NO_QUESTION means no. Retry, then give up without a question.
         for _ in range(self.config["judge_attempts"]):
-            understood, question = self._parse_judge_response(env.llm(judge_prompt))
+            understood, question = self.parse_judge_response(env.llm(judge_prompt))
             if understood:
                 return question
         return None
 
     @staticmethod
-    def _parse_judge_response(response: str) -> tuple[bool, str | None]:
+    def parse_judge_response(response: str) -> tuple[bool, str | None]:
         """Returns (understood, question). understood is False only if no verdict was found."""
         question_matches = list(_QUESTION_RE.finditer(response))
         no_question_matches = list(_NO_QUESTION_RE.finditer(response))
@@ -342,7 +343,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
 
     # --- Final Generation ---
 
-    def _generate(self, env: ClarificationEnvironment, spec: str, entry_point: str) -> str:
+    def generate(self, env: ClarificationEnvironment, spec: str, entry_point: str) -> str:
         messages = [
             {"role": "user", "content": CODE_PROMPT.format(entry_point=entry_point, prompt=spec)}
         ]
@@ -357,7 +358,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
                 if "ALL_TESTS_PASSED" not in test_result:
                     raise ValueError(f"Execution failed or asserts crashed. Traceback/Output:\n{test_result}")
 
-                return self._strip_main_block(raw_code)
+                return self.strip_main_block(raw_code)
             except ValueError as error:
                 messages += [
                     {"role": "assistant", "content": response},
@@ -372,12 +373,12 @@ class StructuredClarifier(ClarificationAlgorithmBase):
                 ]
 
         try:
-            return self._strip_main_block(_validate_and_parse_evalplus_result(response))
+            return self.strip_main_block(_validate_and_parse_evalplus_result(response))
         except ValueError:
             return response
 
     @staticmethod
-    def _strip_main_block(code: str) -> str:
+    def strip_main_block(code: str) -> str:
         try:
             tree = ast.parse(code)
         except (SyntaxError, ValueError):
@@ -396,7 +397,7 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         return "\n".join(lines).rstrip() + "\n"
 
     @staticmethod
-    def _with_clarifications(prompt: str, resolved: list[tuple[str, str]]) -> str:
+    def with_clarifications(prompt: str, resolved: list[tuple[str, str]]) -> str:
         fragments = [
             f"Question #{i}:\n{question}\nAnswer:\n{answer}\n"
             for i, (question, answer) in enumerate(resolved, start=1)
