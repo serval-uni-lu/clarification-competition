@@ -112,7 +112,9 @@ IMPORTANT: the requirement above gives no worked example (no `>>>` call) and no 
 
 # The verdict must start its line (markdown decoration allowed), so "NO_QUESTION: <reason>" and
 # mid-sentence mentions of the word are never mistaken for a question.
-_QUESTION_RE = re.compile(r"^[ \t>*_`#-]*QUESTION[ \t]*:[ \t*_`]*(.+)$", re.IGNORECASE | re.MULTILINE)
+_QUESTION_RE = re.compile(
+    r"^[ \t>*_`#-]*QUESTION[ \t]*:[ \t*_`]*(.+)$", re.IGNORECASE | re.MULTILINE
+)
 _NO_QUESTION_RE = re.compile(r"\bNO_QUESTION\b", re.IGNORECASE)
 
 # Used for the final generation, after the ask/no-ask decision.
@@ -183,9 +185,14 @@ class StructuredClarifier(ClarificationAlgorithmBase):
 
     # --- Seed + Judge ---
 
-    def generate_seed(self, env: ClarificationEnvironment, prompt: str, entry_point: str) -> str | None:
+    def generate_seed(
+        self, env: ClarificationEnvironment, prompt: str, entry_point: str
+    ) -> str | None:
         messages = [
-            {"role": "user", "content": SEED_CODE_PROMPT.format(entry_point=entry_point, prompt=prompt)}
+            {
+                "role": "user",
+                "content": SEED_CODE_PROMPT.format(entry_point=entry_point, prompt=prompt),
+            }
         ]
         response = ""
         for _ in range(self.config["generation_attempts"]):
@@ -315,7 +322,9 @@ class StructuredClarifier(ClarificationAlgorithmBase):
             prompt=prompt,
             candidate=candidate,
             evidence_block=f"\n{evidence}\n" if evidence else "",
-            priority_override=f"\n{_NO_SHAPE_SIGNAL_PRIORITY_OVERRIDE}\n" if no_shape_signal else "",
+            priority_override=f"\n{_NO_SHAPE_SIGNAL_PRIORITY_OVERRIDE}\n"
+            if no_shape_signal
+            else "",
         )
         # A formatting slip in the judge's reply must not silently become "don't ask": only an
         # explicit NO_QUESTION means no. Retry, then give up without a question.
@@ -334,7 +343,9 @@ class StructuredClarifier(ClarificationAlgorithmBase):
         last_no_question = no_question_matches[-1] if no_question_matches else None
 
         # The final verdict wins: reasoning text may mention either token earlier on.
-        if last_question and (not last_no_question or last_question.start() > last_no_question.start()):
+        if last_question and (
+            not last_no_question or last_question.start() > last_no_question.start()
+        ):
             text = last_question.group(1).strip(" *_`")
             return (True, text) if text else (False, None)
         if last_no_question:
@@ -356,7 +367,9 @@ class StructuredClarifier(ClarificationAlgorithmBase):
                 test_result = env.exec_code(test_code)
 
                 if "ALL_TESTS_PASSED" not in test_result:
-                    raise ValueError(f"Execution failed or asserts crashed. Traceback/Output:\n{test_result}")
+                    raise ValueError(
+                        f"Execution failed or asserts crashed. Traceback/Output:\n{test_result}"
+                    )
 
                 return self.strip_main_block(raw_code)
             except ValueError as error:
