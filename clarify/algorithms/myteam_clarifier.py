@@ -19,9 +19,6 @@ from clarify.baselines.base import ClarificationAlgorithmBase
 class MyTeamClarifier(ClarificationAlgorithmBase):
     DEFAULT_CONFIG = {}
 
-    def __init__(self, config=None):
-        super().__init__({**self.DEFAULT_CONFIG, **(config or {})})
-
     def run(self, env, problem) -> str:
         entry_point = problem["entry_point"]
         return f"def {entry_point}(*args, **kwargs):\n    return None\n"
