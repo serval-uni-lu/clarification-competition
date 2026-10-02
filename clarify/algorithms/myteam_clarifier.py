@@ -9,7 +9,7 @@ without calling a language model or asking clarification questions.
 It will be replaced by the final algorithm before the submission deadline.
 
 Team: Hitsz Hago
-Team Members: Yunhao Zhang, Jiahao Zhang, Haoman Li, Haojia Xiang, Lianghao Xia, Liqiang Nie
+Team Members: Yunhao Zhang, Jiahao Zhang, Haoman Li, Haojia Xiang, Lianghao Xia, Liqiang Nie,Erwei Yin
 Main Contact: yunhaozhang900@gmail.com
 """
 
