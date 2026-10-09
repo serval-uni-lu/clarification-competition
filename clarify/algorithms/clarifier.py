@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-"""My entry sumbission for the clarification algorithm.
-Team: Ioanna Vougiatzi
+"""Team: Ioanna Vougiatzi
 Team Members: Ioanna Vougiatzi
 Main Contact: vougiatzi.joanna@gmail.com
 """
@@ -15,7 +14,7 @@ from clarify.baselines.base import ClarificationAlgorithmBase
 from clarify.runtime import _validate_and_parse_evalplus_result
 
 
-class QuickStartClarification(ClarificationAlgorithmBase):
+class Clarification(ClarificationAlgorithmBase):
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         messages = [{"role": "user", "content": problem["prompt"]}]
 
