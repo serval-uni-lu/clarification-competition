@@ -19,6 +19,4 @@ class EDYClarifier(ClarificationAlgorithmBase):
     DEFAULT_CONFIG = {}
 
     def run(self, env, problem) -> str:
-        raise NotImplementedError(
-            "Registration draft; final implementation pending."
-        )
+        raise NotImplementedError("Registration draft; final implementation pending.")
