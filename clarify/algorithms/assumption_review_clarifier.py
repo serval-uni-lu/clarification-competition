@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""KeepGoingZClarifier: candidate-first, independently reviewed clarification.
+"""AssumptionReviewClarifier: candidate-first, independently reviewed clarification.
 
 Generate a usable implementation and identify one consequential assumption.
 An independent review gates a single atomic clarification, after which a fresh
@@ -162,7 +162,7 @@ def fenced_code(code: str) -> str:
     return f"```python\n{code}\n```"
 
 
-class KeepGoingZClarifier(ClarificationAlgorithmBase):
+class AssumptionReviewClarifier(ClarificationAlgorithmBase):
     """A single-turn algorithm with bounded calls and a retained seed implementation."""
 
     DEFAULT_CONFIG = {
