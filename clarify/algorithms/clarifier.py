@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 """My entry sumbission for the clarification algorithm.
 Team: Ioanna Vougiatzi
 Team Members: Ioanna Vougiatzi
