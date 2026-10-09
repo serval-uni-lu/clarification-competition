@@ -18,12 +18,6 @@ from clarify.baselines import ClarificationAlgorithmBase
 class EDYClarifier(ClarificationAlgorithmBase):
     DEFAULT_CONFIG = {}
 
-    def __init__(self, config=None):
-        super().__init__({
-            **self.DEFAULT_CONFIG,
-            **(config or {}),
-        })
-
     def run(self, env, problem) -> str:
         raise NotImplementedError(
             "Registration draft; final implementation pending."
