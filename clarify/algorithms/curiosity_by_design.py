@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Thibaud <lutellie@ualberta.ca>
+# SPDX-FileCopyrightText: 2026 Thibaud Lutellier <lutellie@ualberta.ca>
 #
 # SPDX-License-Identifier: MIT
 
@@ -44,8 +44,8 @@ nothing usable, `run` falls back to asking the model directly for the most criti
 about the prompt, so a result still comes back without an execution environment.
 
 Team: Curiosity by Design
-Team Members: Thibaud
-Main Contact: lutellie@ualberta.ca
+Team Members: Thibaud Lutellier
+Main Contact: Thibaud Lutellier <lutellie@ualberta.ca>
 """
 
 from __future__ import annotations
