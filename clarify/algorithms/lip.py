@@ -10,7 +10,7 @@ behavioural question and synthesize afresh using the actual answer. Compatibilit
 audits are fallible model judgments, not access to hidden tests or formal proofs.
 
 Team: lip
-Team Members: Yang Zhang (Sun Yat-sen University)
+Team Members: Yang Zhang (Sun Yat-sen University), Zhen Wang (Sun Yat-sen University)
 Main Contact: Yang Zhang <zhangy2256@mail2.sysu.edu.cn>
 """
 
