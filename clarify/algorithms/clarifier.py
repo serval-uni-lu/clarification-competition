@@ -5,7 +5,6 @@ Team Members: Ioanna Vougiatzi
 Main Contact: vougiatzi.joanna@gmail.com
 """
 
-
 from __future__ import annotations
 
 from typing import Any
