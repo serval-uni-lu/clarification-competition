@@ -895,9 +895,7 @@ class CuriosityByDesign(ClarificationAlgorithmBase):
         if not self.config["partition_inputs"]:
             return inputs
 
-        resolved, dropped, rewrapped = self.arity_fit(
-            inputs, candidates, problem["entry_point"]
-        )
+        resolved, dropped, rewrapped = self.arity_fit(inputs, candidates, problem["entry_point"])
         self.trace_add("inputs_rewrapped", rewrapped)
         self.trace_add("inputs_dropped_arity", dropped)
 
@@ -949,9 +947,7 @@ class CuriosityByDesign(ClarificationAlgorithmBase):
         if not self.config["partition_inputs"] or not outputs:
             return set()
 
-        voters = [
-            row for row in outputs if any(obs.get("kind") == "value" for obs in row)
-        ]
+        voters = [row for row in outputs if any(obs.get("kind") == "value" for obs in row)]
         if not voters:
             return set()
 
@@ -1158,9 +1154,7 @@ class CuriosityByDesign(ClarificationAlgorithmBase):
             # agree here and differ elsewhere must not be listed as rival behaviours.
             distinct: dict[str, int] = {}
             for group in groups:
-                key = json.dumps(
-                    self.signature(outputs[group[0]][input_index]), sort_keys=True
-                )
+                key = json.dumps(self.signature(outputs[group[0]][input_index]), sort_keys=True)
                 distinct.setdefault(key, group[0])
 
             if len(distinct) < 2:
@@ -1372,11 +1366,7 @@ class CuriosityByDesign(ClarificationAlgorithmBase):
         failures.
         """
         positions = range(len(row)) if valid is None else valid
-        return [
-            index
-            for index in positions
-            if row[index].get("kind") in ("error", "timeout")
-        ]
+        return [index for index in positions if row[index].get("kind") in ("error", "timeout")]
 
     def repair_program(
         self,
@@ -1634,9 +1624,7 @@ class CuriosityByDesign(ClarificationAlgorithmBase):
             ]
             self.trace_note("inputs", list(inputs[:width]))
             self.trace_note("failures_per_input", per_input)
-            self.trace_note(
-                "inputs_all_failed", sum(1 for n in per_input if n == len(outputs))
-            )
+            self.trace_note("inputs_all_failed", sum(1 for n in per_input if n == len(outputs)))
             self.trace_note("suspect_inputs", len(self.suspect_inputs(outputs)))
 
             if indices:
