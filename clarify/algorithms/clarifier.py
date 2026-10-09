@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: MIT
-
 """Team: Ioanna Vougiatzi
 Team Members: Ioanna Vougiatzi
 Main Contact: vougiatzi.joanna@gmail.com
@@ -17,20 +16,17 @@ from clarify.runtime import _validate_and_parse_evalplus_result
 class Clarification(ClarificationAlgorithmBase):
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
         messages = [{"role": "user", "content": problem["prompt"]}]
-
         response = env.llm(messages)
-
-        messages += [{"role": "assistant", "content": response}]
+        messages.append({"role": "assistant", "content": response})
 
         while True:
             try:
                 return _validate_and_parse_evalplus_result(response)
             except ValueError:
-                # The response might not contain an answer, assume a question is raised.
                 try:
                     answer = env.ask_human(response)
-                    messages += [{"role": "user", "content": answer}]
+                    messages.append({"role": "user", "content": answer})
                     response = env.llm(messages)
-                    messages += [{"role": "assistant", "content": response}]
+                    messages.append({"role": "assistant", "content": response})
                 except TooManyQuestionException:
                     return response
