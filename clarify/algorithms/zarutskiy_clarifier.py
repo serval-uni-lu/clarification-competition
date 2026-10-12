@@ -7,7 +7,9 @@
 Always asks exactly one clarifying question, then regenerates the function from
 the task plus the answer, with the answer overriding conflicting task text.
 An analysis prompt picks the one missing, vague or contradictory requirement
-that changes the output and asks one concrete, atomic question about it.
+that changes the output and asks one concrete, atomic question about it,
+phrased as an assumption the user can confirm or correct ("I will assume X.
+Is that right, or should it be Y?", where X is what the first draft does).
 A deterministic sanitizer aliases the required entry point when a draft renamed
 the function and drops __main__ blocks and top-level prints; questions are sent
 without backticks, because the simulated user's answer parser stops at the
@@ -105,6 +107,8 @@ QUESTION: <one short question about exactly one fact, answerable with a single v
 """.strip()
 
 INTERFACE_QUESTION = "Which arguments does {entry_point} take, and in what order?"
+
+ASSUME_FRAMING_TEXT = 'QUESTION: <one short question about exactly one fact, phrased as an assumption for the user to confirm or correct: "I will assume X. Is that right, or should it be Y?", where X is what your draft does at that point and Y is the most plausible other reading. Name concrete values or a tiny example input when it helps, e.g. "I will assume f([3, 1, 3]) returns 2. Is that right, or should it return 3?">'
 
 INTERFACE_HINT = """The description gives no signature, so the user's tests will call `{entry_point}` with arguments whose number, order and types you have to guess. If your draft's parameters are not clearly determined by the description, ask about them (e.g. "Does the function take the list and the target value as two separate arguments, in that order?").
 
@@ -457,6 +461,7 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
         "exact_name": True,  # ask for the exact entry-point name in code prompts
         "interface_hint": False,  # signature-less prompts: point the question at the call interface
         "interface_question": False,  # signature-less prompts: ask which arguments the function takes
+        "assume_framing": True,  # P05: phrase the question as an assumption to confirm or correct
     }
 
     def cfg(self, key: str) -> Any:
@@ -541,9 +546,15 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
         hint = ""
         if self.cfg("interface_hint") and not re.search(r"def\s+\w+\s*\(", problem["prompt"]):
             hint = INTERFACE_HINT.replace("{entry_point}", problem["entry_point"])
+        template = TARGETED_QUESTION_PROMPT
+        if self.cfg("assume_framing"):
+            template = template.replace(
+                'QUESTION: <one short question about exactly one fact, answerable with a single value or choice. When it helps, name the concrete alternatives or a tiny example input, e.g. "Should f([3, 1, 3]) return 2 or 3?">',
+                ASSUME_FRAMING_TEXT,
+            )
         response = call_llm(
             env,
-            TARGETED_QUESTION_PROMPT.replace("{interface_hint}", hint)
+            template.replace("{interface_hint}", hint)
             .replace("{prompt}", problem["prompt"])
             .replace("{entry_point}", problem["entry_point"])
             .replace("{candidate}", candidate),
