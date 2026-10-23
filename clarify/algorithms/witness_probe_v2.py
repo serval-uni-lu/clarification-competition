@@ -260,7 +260,7 @@ def first_json(text: str) -> dict:
     decoder = json.JSONDecoder()
     for match in list(re.finditer(r"\{", text))[:8]:
         try:
-            value, _ = decoder.raw_decode(text[match.start():])
+            value, _ = decoder.raw_decode(text[match.start() :])
         except (ValueError, RecursionError):
             continue
         if isinstance(value, dict):
@@ -302,7 +302,9 @@ def harness_script(candidates: list[str], entry: str, mode: str, payload: Any) -
     )
 
 
-def run_harness(env: ClarificationEnvironment, candidates: list[str], entry: str, mode: str, payload: Any) -> dict:
+def run_harness(
+    env: ClarificationEnvironment, candidates: list[str], entry: str, mode: str, payload: Any
+) -> dict:
     try:
         out = env.exec_code(harness_script(candidates, entry, mode, payload))
     except Exception:
@@ -344,24 +346,29 @@ class WitnessProbe(ClarificationAlgorithmBase):
                     answer = env.ask_human(question)
                 except TooManyQuestionException:
                     answer = None
-                if answer is None or not answer.strip() or answer.strip() in (
-                    "Cannot answer the given question.",
-                    "Irrelevant question.",
+                if (
+                    answer is None
+                    or not answer.strip()
+                    or answer.strip()
+                    in (
+                        "Cannot answer the given question.",
+                        "Irrelevant question.",
+                    )
                 ):
                     question, answer = None, None
 
         # Stage 3: answer-priority regeneration + selection.
         if question is None or answer is None:
             return base
-        clarification = (
-            "\nThe user was asked: " + question + "\nAnswer: " + answer + "\n"
-        )
+        clarification = "\nThe user was asked: " + question + "\nAnswer: " + answer + "\n"
         candidates = [base]
         for _ in range(max(1, int(self.cfg("num_final")))):
             code = extract_code(
                 call_llm(
                     env,
-                    FINAL_PROMPT.format(prompt=prompt, entry_point=entry, clarification=clarification),
+                    FINAL_PROMPT.format(
+                        prompt=prompt, entry_point=entry, clarification=clarification
+                    ),
                 )
             )
             if code:
@@ -370,7 +377,9 @@ class WitnessProbe(ClarificationAlgorithmBase):
             return candidates[0]
         return self.select(env, prompt, entry, candidates, clarification)
 
-    def fork_question(self, env: ClarificationEnvironment, prompt: str, entry: str, base: str) -> str | None:
+    def fork_question(
+        self, env: ClarificationEnvironment, prompt: str, entry: str, base: str
+    ) -> str | None:
         if self.cfg("use_interface_question") and not re.search(r"def\s+\w+\s*\(", prompt):
             return INTERFACE_QUESTION.replace("{entry_point}", entry)
         raw = call_llm(
@@ -384,11 +393,16 @@ class WitnessProbe(ClarificationAlgorithmBase):
         if not question:
             return None
         # Stage 2b: witness — does the other reading actually change behavior?
-        fork_note = why or ("The candidate implements one reading; implement the other plausible reading of the ambiguous point: " + question)
+        fork_note = why or (
+            "The candidate implements one reading; implement the other plausible reading of the ambiguous point: "
+            + question
+        )
         witness = extract_code(
             call_llm(
                 env,
-                SIDE_PROMPT.format(prompt=prompt, entry_point=entry, fork_note=fork_note, draft=base[:3000]),
+                SIDE_PROMPT.format(
+                    prompt=prompt, entry_point=entry, fork_note=fork_note, draft=base[:3000]
+                ),
             )
         )
         if not witness:
