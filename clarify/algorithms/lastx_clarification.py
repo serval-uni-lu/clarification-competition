@@ -237,9 +237,7 @@ def _asserts_of(entry_point: str, text: str) -> list[tuple[str, str]]:
             continue
         test = node.test
         if not (
-            isinstance(test, ast.Compare)
-            and len(test.ops) == 1
-            and isinstance(test.ops[0], ast.Eq)
+            isinstance(test, ast.Compare) and len(test.ops) == 1 and isinstance(test.ops[0], ast.Eq)
         ):
             continue
         left, right = test.left, test.comparators[0]
@@ -313,9 +311,7 @@ class AnchorVerify(ClarificationAlgorithmBase):
         if marker < 0:
             return None
         try:
-            return json.loads(
-                output[marker + len("@@RESULT@@") :].strip().splitlines()[0]
-            )
+            return json.loads(output[marker + len("@@RESULT@@") :].strip().splitlines()[0])
         except (ValueError, IndexError):
             return None
 
@@ -337,10 +333,7 @@ class AnchorVerify(ClarificationAlgorithmBase):
         first_code, first_response = self.sample(env, messages, entry_point)
         fallback = f"```python\n{first_code}\n```"
         try:
-            return (
-                self.verify(env, problem, qa, messages, first_code, first_response)
-                or fallback
-            )
+            return self.verify(env, problem, qa, messages, first_code, first_response) or fallback
         except Exception:  # noqa: BLE001 - Preserve first-sample fallback on verification errors.
             return fallback
 
@@ -350,22 +343,14 @@ class AnchorVerify(ClarificationAlgorithmBase):
         if qa:
             hard = _asserts_of(entry_point, qa[1])
             if not hard:
-                extracted = env.llm(
-                    EXTRACT_PROMPT.format(entry_point=entry_point, answer=qa[1])
-                )
+                extracted = env.llm(EXTRACT_PROMPT.format(entry_point=entry_point, answer=qa[1]))
                 hard = _asserts_of(entry_point, _extract_code(extracted))
         hard = hard[:3]
-        soft = [
-            c for c in _doc_examples(entry_point, problem["prompt"]) if c not in hard
-        ]
+        soft = [c for c in _doc_examples(entry_point, problem["prompt"]) if c not in hard]
 
         probes = []
         if self.config["probes"]:
-            example = (
-                f"\nA confirmed example call: {hard[0][0]} == {hard[0][1]}\n"
-                if hard
-                else ""
-            )
+            example = f"\nA confirmed example call: {hard[0][0]} == {hard[0][1]}\n" if hard else ""
             response = env.llm(
                 PROBE_PROMPT.format(
                     entry_point=entry_point,
@@ -389,9 +374,7 @@ class AnchorVerify(ClarificationAlgorithmBase):
             env, entry_point, messages, codes, responses, results, hard, soft, probes
         )
 
-    def select(
-        self, env, entry_point, messages, codes, responses, results, hard, soft, probes
-    ):
+    def select(self, env, entry_point, messages, codes, responses, results, hard, soft, probes):
         """Repair toward the checks, then pick the implementation most others agree with."""
         checks = hard + soft
         target = hard if hard else soft
@@ -410,7 +393,7 @@ class AnchorVerify(ClarificationAlgorithmBase):
                 break
             failures = "\n".join(
                 f"- {call} returned {res[1]}, but the expected result is {expected}"
-                for (call, expected), res in zip(target, target_results)
+                for (call, expected), res in zip(target, target_results, strict=False)
                 if not res[0]
             )
             repair_messages = messages + [
