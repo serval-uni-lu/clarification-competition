@@ -2,19 +2,22 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""WitnessProbe v4.1 — fork analysis, witness execution, answer-priority regeneration.
+"""WitnessProbe v4.2 — fork analysis, witness execution, answer-priority regeneration,
+and example-assert repair for the no-question path.
 
 Mechanism:
 1. Generate a first-guess draft of the task.
 2. Ask the model to locate a single critical fork: one missing or vague fact
    whose two plausible readings change what the function returns for ordinary
-   valid inputs. If none exists, the draft stands and no question is asked.
-3. Build a witness draft committed to the other reading and run both drafts
-   in the sandbox on a few probe inputs. Ask the user the fork question
-   (assumption-framed) unless the witness evidence shows the readings agree.
-4. When an answer is received, regenerate the implementation with the answer
+   valid inputs. A witness draft committed to the other reading is run against
+   the draft on probe inputs; disagreement strengthens the case for asking.
+3. When an answer is received, regenerate the implementation with the answer
    taking precedence over the task text, and pick the best candidate by
    executing self-written asserts derived from the task description.
+4. When no question is asked, verify the draft against the example asserts
+   shipped with the task statement (when present): generate one alternative,
+   keep the variant passing more examples, and repair the best variant once
+   with the failing asserts as feedback.
 
 Team: zhangchuangnankai
 Team Members: Zhang Chuang (Lenovo)
@@ -122,6 +125,27 @@ Return only a Python code block with one `assert {entry_point}(...) == ...` stat
 """
 
 INTERFACE_QUESTION = "Which arguments does {entry_point} take, and in what order?"
+
+REPAIR_PROMPT = """\
+Implement `{entry_point}` as a self-contained Python module for the task below.
+
+<problem>
+{prompt}
+</problem>
+
+A previous implementation failed some example checks shipped with the task:
+
+```python
+{candidate}
+```
+
+Failing checks:
+```python
+{failures}
+```
+
+Fix the implementation so every failing check passes while keeping the rest of the behavior unchanged. Name the function exactly `{entry_point}`. Enclose your solution in ```python and ```.
+"""
 
 HARNESS = r"""
 import copy
@@ -357,9 +381,10 @@ class WitnessProbe(ClarificationAlgorithmBase):
                 ):
                     question, answer = None, None
 
-        # Stage 3: answer-priority regeneration + selection.
+        # Stage 3: answer-priority regeneration + selection; example-assert
+        # repair when no answer was obtained.
         if question is None or answer is None:
-            return base
+            return self.no_question_path(env, prompt, entry, base, problem)
         clarification = "\nThe user was asked: " + question + "\nAnswer: " + answer + "\n"
         candidates = [base]
         for _ in range(max(1, int(self.cfg("num_final")))):
@@ -419,8 +444,67 @@ class WitnessProbe(ClarificationAlgorithmBase):
         for i in range(n_inputs):
             if rows[0][i] != rows[1][i]:
                 return question
-        # both readings agree on every probe: not a real fork
-        return None
+        # Both readings agree on every probe. v4.1 treated this as "not a real
+        # fork" and skipped the question, but probe agreement does not rule out
+        # a hidden requirement — keep the question (cheap, one turn).
+        return question
+
+    def example_asserts(self, problem: dict[str, Any]) -> list[str]:
+        """Asserts shipped with the task statement (part of the visible problem)."""
+        raw = problem.get("test_cases")
+        if not isinstance(raw, str) or "assert" not in raw:
+            return []
+        asserts = [ln.strip() for ln in raw.splitlines() if ln.strip().startswith("assert ")]
+        return asserts[:8]
+
+    def no_question_path(self, env, prompt: str, entry: str, base: str, problem: dict) -> str:
+        """No clarification happened: verify the draft against the example
+        asserts shipped with the task, then repair the best variant once."""
+        asserts = self.example_asserts(problem)
+        if not asserts:
+            return base
+        result = run_harness(env, [base], entry, "asserts", asserts)
+        rows = result.get("rows", [])
+        if not rows or rows[0] is None:
+            return base
+        base_score = sum(rows[0])
+        if base_score == len(asserts):
+            return base
+        # One alternative attempt, then a repair of the best variant.
+        alt = extract_code(call_llm(env, CODE_PROMPT.format(prompt=prompt, entry_point=entry)))
+        candidates = [base] + ([alt] if alt else [])
+        if len(candidates) > 1:
+            result = run_harness(env, candidates, entry, "asserts", asserts)
+            rows = result.get("rows", [])
+            if len(rows) == len(candidates):
+                scores = [sum(r) if r is not None else -1 for r in rows]
+                best_idx = scores.index(max(scores))
+                best_code, best_score = candidates[best_idx], max(scores)
+            else:
+                best_code, best_score = base, base_score
+        else:
+            best_code, best_score = base, base_score
+        if best_score == len(asserts):
+            return best_code
+        failing = [a for a, ok in zip(asserts, rows[0] if rows and rows[0] else []) if not ok]
+        if not failing:
+            failing = asserts
+        repaired = extract_code(
+            call_llm(
+                env,
+                REPAIR_PROMPT.format(
+                    prompt=prompt, entry_point=entry, candidate=best_code[:3000],
+                    failures="\n".join(failing)[:800],
+                ),
+            )
+        )
+        if not repaired or repaired == best_code:
+            return best_code
+        result = run_harness(env, [repaired], entry, "asserts", asserts)
+        rows = result.get("rows", [])
+        if rows and rows[0] is not None and sum(rows[0]) > best_score:
+            return repaired
+        return best_code
 
     def select(self, env, prompt: str, entry: str, codes: list[str], clarification: str) -> str:
         resp = call_llm(
