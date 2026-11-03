@@ -27,6 +27,7 @@ Related ideas appear in the literature on interactive and test-driven code gener
 
 Team: Dinh
 Team Members: Dinh (Posts and Telecommunications Institute of Technology),
+    Le Thi Thao (Posts and Telecommunications Institute of Technology),
     Van-Hoang Le (University of Luxembourg)
 Main Contact: dinhtd.b23cc038@stu.ptit.edu.vn
 """
