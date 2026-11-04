@@ -887,13 +887,13 @@ def select_contrast(alternatives: list[dict], behaviours: list[tuple | None], di
     best_question, best_score = "", 0.0
     fatal = {"err:" + name for name in ("NameError", "UnboundLocalError", "ImportError",
              "ModuleNotFoundError", "SyntaxError", "MemoryError", "RecursionError", "TimeoutError")}
-    for alternative, observed, differences in zip(alternatives, behaviours[1:], different):
+    for alternative, observed, differences in zip(alternatives, behaviours[1:], different, strict=False):
         if not observed or not any(row == "ok" for row in observed) or any(row in fatal for row in observed):
             continue
         allow_errors = alternative.get("kind", "semantics") in {"interface", "error_policy"}
         if not allow_errors and any(row != "ok" for row in observed):
             continue
-        pairs = [(left, right, delta) for left, right, delta in zip(baseline, observed, differences)
+        pairs = [(left, right, delta) for left, right, delta in zip(baseline, observed, differences, strict=False)
                  if isinstance(delta, bool) and left not in fatal
                  and (left == right == "ok" or allow_errors and (left == "ok" or right == "ok"))]
         if len(pairs) < 2:
