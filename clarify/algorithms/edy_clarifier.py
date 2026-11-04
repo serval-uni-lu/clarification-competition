@@ -195,7 +195,9 @@ INDEPENDENT_QUESTION_TEMPLATE = VOI_QUESTION_TEMPLATE.replace(
     "",
 ).replace("Your draft's choice does not settle a fact.", "")
 
-ADAPTIVE_QUESTION_TEMPLATE = INDEPENDENT_QUESTION_TEMPLATE + """
+ADAPTIVE_QUESTION_TEMPLATE = (
+    INDEPENDENT_QUESTION_TEMPLATE
+    + """
 
 Before choosing, decide whether a user answer can add necessary information.
 Return <ask>false</ask> and no question ONLY if the requirement already determines
@@ -206,6 +208,7 @@ two credible outputs on valid inputs is a reason to ask even if one seems common
 For an unresolved decision, return <ask>true</ask> and the question as specified.
 Do not infer completeness from familiarity with a named problem or a dataset.
 """
+)
 
 INTERFACE_HINT_NO_SIGNATURE = (
     "no signature is given, so check the number, order and types of the arguments "
@@ -775,15 +778,22 @@ def parse_contrasts(response: str | None, entry_point: str, limit: int) -> list[
         if entry_point not in defined_functions(code):
             continue
         kind = item.get("kind", "semantics")
-        if not isinstance(kind, str) or kind not in {"semantics", "representation", "interface", "error_policy"}:
+        if not isinstance(kind, str) or kind not in {
+            "semantics",
+            "representation",
+            "interface",
+            "error_policy",
+        }:
             continue
-        result.append({"question": question, "probability": probability, "code": code, "kind": kind})
+        result.append(
+            {"question": question, "probability": probability, "code": code, "kind": kind}
+        )
         if len(result) >= limit:
             break
     return result
 
 
-CONTRAST_RUNNER = r'''
+CONTRAST_RUNNER = r"""
 import math as contrast_math
 EDY_PROGRAMS = {programs!r}
 EDY_PROBES = {probes!r}
@@ -849,7 +859,7 @@ for contrast_probe in EDY_PROBES:
             edy_timer(0)
         contrast_different[contrast_index - 1].append(contrast_diff)
 print("@@CONTRAST@@" + edy_json.dumps({"statuses": contrast_statuses, "different": contrast_different}))
-'''
+"""
 
 
 def contrast_behaviour_script(candidates: list[str], probes: list[str]) -> str:
@@ -857,7 +867,8 @@ def contrast_behaviour_script(candidates: list[str], probes: list[str]) -> str:
     # decisions and error classes leave it. No repr truncation or order artifacts.
     timer_setup = BEHAVIOUR_RUNNER.split("EDY_PROGRAMS =", 1)[0]
     return timer_setup + CONTRAST_RUNNER.replace("{programs!r}", repr(candidates)).replace(
-        "{probes!r}", repr(probes))
+        "{probes!r}", repr(probes)
+    )
 
 
 def run_contrast_behaviours(env, candidates, probes):
@@ -866,36 +877,64 @@ def run_contrast_behaviours(env, candidates, probes):
         marker = output.rfind("@@CONTRAST@@")
         if marker < 0:
             return [], []
-        payload = json.loads(output[marker + len("@@CONTRAST@@"):].strip().splitlines()[0])
+        payload = json.loads(output[marker + len("@@CONTRAST@@") :].strip().splitlines()[0])
         statuses, different = payload["statuses"], payload["different"]
         if len(statuses) != len(candidates) or len(different) != len(candidates) - 1:
             return [], []
-        if any(len(row) != len(probes) or not all(isinstance(x, str) for x in row) for row in statuses):
+        if any(
+            len(row) != len(probes) or not all(isinstance(x, str) for x in row) for row in statuses
+        ):
             return [], []
-        if any(len(row) != len(probes) or not all(x is None or isinstance(x, bool) for x in row) for row in different):
+        if any(
+            len(row) != len(probes) or not all(x is None or isinstance(x, bool) for x in row)
+            for row in different
+        ):
             return [], []
         return statuses, different
     except Exception:  # noqa: BLE001 - unusable evidence falls back to edge
         return [], []
 
 
-def select_contrast(alternatives: list[dict], behaviours: list[tuple | None], different: list) -> str:
+def select_contrast(
+    alternatives: list[dict], behaviours: list[tuple | None], different: list
+) -> str:
     """Estimate regret from the public probes, not from any hidden test results."""
     if not behaviours or not behaviours[0]:
         return ""
     baseline = behaviours[0]
     best_question, best_score = "", 0.0
-    fatal = {"err:" + name for name in ("NameError", "UnboundLocalError", "ImportError",
-             "ModuleNotFoundError", "SyntaxError", "MemoryError", "RecursionError", "TimeoutError")}
-    for alternative, observed, differences in zip(alternatives, behaviours[1:], different, strict=False):
-        if not observed or not any(row == "ok" for row in observed) or any(row in fatal for row in observed):
+    fatal = {
+        "err:" + name
+        for name in (
+            "NameError",
+            "UnboundLocalError",
+            "ImportError",
+            "ModuleNotFoundError",
+            "SyntaxError",
+            "MemoryError",
+            "RecursionError",
+            "TimeoutError",
+        )
+    }
+    for alternative, observed, differences in zip(
+        alternatives, behaviours[1:], different, strict=False
+    ):
+        if (
+            not observed
+            or not any(row == "ok" for row in observed)
+            or any(row in fatal for row in observed)
+        ):
             continue
         allow_errors = alternative.get("kind", "semantics") in {"interface", "error_policy"}
         if not allow_errors and any(row != "ok" for row in observed):
             continue
-        pairs = [(left, right, delta) for left, right, delta in zip(baseline, observed, differences, strict=False)
-                 if isinstance(delta, bool) and left not in fatal
-                 and (left == right == "ok" or allow_errors and (left == "ok" or right == "ok"))]
+        pairs = [
+            (left, right, delta)
+            for left, right, delta in zip(baseline, observed, differences, strict=False)
+            if isinstance(delta, bool)
+            and left not in fatal
+            and (left == right == "ok" or allow_errors and (left == "ok" or right == "ok"))
+        ]
         if len(pairs) < 2:
             continue
         # Missing/incomparable observations do not inflate the measured coverage.
@@ -1036,7 +1075,14 @@ class EDYClarifier(ClarificationAlgorithmBase):
     # Steps ---------------------------------------------------------------------
 
     def validate_configuration(self) -> None:
-        if self.config["question_style"] not in {"edge", "contract", "voi", "independent", "adaptive", "contrast"}:
+        if self.config["question_style"] not in {
+            "edge",
+            "contract",
+            "voi",
+            "independent",
+            "adaptive",
+            "contrast",
+        }:
             raise ValueError("Unknown question_style")
 
     def step_generate(self, env: ClarificationEnvironment, prompt: str, entry_point: str) -> str:
@@ -1147,19 +1193,28 @@ class EDYClarifier(ClarificationAlgorithmBase):
 
     def step_contrast(self, env, prompt: str, entry_point: str, draft: str) -> str:
         count = max(1, min(4, int(self.config["contrast_candidates"])))
-        response = safe_llm(env, CONTRAST_TEMPLATE.format(
-            count=count, prompt=prompt, entry_point=entry_point, draft=draft))
+        response = safe_llm(
+            env,
+            CONTRAST_TEMPLATE.format(
+                count=count, prompt=prompt, entry_point=entry_point, draft=draft
+            ),
+        )
         alternatives = parse_contrasts(response, entry_point, count)
         if not alternatives:
             return ""
         candidates = [self.step_safe_sanitize(draft, prompt, entry_point)]
-        candidates.extend(self.step_safe_sanitize(item["code"], prompt, entry_point)
-                          for item in alternatives)
+        candidates.extend(
+            self.step_safe_sanitize(item["code"], prompt, entry_point) for item in alternatives
+        )
         # The probe model sees the requirement and call signatures only, not the
         # competing code, candidate questions, or possible outputs.
         signatures = "\n".join(sorted({function_arity(c, entry_point) for c in candidates}))
-        response = safe_llm(env, PROBE_TEMPLATE.format(
-            prompt=prompt, entry_point=entry_point, clarification="", signatures=signatures))
+        response = safe_llm(
+            env,
+            PROBE_TEMPLATE.format(
+                prompt=prompt, entry_point=entry_point, clarification="", signatures=signatures
+            ),
+        )
         probes = parse_probes(response, entry_point)
         if len(probes) < 2:
             return ""
