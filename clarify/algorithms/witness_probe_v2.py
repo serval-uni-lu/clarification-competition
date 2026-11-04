@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""WitnessProbe v4.2 — fork analysis, witness execution, answer-priority regeneration,
-and example-assert repair for the no-question path.
+"""WitnessProbe v4.3 — fork analysis, witness execution, answer-priority regeneration,
+and example-assert verification/repair on both paths.
 
 Mechanism:
 1. Generate a first-guess draft of the task.
@@ -14,10 +14,10 @@ Mechanism:
 3. When an answer is received, regenerate the implementation with the answer
    taking precedence over the task text, and pick the best candidate by
    executing self-written asserts derived from the task description.
-4. When no question is asked, verify the draft against the example asserts
-   shipped with the task statement (when present): generate one alternative,
-   keep the variant passing more examples, and repair the best variant once
-   with the failing asserts as feedback.
+4. On both the asked and the no-question path, the chosen implementation is
+   verified against the example asserts shipped with the task statement (when
+   present): a failing variant is repaired once with the failing asserts as
+   feedback, and the repair is kept only when it passes strictly more asserts.
 
 Team: zhangchuangnankai
 Team Members: Zhang Chuang (Lenovo)
@@ -132,7 +132,7 @@ Implement `{entry_point}` as a self-contained Python module for the task below.
 <problem>
 {prompt}
 </problem>
-
+{clarification}
 A previous implementation failed some example checks shipped with the task:
 
 ```python
@@ -144,7 +144,7 @@ Failing checks:
 {failures}
 ```
 
-Fix the implementation so every failing check passes while keeping the rest of the behavior unchanged. Name the function exactly `{entry_point}`. Enclose your solution in ```python and ```.
+Fix the implementation so every failing check passes while keeping the rest of the behavior unchanged. Where the user's answer above conflicts with the task text or its examples, keep following the answer; only fix what the failing checks expose. Name the function exactly `{entry_point}`. Enclose your solution in ```python and ```.
 """
 
 HARNESS = r"""
@@ -398,9 +398,16 @@ class WitnessProbe(ClarificationAlgorithmBase):
             )
             if code:
                 candidates.append(code)
-        if len(candidates) == 1 or not self.cfg("run_final_tests"):
-            return candidates[0]
-        return self.select(env, prompt, entry, candidates, clarification)
+        if len(candidates) == 1:
+            chosen = candidates[0]
+        elif not self.cfg("run_final_tests"):
+            chosen = candidates[0]
+        else:
+            chosen = self.select(env, prompt, entry, candidates, clarification)
+        # Answer-priority regeneration can still produce code that fails the
+        # example asserts shipped with the task (the answer may be partially
+        # applied). Verify and repair once, keeping the user's answer in context.
+        return self.verify_and_repair(env, prompt, entry, chosen, problem, clarification)
 
     def fork_question(
         self, env: ClarificationEnvironment, prompt: str, entry: str, base: str
@@ -467,44 +474,56 @@ class WitnessProbe(ClarificationAlgorithmBase):
         rows = result.get("rows", [])
         if not rows or rows[0] is None:
             return base
-        base_score = sum(rows[0])
-        if base_score == len(asserts):
+        if sum(rows[0]) == len(asserts):
             return base
         # One alternative attempt, then a repair of the best variant.
         alt = extract_code(call_llm(env, CODE_PROMPT.format(prompt=prompt, entry_point=entry)))
         candidates = [base] + ([alt] if alt else [])
-        if len(candidates) > 1:
-            result = run_harness(env, candidates, entry, "asserts", asserts)
-            rows = result.get("rows", [])
-            if len(rows) == len(candidates):
-                scores = [sum(r) if r is not None else -1 for r in rows]
-                best_idx = scores.index(max(scores))
-                best_code, best_score = candidates[best_idx], max(scores)
-            else:
-                best_code, best_score = base, base_score
+        result = run_harness(env, candidates, entry, "asserts", asserts)
+        rows = result.get("rows", [])
+        if len(rows) == len(candidates) and len(candidates) > 1:
+            scores = [sum(r) if r is not None else -1 for r in rows]
+            best_code = candidates[scores.index(max(scores))]
         else:
-            best_code, best_score = base, base_score
-        if best_score == len(asserts):
-            return best_code
-        failing = [a for a, ok in zip(asserts, rows[0] if rows and rows[0] else []) if not ok]
-        if not failing:
-            failing = asserts
+            best_code = base
+        return self.verify_and_repair(env, prompt, entry, best_code, problem)
+
+    def verify_and_repair(
+        self, env, prompt: str, entry: str, code: str, problem: dict,
+        clarification: str = "",
+    ) -> str:
+        """Check `code` against the example asserts shipped with the task; if
+        any fail, repair once with the failing asserts as feedback and keep the
+        repair only when it passes strictly more asserts. `clarification`
+        carries the user's answer so the repair keeps answer-priority semantics."""
+        asserts = self.example_asserts(problem)
+        if not asserts:
+            return code
+        result = run_harness(env, [code], entry, "asserts", asserts)
+        rows = result.get("rows", [])
+        if not rows or rows[0] is None:
+            return code
+        score = sum(rows[0])
+        if score == len(asserts):
+            return code
+        failing = [a for a, ok in zip(asserts, rows[0]) if not ok] or asserts
         repaired = extract_code(
             call_llm(
                 env,
                 REPAIR_PROMPT.format(
-                    prompt=prompt, entry_point=entry, candidate=best_code[:3000],
+                    prompt=prompt, entry_point=entry, clarification=clarification,
+                    candidate=code[:3000],
                     failures="\n".join(failing)[:800],
                 ),
             )
         )
-        if not repaired or repaired == best_code:
-            return best_code
+        if not repaired or repaired == code:
+            return code
         result = run_harness(env, [repaired], entry, "asserts", asserts)
         rows = result.get("rows", [])
-        if rows and rows[0] is not None and sum(rows[0]) > best_score:
+        if rows and rows[0] is not None and sum(rows[0]) > score:
             return repaired
-        return best_code
+        return code
 
     def select(self, env, prompt: str, entry: str, codes: list[str], clarification: str) -> str:
         resp = call_llm(
