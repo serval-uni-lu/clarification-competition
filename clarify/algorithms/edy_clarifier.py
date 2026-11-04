@@ -144,6 +144,69 @@ the one question
 </question>
 """.strip()
 
+VOI_QUESTION_TEMPLATE = """
+Select one clarification question for a software requirement. You have one user
+interaction; maximize the useful information that interaction adds.
+
+Requirement (function `{entry_point}`):
+{prompt}
+
+Provisional implementation, which is only a hypothesis, NOT evidence of intent:
+```python
+{draft}
+```
+
+First identify up to three independent unresolved decisions. For each, separate:
+- What the requirement already establishes, including explicit signatures/examples.
+- What you are merely assuming; write two plausible alternatives.
+- Which valid inputs would behave differently, and how widely that matters.
+
+Choose the decision with the greatest expected reduction in implementation error:
+uncertainty about its answer TIMES consequence of guessing incorrectly. A missing
+interface detail that can break every call may outweigh an edge case; a semantic
+choice affecting most outputs may outweigh a cosmetic representation difference.
+Use this comparison, not a fixed priority list. Do not re-confirm facts directly
+stated or reliably implied by the requirement. Do not invent ambiguity just because
+an alternative is logically possible. Your draft's choice does not settle a fact.
+
+The question must isolate EXACTLY ONE decision. Examples:
+- If only argument order is uncertain, ask which of two orders applies; do not also
+  ask argument types, output format or semantics.
+- If only multiplicity is uncertain, ask whether repeated matches count separately;
+  do not also ask about ordering or missing matches.
+- If only return container type is uncertain, ask list or tuple; do not ask the user
+  to confirm a whole example output whose value depends on several unknown rules.
+Never ask for an algorithm, implementation, test cases or a complete specification.
+Avoid open-ended 'anything else?' and 'confirm my whole contract' questions.
+Use a brief neutral choice between the two credible alternatives, without claiming
+either is the default. Use a concrete input only if it isolates this one decision.
+{interface_hint}
+{evidence}
+
+Reply with <analysis> containing the candidate decisions, what is already known,
+and why one answer changes the implementation most, then <question> containing
+only one sentence with one question mark. No backticks, bullets or numbered list
+inside <question>. Do not mention evaluation or hidden requirements to the user.
+""".strip()
+
+INDEPENDENT_QUESTION_TEMPLATE = VOI_QUESTION_TEMPLATE.replace(
+    "Provisional implementation, which is only a hypothesis, NOT evidence of intent:\n"
+    "```python\n{draft}\n```\n\n",
+    "",
+).replace("Your draft's choice does not settle a fact.", "")
+
+ADAPTIVE_QUESTION_TEMPLATE = INDEPENDENT_QUESTION_TEMPLATE + """
+
+Before choosing, decide whether a user answer can add necessary information.
+Return <ask>false</ask> and no question ONLY if the requirement already determines
+the interface and behavior on all valid inputs, and every candidate would merely
+re-confirm a stated fact or invent an irrelevant edge policy. An unfamiliar
+implementation is not itself a reason to ask. Conversely, an unknown policy with
+two credible outputs on valid inputs is a reason to ask even if one seems common.
+For an unresolved decision, return <ask>true</ask> and the question as specified.
+Do not infer completeness from familiarity with a named problem or a dataset.
+"""
+
 INTERFACE_HINT_NO_SIGNATURE = (
     "no signature is given, so check the number, order and types of the arguments "
     "(e.g. whether sizes or indices are passed as extra parameters) and the exact "
@@ -246,6 +309,42 @@ here is genuinely unclear. Prefer asking about the decision behind this disagree
 using the input and the competing outputs in the question:
 {rows}
 """
+
+CONTRAST_TEMPLATE = """
+Find at most {count} genuinely unresolved facts in this software requirement.
+
+Requirement (function `{entry_point}`):
+{prompt}
+
+Provisional implementation, which is a hypothesis rather than evidence of intent:
+```python
+{draft}
+```
+
+For EACH fact, construct one counterfactual implementation that changes ONLY that
+fact relative to the provisional implementation. Keep the other behavioral choices
+and the algorithm as close as possible. A fact may concern one interface detail,
+one semantic rule, one return representation, or one boundary policy. Do not change
+several independent facts in an alternative. Never change an explicit unambiguous
+requirement. If the draft contains an ordinary programming bug, that is a repair,
+not a user decision: do not ask the user to resolve it.
+
+For each alternative supply:
+- question: a single neutral atomic question distinguishing that fact's two
+  credible readings; one sentence, one question mark, no bullets or backticks.
+  It must not confirm a whole contract or ask for code, algorithms or tests.
+- probability: your estimated probability that the alternative, rather than the
+  draft's reading, is intended; greater than 0 and at most 0.5. Only include facts
+  that cannot be reliably resolved from the requirement itself. Do not use a
+  benchmark, remembered reference implementation or task identity as evidence.
+- kind: semantics, representation, interface, or error_policy. Only interface and
+  error_policy contrasts may intentionally change whether a call raises an error.
+- code: the COMPLETE self-contained alternative Python implementation, with the
+  same function name, using only the standard library; no tests or example usage.
+
+Return ONLY a JSON object whose key alternatives is a list of these objects.
+If no genuine ambiguity remains, return an empty alternatives list.
+""".strip()
 
 FALLBACK_QUESTION = (
     "Should the function follow the most common interpretation of this task, or is "
@@ -413,6 +512,18 @@ def answer_is_usable(answer: str | None) -> bool:
         return False
     lowered = answer.lower()
     return not any(marker in lowered for marker in REFUSAL_MARKERS)
+
+
+def skip_clarification(response: str | None) -> bool:
+    """Skip only on one unambiguous final decision outside the analysis block."""
+    remaining = re.sub(r"<analysis>.*?</analysis>", "", response or "", flags=re.S | re.I)
+    if re.search(r"</?analysis\b", remaining, flags=re.I):
+        return False
+    decisions = re.findall(r"<ask>\s*(true|false)\s*</ask>", remaining, flags=re.I)
+    leftover = re.sub(r"<ask>\s*(true|false)\s*</ask>", "", remaining, flags=re.I)
+    if re.search(r"</?ask\b", leftover, flags=re.I):
+        return False
+    return [d.lower() for d in decisions] == ["false"] and not clean_question(remaining)
 
 
 def extract_examples(prompt: str, entry_point: str) -> list[tuple[str, str]]:
@@ -632,6 +743,169 @@ def count_passed(results: list[list[Any]] | None) -> int:
     return sum(1 for row in results or [] if row[3])
 
 
+def parse_contrasts(response: str | None, entry_point: str, limit: int) -> list[dict]:
+    if not response:
+        return []
+    try:
+        start = response.index("{")
+        payload, _ = json.JSONDecoder().raw_decode(response[start:])
+        alternatives = payload.get("alternatives", [])
+    except (ValueError, TypeError, AttributeError):
+        return []
+    if not isinstance(alternatives, list):
+        return []
+    result = []
+    for item in alternatives:
+        if not isinstance(item, dict):
+            continue
+        raw_question = item.get("question", "")
+        if not isinstance(raw_question, str) or raw_question.count("?") != 1:
+            continue
+        question = clean_question(raw_question)
+        probability = item.get("probability", 0.5)
+        if not question or len(question) > 360 or isinstance(probability, bool):
+            continue
+        if not isinstance(probability, (int, float)) or not 0 < probability <= 0.5:
+            continue
+        code = item.get("code", "")
+        if not isinstance(code, str):
+            continue
+        if "```" in code:
+            code = extract_code(code) or ""
+        if entry_point not in defined_functions(code):
+            continue
+        kind = item.get("kind", "semantics")
+        if not isinstance(kind, str) or kind not in {"semantics", "representation", "interface", "error_policy"}:
+            continue
+        result.append({"question": question, "probability": probability, "code": code, "kind": kind})
+        if len(result) >= limit:
+            break
+    return result
+
+
+CONTRAST_RUNNER = r'''
+import math as contrast_math
+EDY_PROGRAMS = {programs!r}
+EDY_PROBES = {probes!r}
+contrast_namespaces = []
+contrast_init = []
+for contrast_source in EDY_PROGRAMS:
+    contrast_ns = {"__name__": "contrast_candidate"}
+    try:
+        edy_timer(2.0)
+        exec(contrast_source, contrast_ns)
+        contrast_init.append("ok")
+    except BaseException as contrast_error:
+        contrast_ns = None
+        contrast_init.append("init:" + type(contrast_error).__name__)
+    finally:
+        edy_timer(0)
+    contrast_namespaces.append(contrast_ns)
+
+def contrast_equal(left, right):
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(contrast_equal(left[k], right[k]) for k in left)
+    if isinstance(left, (list, tuple)):
+        return len(left) == len(right) and all(contrast_equal(x, y) for x, y in zip(left, right))
+    if isinstance(left, float) and contrast_math.isnan(left) and contrast_math.isnan(right):
+        return True
+    return bool(left == right)
+
+def contrast_call(index, expression):
+    if contrast_namespaces[index] is None:
+        return contrast_init[index], None
+    try:
+        edy_timer(0.6)
+        return "ok", eval(expression, contrast_namespaces[index])
+    except BaseException as error:
+        return "err:" + type(error).__name__, None
+    finally:
+        edy_timer(0)
+
+contrast_statuses = [[] for _ in EDY_PROGRAMS]
+contrast_different = [[] for _ in EDY_PROGRAMS[1:]]
+for contrast_probe in EDY_PROBES:
+    contrast_base_status, contrast_base_value = contrast_call(0, contrast_probe)
+    contrast_statuses[0].append(contrast_base_status)
+    for contrast_index in range(1, len(EDY_PROGRAMS)):
+        contrast_status, contrast_value = contrast_call(contrast_index, contrast_probe)
+        contrast_statuses[contrast_index].append(contrast_status)
+        contrast_diff = None
+        try:
+            edy_timer(0.4)
+            if contrast_base_status == contrast_status == "ok":
+                contrast_diff = not contrast_equal(contrast_base_value, contrast_value)
+            elif contrast_base_status.startswith("err:") and contrast_status.startswith("err:"):
+                contrast_diff = contrast_base_status != contrast_status
+            elif contrast_base_status == "ok" and contrast_status.startswith("err:"):
+                contrast_diff = True
+            elif contrast_status == "ok" and contrast_base_status.startswith("err:"):
+                contrast_diff = True
+        except BaseException:
+            contrast_diff = None
+        finally:
+            edy_timer(0)
+        contrast_different[contrast_index - 1].append(contrast_diff)
+print("@@CONTRAST@@" + edy_json.dumps({"statuses": contrast_statuses, "different": contrast_different}))
+'''
+
+
+def contrast_behaviour_script(candidates: list[str], probes: list[str]) -> str:
+    # Compare complete live Python values in the sandbox; only compact equality
+    # decisions and error classes leave it. No repr truncation or order artifacts.
+    timer_setup = BEHAVIOUR_RUNNER.split("EDY_PROGRAMS =", 1)[0]
+    return timer_setup + CONTRAST_RUNNER.replace("{programs!r}", repr(candidates)).replace(
+        "{probes!r}", repr(probes))
+
+
+def run_contrast_behaviours(env, candidates, probes):
+    try:
+        output = env.exec_code(contrast_behaviour_script(candidates, probes))
+        marker = output.rfind("@@CONTRAST@@")
+        if marker < 0:
+            return [], []
+        payload = json.loads(output[marker + len("@@CONTRAST@@"):].strip().splitlines()[0])
+        statuses, different = payload["statuses"], payload["different"]
+        if len(statuses) != len(candidates) or len(different) != len(candidates) - 1:
+            return [], []
+        if any(len(row) != len(probes) or not all(isinstance(x, str) for x in row) for row in statuses):
+            return [], []
+        if any(len(row) != len(probes) or not all(x is None or isinstance(x, bool) for x in row) for row in different):
+            return [], []
+        return statuses, different
+    except Exception:  # noqa: BLE001 - unusable evidence falls back to edge
+        return [], []
+
+
+def select_contrast(alternatives: list[dict], behaviours: list[tuple | None], different: list) -> str:
+    """Estimate regret from the public probes, not from any hidden test results."""
+    if not behaviours or not behaviours[0]:
+        return ""
+    baseline = behaviours[0]
+    best_question, best_score = "", 0.0
+    fatal = {"err:" + name for name in ("NameError", "UnboundLocalError", "ImportError",
+             "ModuleNotFoundError", "SyntaxError", "MemoryError", "RecursionError", "TimeoutError")}
+    for alternative, observed, differences in zip(alternatives, behaviours[1:], different):
+        if not observed or not any(row == "ok" for row in observed) or any(row in fatal for row in observed):
+            continue
+        allow_errors = alternative.get("kind", "semantics") in {"interface", "error_policy"}
+        if not allow_errors and any(row != "ok" for row in observed):
+            continue
+        pairs = [(left, right, delta) for left, right, delta in zip(baseline, observed, differences)
+                 if isinstance(delta, bool) and left not in fatal
+                 and (left == right == "ok" or allow_errors and (left == "ok" or right == "ok"))]
+        if len(pairs) < 2:
+            continue
+        # Missing/incomparable observations do not inflate the measured coverage.
+        disagreement = sum(delta for _, _, delta in pairs) / len(baseline)
+        score = alternative["probability"] * disagreement
+        if score > best_score:
+            best_question, best_score = alternative["question"], score
+    return best_question
+
+
 def fence(code: str) -> str:
     return f"```python\n{code.strip()}\n```"
 
@@ -643,18 +917,21 @@ class EDYClarifier(ClarificationAlgorithmBase):
         # Run the task's own examples in the sandbox and reconcile failures.
         "check_examples": True,
         # Tell the model the tasks are perturbed classic exercises (signature prior).
-        "canonical_prior": True,
+        "canonical_prior": False,
         # Wrap signature-less entry points so extra trailing arguments are tolerated.
         "arity_shim": True,
         # Solutions sampled after the clarification; >1 enables behavioural voting.
         "consensus_samples": 1,
         # Pick the question from where differently-minded drafts disagree on probes.
         "divergence_probe": False,
-        # "edge": ask about the riskiest ambiguity; "contract": confirm a typical call.
+        # "voi": compare uncertainty and impact; "edge"/"contract": legacy controls.
         "question_style": "edge",
+        # One-fact counterfactual implementations used by the contrast policy.
+        "contrast_candidates": 2,
     }
 
     def run(self, env: ClarificationEnvironment, problem: dict[str, Any]) -> str:
+        self.validate_configuration()
         prompt = problem["prompt"]
         entry_point = problem["entry_point"]
         prior = PRIOR_NOTE if self.config["canonical_prior"] else ""
@@ -671,10 +948,12 @@ class EDYClarifier(ClarificationAlgorithmBase):
             if self.config["divergence_probe"] and draft:
                 evidence = self.step_divergence(env, prompt, entry_point, prior, draft)
             question = self.step_question(env, prompt, entry_point, draft, evidence)
-            try:
-                answer = env.ask_human(question)
-            except TooManyQuestionException:
-                answer = None
+            answer = None
+            if question:
+                try:
+                    answer = env.ask_human(question)
+                except TooManyQuestionException:
+                    answer = None
             if answer_is_usable(answer):
                 clarification = CLARIFICATION_BLOCK.format(question=question, answer=answer)
 
@@ -756,6 +1035,10 @@ class EDYClarifier(ClarificationAlgorithmBase):
 
     # Steps ---------------------------------------------------------------------
 
+    def validate_configuration(self) -> None:
+        if self.config["question_style"] not in {"edge", "contract", "voi", "independent", "adaptive", "contrast"}:
+            raise ValueError("Unknown question_style")
+
     def step_generate(self, env: ClarificationEnvironment, prompt: str, entry_point: str) -> str:
         messages = [{"role": "user", "content": prompt}]
         for attempt in range(self.config["repair_attempts"] + 1):
@@ -830,16 +1113,24 @@ class EDYClarifier(ClarificationAlgorithmBase):
         draft: str,
         evidence: str = "",
     ) -> str:
+        self.validate_configuration()
+        if self.config["question_style"] == "contrast" and draft:
+            selected = self.step_contrast(env, prompt, entry_point, draft)
+            if selected:
+                return selected
         hint = (
             INTERFACE_HINT_SIGNATURE
             if has_signature(prompt, entry_point)
             else INTERFACE_HINT_NO_SIGNATURE
         )
-        template = (
-            CONTRACT_QUESTION_TEMPLATE
-            if self.config["question_style"] == "contract"
-            else QUESTION_TEMPLATE
-        )
+        template = {
+            "edge": QUESTION_TEMPLATE,
+            "contract": CONTRACT_QUESTION_TEMPLATE,
+            "voi": VOI_QUESTION_TEMPLATE,
+            "independent": INDEPENDENT_QUESTION_TEMPLATE,
+            "adaptive": ADAPTIVE_QUESTION_TEMPLATE,
+            "contrast": QUESTION_TEMPLATE,
+        }[self.config["question_style"]]
         response = safe_llm(
             env,
             template.format(
@@ -850,7 +1141,30 @@ class EDYClarifier(ClarificationAlgorithmBase):
                 evidence=evidence,
             ),
         )
+        if self.config["question_style"] == "adaptive" and skip_clarification(response):
+            return ""
         return clean_question(response or "") or FALLBACK_QUESTION
+
+    def step_contrast(self, env, prompt: str, entry_point: str, draft: str) -> str:
+        count = max(1, min(4, int(self.config["contrast_candidates"])))
+        response = safe_llm(env, CONTRAST_TEMPLATE.format(
+            count=count, prompt=prompt, entry_point=entry_point, draft=draft))
+        alternatives = parse_contrasts(response, entry_point, count)
+        if not alternatives:
+            return ""
+        candidates = [self.step_safe_sanitize(draft, prompt, entry_point)]
+        candidates.extend(self.step_safe_sanitize(item["code"], prompt, entry_point)
+                          for item in alternatives)
+        # The probe model sees the requirement and call signatures only, not the
+        # competing code, candidate questions, or possible outputs.
+        signatures = "\n".join(sorted({function_arity(c, entry_point) for c in candidates}))
+        response = safe_llm(env, PROBE_TEMPLATE.format(
+            prompt=prompt, entry_point=entry_point, clarification="", signatures=signatures))
+        probes = parse_probes(response, entry_point)
+        if len(probes) < 2:
+            return ""
+        statuses, different = run_contrast_behaviours(env, candidates, probes)
+        return select_contrast(alternatives, statuses, different)
 
     def step_safe_sanitize(self, code: str, prompt: str, entry_point: str) -> str:
         try:
