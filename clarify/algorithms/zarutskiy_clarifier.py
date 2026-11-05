@@ -4,27 +4,46 @@
 
 """ZarutskiyClarifier.
 
-Always asks exactly one clarifying question, then regenerates the function from
-the task plus the answer, with the answer overriding conflicting task text.
-An analysis prompt picks the one missing, vague or contradictory requirement
-that changes the output and asks one concrete, atomic question about it,
-phrased as an assumption the user can confirm or correct ("I will assume X.
-Is that right, or should it be Y?", where X is what the first draft does).
-A deterministic sanitizer aliases the required entry point when a draft renamed
-the function and drops __main__ blocks and top-level prints; questions are sent
-without backticks, because the simulated user's answer parser stops at the
-first backtick. Optional switches (off by default) ask a fixed call-interface
-question on prompts without a signature, add disagreement-driven questions
-(candidates run on probe inputs in one exec_code call), and select among
-several samples by execution.
+Always asks exactly one clarifying question, which reads the seed draft's contract back to
+the user and ends with an open invitation to say what should be different, then writes one
+final version from the task plus the question and answer, with the answer overriding
+conflicting task text.
 
-Prompts for the gated question and the regeneration baseline are adapted from
-the Okanagan baseline (Wu and Fard, TOSEM 2025); the disagreement idea follows
-ClarifyGPT (Mu et al., FSE 2024). Fresh regeneration with the answer taking
-precedence follows GatedClarification (STIL-ETS); AST hygiene follows
-ContractFirstClarifier (D4vidHuang) and GatedClarification; the backtick
-gotcha and single-exec batching follow the CuriosityByDesign notes
-(thibolu-uofa). Omega (OmegaTeam) asks interface questions concurrently.
+One LLM call states, from the task and the draft, what the draft expects as input (in order,
+with types), what it gives back, the rule it assumes at the point the description leaves
+most open or contradicts, and one call on a tiny valid input that shows that rule. One
+env.exec_code call runs the draft on that call, and the question reads "I will assume f
+expects ... and gives back ..., and that .... So f(...) would return X. Is that right, or
+did you mean something else?", where X is the draft's real output; the example is left out
+when the call raises or its output is long. This is done on every task, with or without a
+signature. If a field is missing, the question of the previous version (ae88217) is asked
+instead: one concrete, atomic question about the single missing, vague or contradictory
+requirement that changes the output, phrased "I will assume X. Is that right, or should it
+be Y?", where X is what the draft does.
+
+A deterministic sanitizer aliases the required entry point when a draft renamed the function
+and drops __main__ blocks and top-level prints; questions are sent without backticks,
+because the simulated user's answer parser stops at the first backtick. If anything fails
+after the seed draft, the sanitized seed draft is returned. env.llm calls are retried up to
+twice on errors other than the budget limit. A task uses 3 env.llm calls (4 when the
+read-back falls back), at most one env.exec_code call and one env.ask_human call.
+DEFAULT_CONFIG also holds switches from earlier experiments (other question styles and
+framings, disagreement probing, execution-based selection); with these defaults they are off
+or not reached.
+
+Credits. The contract read-back with an executed example follows ContrastiveClarifier (Dinh,
+PR #9), InfoGainClarifier (RankOne, PR #12; also the read-back on every task, with or
+without a signature) and the contract question of CrossCheckClarification (STIL-ETS, PR #4);
+the open close follows ContrastiveClarifier and InfoGainClarifier. The base is our own P05
+assumption framing (ae88217): the read-back extends its assumption from one point to the
+draft's whole contract, and the P05 question is the fallback. The code and the new prompts
+are our own; the code-generation prompt is the Okanagan baseline's (Wu and Fard, TOSEM 2025)
+with our rules added, and the okanagan options (off by default) use its question and
+regeneration prompts. Earlier ideas still in use: fresh regeneration with the answer taking
+precedence follows GatedClarification (STIL-ETS, the earlier version of PR #4); the
+disagreement option (off by default) follows ClarifyGPT (Mu et al., FSE 2024); AST hygiene
+follows ContractFirstClarifier (D4vidHuang) and GatedClarification; the backtick gotcha
+follows the CuriosityByDesign notes (thibolu-uofa).
 
 Team: zarutskiysy
 Team Members: Semyon Zarutskiy, Veronica Veselova
@@ -110,6 +129,73 @@ INTERFACE_QUESTION = "Which arguments does {entry_point} take, and in what order
 
 ASSUME_FRAMING_TEXT = 'QUESTION: <one short question about exactly one fact, phrased as an assumption for the user to confirm or correct: "I will assume X. Is that right, or should it be Y?", where X is what your draft does at that point and Y is the most plausible other reading. Name concrete values or a tiny example input when it helps, e.g. "I will assume f([3, 1, 3]) returns 2. Is that right, or should it return 3?">'
 
+ASSUME_NOY_TEXT = 'QUESTION: <one short question about exactly one fact, phrased as an assumption for the user to confirm or correct: "I will assume X. Is that right?", where X is what your draft does at that point. Name concrete values or a tiny example input when it helps, e.g. "I will assume f([3, 1, 3]) returns 2. Is that right?">'
+
+# XE: the assumption is stated as what the draft really returns on one call (filled in by execution).
+EXEC_ASSUME_TEXT = """CALL: <one call of `{entry_point}` on a tiny, valid input where the competing readings give different results, written as a single Python expression, e.g. f([3, 1, 3])>
+QUESTION: <one short question about exactly one fact, phrased as an assumption for the user to confirm or correct, of the form "I will assume <the call> returns RESULT. Is that right?". Write the word RESULT literally: it will be replaced by what your draft actually returns for that call. If no single call can show the point, ask "I will assume X. Is that right?" in words instead.>"""
+
+# IFA: on prompts without a signature, the assumption is about how the function is called.
+IFACE_ASSUME_TEXT = 'QUESTION: <one short question about the call interface, phrased as an assumption for the user to confirm or correct: "I will assume {entry_point} is called like C. Is that right?", where C is one concrete example call with the number, order and types of arguments your draft expects, e.g. "I will assume f is called like f([3, 1, 3], 2). Is that right?">'
+
+# CR: P05's assumption extended from one point to the draft's whole contract, with the example output
+# taken from executing the draft. The read-back idea comes from ContrastiveClarifier (Dinh), InfoGainClarifier
+# (RankOne) and CrossCheckClarification (STIL-ETS); the wording is ours.
+READBACK_PROMPT = """
+A user asked you to implement `{entry_point}`:
+
+<problem>
+{prompt}
+</problem>
+
+Your first draft:
+```python
+{candidate}
+```
+
+Before you finalize the code you will state your assumptions about the task in one message, and the user will confirm or correct them; there is no second chance. State what your draft assumes, in plain words a user can check.
+
+Answer in exactly this format, one line per field, plain text without Markdown or backticks:
+ARGS: <what your draft expects as input, in order, with types, e.g. a list of integers and an integer k>
+OUTPUT: <what it gives back, with type and format, e.g. the number of pairs as an int>
+ASSUMPTION: <one short clause: your draft's reading of the point the description leaves most open or contradicts, e.g. pairs are counted with i < j and equal values count>
+CALL: <one call of {entry_point} on a tiny, valid input that shows that assumption, as a single Python expression, e.g. f([3, 1, 3], 2)>
+""".strip()
+
+READBACK_TEMPLATE = "I will assume {entry_point} expects {args} and gives back {output}, and that {assumption}.{example} {close}"
+READBACK_CLOSE = "Is that right?"
+READBACK_CLOSE_OPEN = "Is that right, or did you mean something else?"
+
+TESTS_SEL_PROMPT = """
+Task for `{entry_point}`:
+
+<problem>
+{prompt}
+</problem>
+{clarification}
+Write up to {num_tests} assert statements that check `{entry_point}` on concrete, valid inputs. Use the examples stated in the task (where they agree with the clarification) and at least one assert that encodes the user's answer, when the answer states a concrete behavior. The expected value must follow unambiguously from the task text, its examples or the answer; skip a case rather than guess.
+Return only a Python code block with one `assert {entry_point}(...) == ...` statement per line.
+""".strip()
+
+REPAIR_PROMPT = """
+Implement `{entry_point}` for the task below.
+
+<problem>
+{prompt}
+</problem>
+{clarification}
+Your current implementation:
+```python
+{code}
+```
+
+These checks were written from the task text, its examples and the user's answer, and your implementation fails them:
+{failures}
+
+If a check follows from the task or the answer, fix the implementation so it passes; if a check contradicts the task or the answer, ignore that check. Keep the function name `{entry_point}` and everything that already works.
+Enclose your solution in ```python and ```.
+""".strip()
+
 INTERFACE_HINT = """The description gives no signature, so the user's tests will call `{entry_point}` with arguments whose number, order and types you have to guess. If your draft's parameters are not clearly determined by the description, ask about them (e.g. "Does the function take the list and the target value as two separate arguments, in that order?").
 
 """
@@ -144,8 +230,8 @@ Problem for `{entry_point}`:
 
 {prompt}
 
-Write {num_probes} small, valid test inputs for `{entry_point}` that would expose differences between plausible readings of this description: the examples given in the description (if any), typical cases, and boundary cases (empty input, ties, duplicates, zero, boundaries) where readings could differ. Use only inputs the description allows; skip invalid types or values that the function would reject.
-Return only a Python code block that defines a list named INPUTS; each element is a tuple with the positional arguments of one call, e.g.
+Propose {num_probes} short argument lists for `{entry_point}` that could separate different reasonable interpretations of this description: the examples it gives (if any), typical inputs, and edge inputs (empty, ties, duplicates, zero, limits) where interpretations might differ. Only use inputs the description permits; leave out types or values the function would reject.
+Answer with a single Python code block assigning INPUTS, a list in which each item is the tuple of positional arguments for one call, like:
 ```python
 INPUTS = [
     ([1, 2, 3], 2),
@@ -190,7 +276,7 @@ Implement `{entry_point}` for the task below.
 {prompt}
 </problem>
 
-You asked the user a clarifying question and got an answer:
+The user was asked one clarifying question and replied:
 Question: {question}
 Answer: {answer}
 
@@ -240,69 +326,126 @@ Return only a Python code block with one `assert {entry_point}(...) == ...` stat
 
 # Runs several candidates on several inputs inside ONE exec_code call and prints JSON.
 HARNESS = r"""
-import copy, json, signal
+import copy, json, signal, sys, time
 
-def _alarm(signum, frame):
-    raise TimeoutError("probe timeout")
+class CallTimedOut(BaseException):
+    # a BaseException, so candidate code with `except Exception` cannot swallow it
+    pass
 
-signal.signal(signal.SIGALRM, _alarm)
+def on_timer(signum, frame):
+    raise CallTimedOut()
+
+def stop_timer():
+    signal.alarm(0)
+
+signal.signal(signal.SIGALRM, on_timer)
 CANDIDATES = json.loads(CANDIDATES_JSON)
 ENTRY = ENTRY_JSON
 MODE = MODE_JSON
 PAYLOAD = json.loads(PAYLOAD_JSON)
 
-def _load(code):
+def load_candidate(code):
     ns = {"__name__": "candidate_module"}
     signal.alarm(5)
     try:
         exec(code, ns)
     finally:
-        signal.alarm(0)
+        stop_timer()
     return ns
 
 rows = []
 inputs = None
+# stay well inside the 30 s container timeout, so the results of all candidates are printed
+DEADLINE = time.time() + 20
 if MODE == "probe":
     ins = {}
     try:
         signal.alarm(5)
         exec(PAYLOAD, ins)
-        signal.alarm(0)
+        stop_timer()
         inputs = list(ins["INPUTS"])[:20]
     except BaseException as e:
-        signal.alarm(0)
+        stop_timer()
         inputs = []
 for code in CANDIDATES:
     row = []
     try:
-        ns = _load(code)
+        ns = load_candidate(code)
         fn = ns[ENTRY]
     except BaseException as e:
         rows.append(None)
         continue
-    if MODE == "probe":
+    if MODE == "calls":
+        for expr in PAYLOAD:
+            try:
+                signal.alarm(2)
+                out = eval(expr, ns)
+                stop_timer()
+                row.append(repr(out)[:120])
+            except BaseException as e:
+                stop_timer()
+                row.append("raises " + type(e).__name__)
+    elif MODE == "checks":
+        # each candidate gets an equal share of the time; after one timeout the rest is skipped
+        stop_at = min(DEADLINE, time.time() + 20 / max(1, len(CANDIDATES)))
+        hung = False
+        for stmt in PAYLOAD["asserts"]:
+            if hung or time.time() > stop_at:
+                row.append(0)
+                continue
+            try:
+                signal.alarm(2)
+                exec(stmt, ns)
+                stop_timer()
+                row.append(1)
+            except CallTimedOut:
+                stop_timer()
+                hung = True
+                row.append(0)
+            except BaseException:
+                stop_timer()
+                row.append(0)
+        outs = []
+        for expr in PAYLOAD["calls"]:
+            if hung or time.time() > stop_at:
+                outs.append("skipped")
+                continue
+            try:
+                signal.alarm(2)
+                outs.append(repr(eval(expr, ns))[:120])
+                stop_timer()
+            except CallTimedOut:
+                stop_timer()
+                hung = True
+                outs.append("skipped")
+            except BaseException as e:
+                stop_timer()
+                outs.append("raises " + type(e).__name__)
+        row = {"passed": row, "outs": outs}
+    elif MODE == "probe":
         for inp in inputs:
             args = inp if isinstance(inp, tuple) else (inp,)
             try:
                 signal.alarm(2)
                 out = fn(*copy.deepcopy(args))
-                signal.alarm(0)
+                stop_timer()
                 row.append(repr(out)[:120])
             except BaseException as e:
-                signal.alarm(0)
+                stop_timer()
                 row.append("raises " + type(e).__name__)
     else:
         for stmt in PAYLOAD:
             try:
                 signal.alarm(2)
                 exec(stmt, ns)
-                signal.alarm(0)
+                stop_timer()
                 row.append(1)
             except BaseException:
-                signal.alarm(0)
+                stop_timer()
                 row.append(0)
     rows.append(row)
-print("@@HARNESS@@" + json.dumps({"inputs": [repr(i)[:120] for i in (inputs or [])], "rows": rows}))
+result = {"inputs": [repr(i)[:120] for i in (inputs or [])], "rows": rows}
+sys.stdout.write("@@HARNESS@@" + json.dumps(result) + "\n")
 """
 
 
@@ -431,6 +574,23 @@ def sanitize_code(code: str, entry: str, prompt: str) -> str:
     return code + f"\n\n{entry} = {chosen}\n"
 
 
+def lhs_call(stmt: str, entry: str) -> str | None:
+    """The left-hand call of `assert entry(...) == expected`, as source text."""
+    try:
+        node = ast.parse(stmt).body[0]
+    except (SyntaxError, IndexError):
+        return None
+    test = getattr(node, "test", None)
+    if not (
+        isinstance(test, ast.Compare) and len(test.ops) == 1 and isinstance(test.ops[0], ast.Eq)
+    ):
+        return None
+    left = test.left
+    if isinstance(left, ast.Call) and isinstance(left.func, ast.Name) and left.func.id == entry:
+        return ast.unparse(left)
+    return None
+
+
 def plain_question(text: str | None) -> str | None:
     if not text:
         return None
@@ -462,6 +622,14 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
         "interface_hint": False,  # signature-less prompts: point the question at the call interface
         "interface_question": False,  # signature-less prompts: ask which arguments the function takes
         "assume_framing": True,  # P05: phrase the question as an assumption to confirm or correct
+        "assume_noY": False,  # X11: the assumption without the "or should it be Y?" alternative
+        "exec_assumption": False,  # XE: state the assumption as the draft's real output on one call
+        "answer_checks": False,  # SEL: asserts from examples + answer, output agreement, repair
+        "include_draft": False,  # SEL: the pre-answer draft joins the final candidates (lowest priority)
+        "repair_rounds": 0,  # SEL: repairs of the selected program on failing checks
+        "readback": True,  # CR: the question reads the draft's contract back, with an executed example
+        "readback_open_close": True,  # CRc: end the read-back with the open close (READBACK_CLOSE_OPEN)
+        "interface_assume": False,  # IFA: signature-less prompts: confirm the call interface instead
     }
 
     def cfg(self, key: str) -> Any:
@@ -542,16 +710,23 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
             return None
         return response.strip() or None
 
-    def question_targeted(self, env, problem, candidate) -> str | None:
+    def question_targeted(self, env, problem, candidate, allow_exec=True) -> str | None:
         hint = ""
         if self.cfg("interface_hint") and not re.search(r"def\s+\w+\s*\(", problem["prompt"]):
             hint = INTERFACE_HINT.replace("{entry_point}", problem["entry_point"])
         template = TARGETED_QUESTION_PROMPT
-        if self.cfg("assume_framing"):
-            template = template.replace(
-                'QUESTION: <one short question about exactly one fact, answerable with a single value or choice. When it helps, name the concrete alternatives or a tiny example input, e.g. "Should f([3, 1, 3]) return 2 or 3?">',
-                ASSUME_FRAMING_TEXT,
-            )
+        z0_line = 'QUESTION: <one short question about exactly one fact, answerable with a single value or choice. When it helps, name the concrete alternatives or a tiny example input, e.g. "Should f([3, 1, 3]) return 2 or 3?">'
+        no_def = not re.search(r"def\s+\w+\s*\(", problem["prompt"])
+        use_exec = self.cfg("exec_assumption") and allow_exec
+        if self.cfg("interface_assume") and no_def:
+            template = template.replace(z0_line, IFACE_ASSUME_TEXT)
+            use_exec = False
+        elif use_exec:
+            template = template.replace(z0_line, EXEC_ASSUME_TEXT)
+        elif self.cfg("assume_noY") or self.cfg("exec_assumption"):
+            template = template.replace(z0_line, ASSUME_NOY_TEXT)
+        elif self.cfg("assume_framing"):
+            template = template.replace(z0_line, ASSUME_FRAMING_TEXT)
         response = call_llm(
             env,
             template.replace("{interface_hint}", hint)
@@ -562,7 +737,66 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
         question = strip_fences(after_tag(response, "QUESTION:"))
         if not question:
             question = response.strip().splitlines()[-1] if response.strip() else ""
+        if use_exec and "RESULT" in question:
+            question = self.fill_result(env, problem, candidate, response, question)
         return question or None
+
+    def field(self, response: str, tag: str) -> str:
+        for line in response.splitlines():
+            line = line.strip().replace("`", "")
+            if line.upper().startswith(tag + ":"):
+                return line[len(tag) + 1 :].strip().rstrip(".")
+        return ""
+
+    def question_readback(self, env, problem, candidate) -> str | None:
+        entry = problem["entry_point"]
+        response = call_llm(
+            env,
+            READBACK_PROMPT.replace("{prompt}", problem["prompt"])
+            .replace("{entry_point}", entry)
+            .replace("{candidate}", candidate),
+        )
+        args, output, assumption = (
+            self.field(response, t) for t in ("ARGS", "OUTPUT", "ASSUMPTION")
+        )
+        call = self.field(response, "CALL")
+        if not (args and output and assumption):
+            return self.question_targeted(env, problem, candidate, allow_exec=False)
+        example = ""
+        if call.startswith(entry + "(") and len(call) <= 120:
+            result = self.run_harness(env, [candidate], entry, "calls", [call])
+            rows = result.get("rows") or [None]
+            out = rows[0][0] if rows[0] else None
+            if out and not out.startswith("raises ") and len(out) <= 80:
+                example = f" So {call} would return {out}."
+        close = READBACK_CLOSE_OPEN if self.cfg("readback_open_close") else READBACK_CLOSE
+        return (
+            READBACK_TEMPLATE.replace("{entry_point}", entry)
+            .replace("{args}", args)
+            .replace("{output}", output)
+            .replace("{assumption}", assumption[:1].lower() + assumption[1:])
+            .replace("{example}", example)
+            .replace("{close}", close)
+        )
+
+    def fill_result(self, env, problem, candidate, response, question) -> str | None:
+        """Replace RESULT with what the draft returns on the CALL line; else ask without the call."""
+        entry = problem["entry_point"]
+        call = response[response.rfind("CALL:") + len("CALL:") :] if "CALL:" in response else ""
+        call = strip_fences(
+            call.split("QUESTION:", 1)[0].strip().splitlines()[0] if call.strip() else ""
+        )
+        call = call.replace("`", "").strip()
+        out = None
+        if call.startswith(entry + "(") and len(call) <= 200:
+            result = self.run_harness(env, [candidate], entry, "calls", [call])
+            rows = result.get("rows") or [None]
+            if rows[0]:
+                out = rows[0][0]
+        if out is None or len(out) > 80 or out.startswith("raises "):
+            # no usable execution: fall back to the plain assumption question
+            return self.question_targeted(env, problem, candidate, allow_exec=False)
+        return question.replace("RESULT", out)
 
     def question_multi(self, env, problem, candidate) -> str | None:
         response = call_llm(
@@ -733,6 +967,8 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
                 question, probe_info = self.question_disagreement(env, problem, candidate)
                 if question is None and self.cfg("ask_policy") == "always":
                     question = self.question_targeted(env, problem, candidate)
+            elif self.cfg("readback"):
+                question = self.question_readback(env, problem, candidate)
             else:
                 question = self.question_targeted(env, problem, candidate)
             if self.cfg("plain_questions"):
@@ -745,4 +981,108 @@ class ZarutskiyClarifier(ClarificationAlgorithmBase):
         if question is None and int(self.cfg("num_final")) <= 1:
             return candidate
         codes = [self.clean(c, problem) for c in self.final_code(env, problem, question, answer)]
+        if self.cfg("answer_checks"):
+            if self.cfg("include_draft") and candidate.strip():
+                codes = codes + [candidate]
+            try:
+                return self.select_checks(env, problem, codes, question, answer)
+            except Exception:
+                # budget or harness trouble during selection keeps the first final
+                return codes[0]
         return self.select(env, problem, codes, question, answer)
+
+    def write_checks(self, env, problem, question, answer) -> list[str]:
+        clar = ""
+        if question:
+            clar = f"\nClarification from the user:\nQuestion: {question}\nAnswer: {answer}\n"
+        resp = call_llm(
+            env,
+            TESTS_SEL_PROMPT.replace("{prompt}", problem["prompt"])
+            .replace("{entry_point}", problem["entry_point"])
+            .replace("{clarification}", clar)
+            .replace("{num_tests}", str(self.cfg("num_tests"))),
+        )
+        block = extract_code(resp) or ""
+        asserts = []
+        for line in block.splitlines():
+            line = line.strip()
+            if not line.startswith("assert ") or line in asserts:
+                continue
+            try:
+                ast.parse(line)
+            except SyntaxError:
+                continue
+            asserts.append(line)
+        return asserts[:12]
+
+    def run_checks(self, env, codes, entry, asserts, calls) -> list[dict | None]:
+        result = self.run_harness(env, codes, entry, "checks", {"asserts": asserts, "calls": calls})
+        rows = result.get("rows", [])
+        if len(rows) != len(codes):
+            return [None] * len(codes)
+        return rows
+
+    def select_checks(self, env, problem, codes: list[str], question, answer) -> str:
+        """Pick the candidate passing most answer-bound checks; ties go to the candidate whose
+        outputs on the checked calls agree with most others; then one guarded repair."""
+        entry = problem["entry_point"]
+        asserts = self.write_checks(env, problem, question, answer)
+        if not asserts:
+            return codes[0]
+        calls = [lhs_call(a, entry) for a in asserts]
+        rows = self.run_checks(env, codes, entry, asserts, [c or "None" for c in calls])
+        # a check no candidate passes is more likely wrong than all candidates (filter as in CrossCheck)
+        all_asserts, all_calls = asserts, calls
+        full = [dict(r) if r else None for r in rows]
+        keep = [k for k in range(len(asserts)) if any(r and r["passed"][k] for r in rows)]
+        asserts, calls = [asserts[k] for k in keep], [calls[k] for k in keep]
+        for r in rows:
+            if r:
+                r["passed"] = [r["passed"][k] for k in keep]
+                r["outs"] = [r["outs"][k] for k in keep]
+        scores = [sum(r["passed"]) if r else -1 for r in rows]
+        if max(scores) < 0:
+            return codes[0]
+        best = max(scores)
+        tied = [i for i, sc in enumerate(scores) if sc == best]
+
+        def agreement(i):
+            outs = rows[i]["outs"]
+            return sum(
+                1
+                for j, other in enumerate(rows)
+                if j != i and other
+                for k, out in enumerate(other["outs"])
+                if calls[k] and k < len(outs) and out == outs[k] and out != "skipped"
+            )
+
+        top = max(tied, key=lambda i: (agreement(i), -i))
+        chosen = codes[top]
+        # the guarded repair sees every check, including those no candidate passes
+        asserts, calls = all_asserts, all_calls
+        chosen_score = sum(full[top]["passed"])
+        if chosen_score < len(asserts) and int(self.cfg("repair_rounds")) > 0:
+            outs = full[top]["outs"]
+            failures = []
+            for k, (stmt, ok) in enumerate(zip(asserts, full[top]["passed"], strict=False)):
+                if not ok:
+                    got = f" (your code gives {outs[k]})" if calls[k] and k < len(outs) else ""
+                    failures.append(f"- {stmt}{got}")
+            clar = ""
+            if question:
+                clar = f"\nClarification from the user:\nQuestion: {question}\nAnswer: {answer}\n"
+            # one repair at most; kept only if it passes strictly more checks
+            code, _ = self.generate_code(
+                env,
+                REPAIR_PROMPT.replace("{prompt}", problem["prompt"])
+                .replace("{entry_point}", entry)
+                .replace("{clarification}", clar)
+                .replace("{code}", chosen)
+                .replace("{failures}", "\n".join(failures[:6])),
+            )
+            if code:
+                code = self.clean(code, problem)
+                new = self.run_checks(env, [code], entry, asserts, [])[0]
+                if new and sum(new["passed"]) > chosen_score:
+                    chosen = code
+        return chosen
