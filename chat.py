@@ -24,12 +24,14 @@ import hashlib
 import importlib.util
 import inspect
 import json
+import logging
 import os
 import queue
 import re
 import sys
 import threading
 import traceback
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Union
@@ -51,6 +53,9 @@ from clarify.env import (
     _ClarificationEnvironment,
 )
 from clarify.llm import LanguageModel
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+logging.getLogger("LiteLLM").setLevel(logging.ERROR)
 
 console = Console()
 

@@ -15,3 +15,6 @@ dependencies = [
     "tenacity>=9.1.4",
     "tqdm>=4.70.0",
 ]
+
+[tool.setuptools]
+packages = ["clarify"]
