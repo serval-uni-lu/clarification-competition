@@ -489,7 +489,12 @@ class WitnessProbe(ClarificationAlgorithmBase):
         return self.verify_and_repair(env, prompt, entry, best_code, problem)
 
     def verify_and_repair(
-        self, env, prompt: str, entry: str, code: str, problem: dict,
+        self,
+        env,
+        prompt: str,
+        entry: str,
+        code: str,
+        problem: dict,
         clarification: str = "",
     ) -> str:
         """Check `code` against the example asserts shipped with the task; if
@@ -511,7 +516,9 @@ class WitnessProbe(ClarificationAlgorithmBase):
             call_llm(
                 env,
                 REPAIR_PROMPT.format(
-                    prompt=prompt, entry_point=entry, clarification=clarification,
+                    prompt=prompt,
+                    entry_point=entry,
+                    clarification=clarification,
                     candidate=code[:3000],
                     failures="\n".join(failing)[:800],
                 ),
