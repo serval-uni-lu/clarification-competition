@@ -506,7 +506,7 @@ class WitnessProbe(ClarificationAlgorithmBase):
         score = sum(rows[0])
         if score == len(asserts):
             return code
-        failing = [a for a, ok in zip(asserts, rows[0]) if not ok] or asserts
+        failing = [a for a, ok in zip(asserts, rows[0], strict=False) if not ok] or asserts
         repaired = extract_code(
             call_llm(
                 env,
