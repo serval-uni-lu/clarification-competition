@@ -2,8 +2,8 @@
   "summary": "Real-world software requirements are often underspecified. The Clarification Challenge asks teams to build LLM-based coding assistants that recognize missing or ambiguous requirements, ask targeted clarification questions, and then produce code that better matches the user's intent.",
   "single_track": "The system may make at most one clarification turn before returning its implementation. This wording is a competition-site placeholder until the organizers confirm the exact single-turn budget and enforcement rules.",
   "multi_track": "The system may ask multiple targeted clarification questions before returning its implementation. Replace this text with the exact maximum-turn budget and any stopping rules once finalized.",
-  "private_results_message": "Private test-set scores are not shown during the competition. They will be evaluated and published only at the end, after the final submission deadline.",
-  "private_results_published": false,
+  "private_results_message": "Final private-test results are now published. Select Private test to view the final rankings.",
+  "private_results_published": true,
   "dates": [
     {
       "date": "Sep 11th",
@@ -80,7 +80,7 @@
     },
     {
       "question": "What determines my rank?",
-      "answer": "TDS is the primary metric. nDCG is used only to break TDS ties. Pass@1, clarification rate, over-asking rate, and cost are reported but do not affect rank."
+      "answer": "Entries are ordered by mean TDS, then mean nDCG. A submission shares a group winner’s rank only when both metrics tie: each mean must lie within the other submission’s mean ± standard deviation. Other metrics do not affect rank."
     },
     {
       "question": "Why does a leaderboard entry show no rank?",

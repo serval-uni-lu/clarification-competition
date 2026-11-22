@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="The Clarification Challenge — building coding assistants that clarify underspecified requirements before they code.">
   <title>The Clarification Challenge</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=tie-details">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -59,11 +59,11 @@
       <div class="container">
         <div class="section-heading split-heading">
           <div>
-            <div class="eyebrow" id="leaderboard-eyebrow">Public benchmark</div>
+            <div class="eyebrow" id="leaderboard-eyebrow">Final benchmark</div>
             <h2>Leaderboard</h2>
-            <p id="leaderboard-summary">Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.</p>
+            <p id="leaderboard-summary">Final rankings below are for the <strong>private test set</strong>.</p>
           </div>
-          <span class="status-pill" id="result-status"><span class="status-dot" aria-hidden="true"></span><span id="result-status-text">Public validation</span></span>
+          <span class="status-pill" id="result-status"><span class="status-dot" aria-hidden="true"></span><span id="result-status-text">Private test</span></span>
         </div>
 
         <div class="leaderboard-shell">
@@ -71,8 +71,8 @@
             <div class="control-group" aria-label="Result set">
               <span class="control-label">Results</span>
               <div class="segmented" role="group" aria-label="Result set selector">
-                <button type="button" class="segment is-active" data-result-set="public" aria-pressed="true">Public validation</button>
-                <button type="button" class="segment" data-result-set="private" aria-pressed="false">Private test <span class="lock" id="private-lock">🔒</span></button>
+                <button type="button" class="segment" data-result-set="public" aria-pressed="false">Public validation</button>
+                <button type="button" class="segment is-active" data-result-set="private" aria-pressed="true">Private test <span class="lock" id="private-lock" hidden>🔒</span></button>
               </div>
             </div>
             <div class="control-group" id="track-control" aria-label="Track" hidden>
@@ -86,8 +86,8 @@
 
           <div id="leaderboard-results">
             <div class="table-note">
-              <span id="track-description">Clarification systems are evaluated on the public validation benchmark.</span>
-              <span>Rank by <strong>TDS ↑</strong> · tie-break by <strong>nDCG ↑</strong></span>
+              <span id="track-description">Final results on the private test benchmark.</span>
+              <span>Order by mean <strong>TDS ↑</strong>, then mean <strong>nDCG ↑</strong> · shared ranks within standard deviation</span>
             </div>
             <div class="table-scroll">
               <table class="leaderboard-table">
@@ -123,7 +123,7 @@
                 <div><strong>Over-ask</strong><span>Share of already-specified tasks where the system asks unnecessarily.</span></div>
                 <div><strong>Avg. cost</strong><span>Average model/API cost per evaluated task.</span></div>
               </div>
-              <p class="ranking-note">Only TDS and, for ties, nDCG affect rank. Baselines are reference rows and remain unranked; submissions below the strongest baseline are also shown without a rank.</p>
+              <p class="ranking-note">TDS and nDCG report means over evaluation runs. In descending mean TDS order (then nDCG), the highest remaining submission becomes a group winner. Entries share its rank when, for both metrics, each mean lies within the other’s mean ± one standard deviation. Entries join the first matching group winner; comparisons with other group members do not extend a group. Both standard deviations appear when either metric has std greater than zero, including ± 0 for the other metric. Tie indicators appear only for metrics with std greater than zero; missing values default to zero. Expand the tie count below either metric to see all entries tied on that metric, including baselines. nDCG ties are shown only between entries that also tie on TDS. A TDS tie alone does not imply a shared rank. Muted rows share a rank with the named group leader; hover or focus the tie note for the reason. Shared ranks use consecutive places (1, 1, 2). Baselines are reference rows and remain unranked; submissions below the strongest baseline are also shown without a rank.</p>
             </div>
           </div>
 
@@ -191,11 +191,11 @@
         <div class="section-heading">
           <div class="eyebrow">Evaluation</div>
           <h2>What gets measured</h2>
-          <p>TDS determines leaderboard rank, with nDCG used only to break TDS ties. The remaining metrics are reported for transparency.</p>
+          <p>Mean TDS determines ordering, with mean nDCG used to break TDS ties. Submissions share a group winner’s rank when, on both metrics, each mean lies within the other’s mean ± standard deviation. The remaining metrics are reported for transparency.</p>
         </div>
         <div class="metrics-grid">
-          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary ranking metric.</strong> Leaderboard positions are ordered by TDS from highest to lowest.</p></article>
-          <article class="metric-card tie-break-metric"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p><strong>Tie-breaker.</strong> When two systems have the same TDS, the higher nDCG ranks first.</p></article>
+          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary ranking metric.</strong> Entries are ordered by mean TDS from highest to lowest, with shared ranks determined against group winners.</p></article>
+          <article class="metric-card tie-break-metric"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p><strong>Tie-breaker.</strong> When two systems have the same mean TDS, the higher mean nDCG appears first. For both metrics, each mean must lie within the other’s mean ± standard deviation to share the group winner’s rank.</p></article>
           <article class="metric-card"><div class="metric-symbol">P@1</div><h3>Pass@1</h3><p><strong>Reported only.</strong> Raw percentage of generated implementations that pass the developer tests.</p></article>
           <article class="metric-card"><div class="metric-symbol">CR</div><h3>Clarification rate</h3><p><strong>Reported only.</strong> Percentage of tasks for which the system asks at least one clarification question.</p></article>
           <article class="metric-card"><div class="metric-symbol">OA</div><h3>Over-asking rate</h3><p><strong>Reported only.</strong> How often the system asks a question even though the task is sufficiently specified. Lower is better.</p></article>
@@ -320,6 +320,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/main.js"></script>
+  <script src="assets/js/main.js?v=tie-details"></script>
 </body>
 </html>

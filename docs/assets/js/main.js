@@ -1,7 +1,7 @@
 (() => {
   const state = {
     track: 'main',
-    resultSet: 'public',
+    resultSet: 'private',
     publicRows: [],
     privateRows: [],
     privateResultsPublished: false,
@@ -42,12 +42,46 @@
   const formatCost = value => value === null ? '—' : `$${value.toFixed(value < 1 ? 3 : 2)}`;
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
+  function standardDeviation(value) {
+    const number = numberOrNull(value);
+    return Number.isFinite(number) && number >= 0 ? number : 0;
+  }
+
+  function scoreWithDeviation(mean, std, showDeviation = std > 0) {
+    const deviation = mean !== null && showDeviation
+      ? ` <small class="metric-std" title="Standard deviation across evaluation runs" aria-label="standard deviation ${std}">± ${formatScore(std)}</small>`
+      : '';
+    return `${formatScore(mean)}${deviation}`;
+  }
+
+  function withinStandardDeviation(aMean, aStd, bMean, bStd) {
+    if (aMean === null || bMean === null) return false;
+    return Math.abs(aMean - bMean) <= Math.min(aStd, bStd);
+  }
+
+  function metricTieInfo(row, rows, metric, label) {
+    if (!(row[metric + 'StdN'] > 0) || row[metric + 'N'] === null) return '';
+    const peers = rows.filter(other => other !== row && other[metric + 'StdN'] > 0 && withinStandardDeviation(
+      row[metric + 'N'], row[metric + 'StdN'], other[metric + 'N'], other[metric + 'StdN'])
+      && (metric !== 'ndcg' || withinStandardDeviation(
+        row.tdsN, row.tdsStdN, other.tdsN, other.tdsStdN)));
+    if (!peers.length) return '<span class="metric-no-tie">No tie</span>';
+    return `<details class="metric-ties"><summary aria-label="${label}: tied with ${peers.length} other entries">${peers.length} ${peers.length === 1 ? 'tie' : 'ties'}</summary><span>${peers.map(peer => escapeHTML(peer.algorithm)).join('<br>')}</span></details>`;
+  }
+
+  function sameRankGroup(a, b) {
+    return withinStandardDeviation(a.tdsN, a.tdsStdN, b.tdsN, b.tdsStdN)
+      && withinStandardDeviation(a.ndcgN, a.ndcgStdN, b.ndcgN, b.ndcgStdN);
+  }
+
   function normalizedRows(rawRows) {
     return rawRows.map(row => ({
       ...row,
       tdsN: numberOrNull(row.tds),
+      tdsStdN: standardDeviation(row.tds_std),
       passN: numberOrNull(row.pass_at_1),
       ndcgN: numberOrNull(row.ndcg),
+      ndcgStdN: standardDeviation(row.ndcg_std),
       clarifyN: numberOrNull(row.clarification_rate),
       overAskN: numberOrNull(row.over_asking_rate),
       costN: numberOrNull(row.avg_cost_usd),
@@ -111,21 +145,44 @@
       return;
     }
 
-    let rank = 0;
-    let rankedIndex = 0;
-    let previousRankedRow = null;
-    body.innerHTML = rows.map(row => {
-      const meetsBaselineThreshold = !strongestBaseline || compareCompetitionScores(row, strongestBaseline) <= 0;
-      const isRanked = row.tdsN !== null && !row.isBaseline && meetsBaselineThreshold;
-      if (isRanked) {
-        rankedIndex += 1;
-        const exactTie = previousRankedRow
-          && row.tdsN === previousRankedRow.tdsN
-          && row.ndcgN === previousRankedRow.ndcgN;
-        if (!exactTie) rank = rankedIndex;
-        previousRankedRow = row;
+    // Fixed winners prevent nontransitive similarity from chaining groups.
+    const groups = [];
+    const rankByRow = new Map();
+    const groupByRow = new Map();
+    for (const row of rows) {
+      const eligible = row.tdsN !== null && !row.isBaseline
+        && (!strongestBaseline || compareCompetitionScores(row, strongestBaseline) <= 0);
+      if (!eligible) continue;
+      let group = groups.find(candidate => sameRankGroup(row, candidate.winner));
+      if (!group) {
+        group = { winner: row, members: [] };
+        groups.push(group);
       }
-      const place = isRanked ? rank : '—';
+      group.members.push(row);
+    }
+    // Dense ranking: 1, 1, 2. A row joins the first matching winner.
+    let nextRank = 1;
+    for (const group of groups) {
+      for (const row of group.members) {
+        rankByRow.set(row, nextRank);
+        groupByRow.set(row, group);
+      }
+      nextRank += 1;
+    }
+    body.innerHTML = rows.map(row => {
+      const rank = rankByRow.get(row);
+      const isRanked = rank !== undefined;
+      const isWinner = state.resultSet === 'private' && rank === 1;
+      const place = isRanked ? `${isWinner ? '<span class="winner-trophy" role="img" aria-label="First place trophy">🏆</span> ' : ''}${rank}` : '—';
+      const group = groupByRow.get(row);
+      const isTied = group && row !== group.winner
+        && row.tdsStdN > 0 && row.ndcgStdN > 0
+        && group.winner.tdsStdN > 0 && group.winner.ndcgStdN > 0;
+      const tieReason = isTied
+        ? (compareCompetitionScores(row, group.winner) === 0
+          ? `Same mean TDS and nDCG as ${group.winner.algorithm}; shares rank ${rank}.`
+          : `For both TDS and nDCG, each mean lies within the other entry’s mean ± standard deviation relative to ${group.winner.algorithm}; shares rank ${rank}.`)
+        : '';
       const badges = [];
       if (row.isBaseline) {
         badges.push('<span class="placeholder-badge">Baseline</span>');
@@ -134,16 +191,19 @@
       }
       if (row.status === 'example') badges.push('<span class="placeholder-badge">example row</span>');
       if (!row.isConfirmed) badges.push('<span class="unconfirmed-badge" title="This result has not yet been independently verified by the organizers.">⚠ Unconfirmed</span>');
-      const note = badges.join(' ');
+      const tieNote = isTied
+        ? `<span class="tie-note" tabindex="0" title="${escapeHTML(tieReason)}" aria-label="${escapeHTML(tieReason)}">Tied with ${escapeHTML(group.winner.algorithm)}</span>`
+        : '';
+      const note = badges.join(' ') + tieNote;
       const submission = row.submission_url
         ? `<a class="submission-link" href="${escapeHTML(row.submission_url)}" target="_blank" rel="noreferrer">View ↗</a>`
         : '—';
-      return `<tr>
+      return `<tr class="${isTied ? 'tied-row ' : ''}${isWinner ? 'winner-row' : ''}">
         <td class="rank ${rank <= 3 && isRanked ? 'top' : ''}">${place}</td>
         <td class="algorithm-cell"><strong>${escapeHTML(row.algorithm)}</strong>${note}</td>
         <td>${escapeHTML(row.model || '—')}</td>
-        <td class="metric-value primary-value">${formatScore(row.tdsN)}</td>
-        <td class="metric-value tie-break-value">${formatScore(row.ndcgN)}</td>
+        <td class="metric-value primary-value">${scoreWithDeviation(row.tdsN, row.tdsStdN, row.tdsStdN > 0 || row.ndcgStdN > 0)}${metricTieInfo(row, rows, 'tds', 'TDS')}</td>
+        <td class="metric-value tie-break-value">${scoreWithDeviation(row.ndcgN, row.ndcgStdN, row.tdsStdN > 0 || row.ndcgStdN > 0)}${metricTieInfo(row, rows, 'ndcg', 'nDCG')}</td>
         <td class="metric-value">${formatPercent(row.passN)}</td>
         <td class="metric-value">${formatPercent(row.clarifyN)}</td>
         <td class="metric-value">${formatPercent(row.overAskN)}</td>
@@ -172,7 +232,9 @@
       if (status) status.textContent = privateAvailable ? 'Private test' : 'Private test · sealed';
     } else {
       if (eyebrow) eyebrow.textContent = 'Public benchmark';
-      if (summary) summary.innerHTML = 'Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.';
+      if (summary) summary.innerHTML = state.privateResultsPublished
+        ? 'Development results for the <strong>public validation set</strong>. Select Private test for the final rankings.'
+        : 'Rankings below are for the <strong>public validation set</strong>. Final private-test results remain hidden until the competition ends.';
       if (status) status.textContent = 'Public validation';
     }
 
@@ -306,7 +368,7 @@
         }
       }
 
-      setResultSet('public');
+      setResultSet(state.privateResultsPublished ? 'private' : 'public');
     } catch (error) {
       console.error(error);
       $('#leaderboard-body').innerHTML = '<tr><td colspan="10" class="empty-cell">Could not load leaderboard data. Check <code>data/leaderboard.csv</code> and <code>data/competition.json</code>, then serve the site through GitHub Pages or a local web server.</td></tr>';
