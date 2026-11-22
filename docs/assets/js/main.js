@@ -298,11 +298,7 @@
   }
 
   function renderSchedule(data, now = Date.now()) {
-    const finalDeadline = $('#hero-final-deadline');
-    const finalDeadlineNote = $('#hero-final-deadline-note');
     const submissionDeadline = nextDeadline(data, now);
-    if (finalDeadline) finalDeadline.textContent = submissionDeadline?.date || 'No upcoming deadlines';
-    if (finalDeadlineNote) finalDeadlineNote.textContent = submissionDeadline?.label || 'All scheduled deadlines have passed';
 
     const timeline = $('#timeline-list');
     if (Array.isArray(data.dates)) {
@@ -339,6 +335,12 @@
       const key = el.dataset.content;
       if (Object.prototype.hasOwnProperty.call(data, key)) el.textContent = data[key];
     });
+
+    const finalDeadline = $('#hero-final-deadline');
+    const finalDeadlineNote = $('#hero-final-deadline-note');
+    const submissionDeadline = (data.dates || []).find(item => /submission deadline/i.test(item.label || ''));
+    if (finalDeadline) finalDeadline.textContent = submissionDeadline?.date || 'TBA';
+    if (finalDeadlineNote) finalDeadlineNote.textContent = submissionDeadline?.description || 'Final competition submission cutoff';
 
     renderSchedule(data);
 
