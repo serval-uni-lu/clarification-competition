@@ -13,12 +13,14 @@
     {
       "date": "Oct 9th",
       "label": "Registration deadline",
-      "description": "Create a pull request to register your system."
+      "description": "Create a pull request to register your system.",
+      "deadline_at": "2026-10-09T23:59:59-12:00"
     },
     {
       "date": "Nov 6th",
       "label": "Submission deadline",
-      "description": "Final pull requests must be submitted by the announced cutoff."
+      "description": "Final pull requests must be submitted by the announced cutoff.",
+      "deadline_at": "2026-11-06T23:59:59-12:00"
     },
     {
       "date": "After deadline",
@@ -41,7 +43,8 @@
     {
       "date": "4 Dec 2026",
       "label": "Solution papers due",
-      "description": "Ranked teams may submit a 4-page solution paper to the ICSE 2027 Competition Track."
+      "description": "Ranked teams may submit a 4-page solution paper to the ICSE 2027 Competition Track.",
+      "deadline_at": "2026-12-04T23:59:59-12:00"
     },
     {
       "date": "16 Dec 2026",
@@ -51,7 +54,8 @@
     {
       "date": "6 Jan 2027",
       "label": "Revisions due",
-      "description": "Revised solution papers are due."
+      "description": "Revised solution papers are due.",
+      "deadline_at": "2027-01-06T23:59:59-12:00"
     },
     {
       "date": "13 Jan 2027",
@@ -61,7 +65,8 @@
     {
       "date": "20 Jan 2027",
       "label": "Camera-ready",
-      "description": "Camera-ready solution papers are due."
+      "description": "Camera-ready solution papers are due.",
+      "deadline_at": "2027-01-20T23:59:59-12:00"
     },
     {
       "date": "25 Apr – 1 May 2027",

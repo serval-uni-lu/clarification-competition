@@ -356,3 +356,7 @@ h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.01em; }
 .leaderboard-table tbody tr.winner-row .rank,
 .leaderboard-table tbody tr.winner-row .algorithm-cell strong { color: #865b08; }
 .winner-trophy { display: block; font-size: 22px; margin-bottom: 3px; }
+
+.ranking-details { margin-top: 8px; font-size: 10.5px; line-height: 1.5; }
+.ranking-details summary { cursor: pointer; color: #475467; width: fit-content; }
+.ranking-details p { margin: 8px 0 0; }

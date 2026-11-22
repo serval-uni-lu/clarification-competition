@@ -291,6 +291,45 @@
     if (lock) lock.hidden = state.privateResultsPublished;
   }
 
+  function nextDeadline(data, now = Date.now()) {
+    return [...(data.dates || []), ...(data.icse_dates || [])]
+      .filter(item => Number.isFinite(Date.parse(item.deadline_at)) && Date.parse(item.deadline_at) >= now)
+      .sort((a, b) => Date.parse(a.deadline_at) - Date.parse(b.deadline_at))[0] || null;
+  }
+
+  function renderSchedule(data, now = Date.now()) {
+    const finalDeadline = $('#hero-final-deadline');
+    const finalDeadlineNote = $('#hero-final-deadline-note');
+    const submissionDeadline = nextDeadline(data, now);
+    if (finalDeadline) finalDeadline.textContent = submissionDeadline?.date || 'No upcoming deadlines';
+    if (finalDeadlineNote) finalDeadlineNote.textContent = submissionDeadline?.label || 'All scheduled deadlines have passed';
+
+    const timeline = $('#timeline-list');
+    if (Array.isArray(data.dates)) {
+      timeline.innerHTML = data.dates.map(item => {
+        return `<article class="timeline-item${item === submissionDeadline ? ' is-final-deadline' : ''}">
+        <div class="timeline-date">${escapeHTML(item.date)}</div>
+        <h3>${escapeHTML(item.label)}</h3>
+        <p>${escapeHTML(item.description || '')}</p>
+      </article>`;
+      }).join('');
+    }
+
+    const icseTimeline = $('#icse-timeline-list');
+    if (icseTimeline && Array.isArray(data.icse_dates)) {
+      icseTimeline.innerHTML = data.icse_dates.map(item => `<article class="timeline-item${item === submissionDeadline ? ' is-final-deadline' : ''}">
+        <div class="timeline-date">${escapeHTML(item.date)}</div>
+        <h3>${escapeHTML(item.label)}</h3>
+        <p>${escapeHTML(item.description || '')}</p>
+      </article>`).join('');
+    }
+
+    const scheduleSummary = $('#schedule-summary');
+    if (scheduleSummary) scheduleSummary.textContent = submissionDeadline
+      ? `Next deadline: ${submissionDeadline.label} · ${submissionDeadline.date}.`
+      : 'All scheduled deadlines have passed.';
+  }
+
   function applyCompetitionContent(data) {
     state.competition = data;
     configureTracks(data);
@@ -301,34 +340,7 @@
       if (Object.prototype.hasOwnProperty.call(data, key)) el.textContent = data[key];
     });
 
-    const finalDeadline = $('#hero-final-deadline');
-    const finalDeadlineNote = $('#hero-final-deadline-note');
-    const submissionDeadline = Array.isArray(data.dates)
-      ? data.dates.find(item => /submission deadline/i.test(item.label || ''))
-      : null;
-    if (finalDeadline) finalDeadline.textContent = submissionDeadline?.date || 'TBA';
-    if (finalDeadlineNote) finalDeadlineNote.textContent = submissionDeadline?.description || 'Final competition submission cutoff';
-
-    const timeline = $('#timeline-list');
-    if (Array.isArray(data.dates)) {
-      timeline.innerHTML = data.dates.map(item => {
-        const isFinalDeadline = /submission deadline/i.test(item.label || '');
-        return `<article class="timeline-item${isFinalDeadline ? ' is-final-deadline' : ''}">
-        <div class="timeline-date">${escapeHTML(item.date)}</div>
-        <h3>${escapeHTML(item.label)}</h3>
-        <p>${escapeHTML(item.description || '')}</p>
-      </article>`;
-      }).join('');
-    }
-
-    const icseTimeline = $('#icse-timeline-list');
-    if (icseTimeline && Array.isArray(data.icse_dates)) {
-      icseTimeline.innerHTML = data.icse_dates.map(item => `<article class="timeline-item">
-        <div class="timeline-date">${escapeHTML(item.date)}</div>
-        <h3>${escapeHTML(item.label)}</h3>
-        <p>${escapeHTML(item.description || '')}</p>
-      </article>`).join('');
-    }
+    renderSchedule(data);
 
     const faqList = $('#faq-list');
     if (faqList && Array.isArray(data.faq)) {
@@ -379,4 +391,5 @@
   $$('[data-track]').forEach(btn => btn.addEventListener('click', () => setTrack(btn.dataset.track)));
   $('#year').textContent = new Date().getFullYear();
   loadData();
+  setInterval(() => renderSchedule(state.competition), 60000);
 })();

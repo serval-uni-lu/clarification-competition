@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="The Clarification Challenge — building coding assistants that clarify underspecified requirements before they code.">
   <title>The Clarification Challenge</title>
-  <link rel="stylesheet" href="assets/css/style.css?v=tie-details">
+  <link rel="stylesheet" href="assets/css/style.css?v=0a690e539b88">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -35,10 +35,10 @@
           <div class="eyebrow">ICSE 2027 Competition · Dublin, Ireland</div>
           <h1>Can your coding assistant <span>ask the right question</span>?</h1>
           <p class="hero-summary" data-content="summary">Loading competition summary…</p>
-          <a class="deadline-banner" href="#timeline" aria-label="Jump to final submission deadline">
-            <span class="deadline-kicker">Final submission deadline</span>
-            <strong id="hero-final-deadline">TBA</strong>
-            <span id="hero-final-deadline-note">Final competition submission cutoff</span>
+          <a class="deadline-banner" href="#timeline" aria-label="Jump to next deadline">
+            <span class="deadline-kicker">Next deadline</span>
+            <strong id="hero-final-deadline">Loading…</strong>
+            <span id="hero-final-deadline-note">Upcoming submission deadline</span>
             <b aria-hidden="true">→</b>
           </a>
           <div class="hero-actions">
@@ -123,7 +123,8 @@
                 <div><strong>Over-ask</strong><span>Share of already-specified tasks where the system asks unnecessarily.</span></div>
                 <div><strong>Avg. cost</strong><span>Average model/API cost per evaluated task.</span></div>
               </div>
-              <p class="ranking-note">TDS and nDCG report means over evaluation runs. In descending mean TDS order (then nDCG), the highest remaining submission becomes a group winner. Entries share its rank when, for both metrics, each mean lies within the other’s mean ± one standard deviation. Entries join the first matching group winner; comparisons with other group members do not extend a group. Both standard deviations appear when either metric has std greater than zero, including ± 0 for the other metric. Tie indicators appear only for metrics with std greater than zero; missing values default to zero. Expand the tie count below either metric to see all entries tied on that metric, including baselines. nDCG ties are shown only between entries that also tie on TDS. A TDS tie alone does not imply a shared rank. Muted rows share a rank with the named group leader; hover or focus the tie note for the reason. Shared ranks use consecutive places (1, 1, 2). Baselines are reference rows and remain unranked; submissions below the strongest baseline are also shown without a rank.</p>
+              <p class="ranking-note">Scores show the mean ± standard deviation across runs. Higher TDS is better; nDCG is the tie-breaker. Entries share a rank when both metrics tie with the group leader: each mean must be within the other entry’s ±std. Expand a tie count to see matching entries; nDCG ties require a TDS tie. Baselines and entries below the strongest baseline remain unranked.</p>
+              <details class="ranking-details"><summary>More about ties and score display</summary><p>Entries are ordered by mean TDS, then mean nDCG. Each entry joins the first matching group leader, or starts a new group. Shared ranks use consecutive places (1, 1, 2). Standard deviations appear only when at least one is positive; tie indicators appear only for metrics with positive std.</p></details>
             </div>
           </div>
 
@@ -191,11 +192,11 @@
         <div class="section-heading">
           <div class="eyebrow">Evaluation</div>
           <h2>What gets measured</h2>
-          <p>Mean TDS determines ordering, with mean nDCG used to break TDS ties. Submissions share a group winner’s rank when, on both metrics, each mean lies within the other’s mean ± standard deviation. The remaining metrics are reported for transparency.</p>
+          <p>TDS measures success while accounting for clarification turns. nDCG measures clarification quality. These two scores determine rank; the other metrics provide context.</p>
         </div>
         <div class="metrics-grid">
-          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary ranking metric.</strong> Entries are ordered by mean TDS from highest to lowest, with shared ranks determined against group winners.</p></article>
-          <article class="metric-card tie-break-metric"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p><strong>Tie-breaker.</strong> When two systems have the same mean TDS, the higher mean nDCG appears first. For both metrics, each mean must lie within the other’s mean ± standard deviation to share the group winner’s rank.</p></article>
+          <article class="metric-card primary-metric"><div class="metric-symbol">TDS</div><h3>Turn-discounted success</h3><p><strong>Primary ranking metric.</strong> Higher mean TDS places an entry earlier on the leaderboard.</p></article>
+          <article class="metric-card tie-break-metric"><div class="metric-symbol">nDCG</div><h3>Clarification quality</h3><p><strong>Tie-breaker.</strong> Higher mean nDCG breaks equal-TDS ordering ties. Entries share a rank when both scores tie within standard deviation.</p></article>
           <article class="metric-card"><div class="metric-symbol">P@1</div><h3>Pass@1</h3><p><strong>Reported only.</strong> Raw percentage of generated implementations that pass the developer tests.</p></article>
           <article class="metric-card"><div class="metric-symbol">CR</div><h3>Clarification rate</h3><p><strong>Reported only.</strong> Percentage of tasks for which the system asks at least one clarification question.</p></article>
           <article class="metric-card"><div class="metric-symbol">OA</div><h3>Over-asking rate</h3><p><strong>Reported only.</strong> How often the system asks a question even though the task is sufficiently specified. Lower is better.</p></article>
@@ -250,7 +251,7 @@
         <div class="section-heading">
           <div class="eyebrow">Schedule</div>
           <h2>Important dates</h2>
-          <p>The <strong>final submission deadline</strong> is the key cutoff for competition entries. Dates remain data-driven so organizers can update them without changing the page layout.</p>
+          <p id="schedule-summary">The next upcoming deadline is highlighted below.</p>
         </div>
         <h3 class="timeline-group-title">Competition timeline</h3>
         <div class="timeline" id="timeline-list">
@@ -258,7 +259,7 @@
         </div>
         <h3 class="timeline-group-title timeline-group-title-secondary">ICSE 2027 solution-paper timeline</h3>
         <div class="timeline icse-timeline" id="icse-timeline-list">
-          <div class="timeline-item"><div class="timeline-date">4 Dec 2026</div><h3>Solution papers</h3></div>
+          <div class="timeline-item"><div class="timeline-date">TBA</div><h3>Loading…</h3></div>
         </div>
         <p class="timeline-footnote">ICSE Competition Track deadlines are 23:59 AoE (UTC−12) unless stated otherwise. Competition-specific deadlines above are maintained separately.</p>
       </div>
@@ -320,6 +321,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/main.js?v=tie-details"></script>
+  <script src="assets/js/main.js?v=7554028addc4"></script>
 </body>
 </html>
